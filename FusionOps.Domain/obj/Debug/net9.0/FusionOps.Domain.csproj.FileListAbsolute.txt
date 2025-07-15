@@ -1,0 +1,11 @@
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\bin\Debug\net9.0\FusionOps.Domain.deps.json
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\bin\Debug\net9.0\FusionOps.Domain.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\bin\Debug\net9.0\FusionOps.Domain.pdb
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\FusionOps.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\FusionOps.Domain.AssemblyInfoInputs.cache
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\FusionOps.Domain.AssemblyInfo.cs
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\FusionOps.Domain.csproj.CoreCompileInputs.cache
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\FusionOps.Domain.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\refint\FusionOps.Domain.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\FusionOps.Domain.pdb
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\ref\FusionOps.Domain.dll

@@ -1,0 +1,73 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v9.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v9.0": {
+      "FusionOps.Presentation/1.0.0": {
+        "dependencies": {
+          "FusionOps.Application": "1.0.0",
+          "FusionOps.Domain": "1.0.0",
+          "FusionOps.Infrastructure": "1.0.0"
+        },
+        "runtime": {
+          "FusionOps.Presentation.dll": {}
+        }
+      },
+      "FusionOps.Application/1.0.0": {
+        "dependencies": {
+          "FusionOps.Domain": "1.0.0"
+        },
+        "runtime": {
+          "FusionOps.Application.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "FusionOps.Domain/1.0.0": {
+        "runtime": {
+          "FusionOps.Domain.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "FusionOps.Infrastructure/1.0.0": {
+        "dependencies": {
+          "FusionOps.Domain": "1.0.0"
+        },
+        "runtime": {
+          "FusionOps.Infrastructure.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "FusionOps.Presentation/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "FusionOps.Application/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "FusionOps.Domain/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "FusionOps.Infrastructure/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

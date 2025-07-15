@@ -1,0 +1,15 @@
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\bin\Debug\net9.0\FusionOps.Application.deps.json
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\bin\Debug\net9.0\FusionOps.Application.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\bin\Debug\net9.0\FusionOps.Application.pdb
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\bin\Debug\net9.0\FusionOps.Domain.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\bin\Debug\net9.0\FusionOps.Domain.pdb
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\FusionOps.Application.csproj.AssemblyReference.cache
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\FusionOps.Application.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\FusionOps.Application.AssemblyInfoInputs.cache
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\FusionOps.Application.AssemblyInfo.cs
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\FusionOps.Application.csproj.CoreCompileInputs.cache
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\FusionOp.08266198.Up2Date
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\FusionOps.Application.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\refint\FusionOps.Application.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\FusionOps.Application.pdb
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\ref\FusionOps.Application.dll

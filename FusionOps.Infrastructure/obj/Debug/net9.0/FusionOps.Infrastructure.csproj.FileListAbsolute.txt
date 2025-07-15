@@ -1,0 +1,15 @@
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\bin\Debug\net9.0\FusionOps.Infrastructure.deps.json
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\bin\Debug\net9.0\FusionOps.Infrastructure.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\bin\Debug\net9.0\FusionOps.Infrastructure.pdb
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\bin\Debug\net9.0\FusionOps.Domain.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\bin\Debug\net9.0\FusionOps.Domain.pdb
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\FusionOps.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\FusionOps.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\FusionOps.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\FusionOps.Infrastructure.AssemblyInfo.cs
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\FusionOps.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\FusionOp.1A51923F.Up2Date
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\FusionOps.Infrastructure.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\refint\FusionOps.Infrastructure.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\FusionOps.Infrastructure.pdb
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\ref\FusionOps.Infrastructure.dll
