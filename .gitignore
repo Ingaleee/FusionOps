@@ -1,0 +1,20 @@
+# Build artifacts
+bin/
+obj/
+
+# Rider/JetBrains IDE files
+.idea/
+*.sln.iml
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# VS Code
+.vscode/
+
+# Other
+*.log 
