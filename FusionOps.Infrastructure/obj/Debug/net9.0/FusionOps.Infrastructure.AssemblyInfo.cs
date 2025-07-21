@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FusionOps.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+55502310903e2a3c5b5105c6a5f9f5841bac61ba")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1f9a69848de689cdcf2bf586081f522528ff6c72")]
 [assembly: System.Reflection.AssemblyProductAttribute("FusionOps.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FusionOps.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
