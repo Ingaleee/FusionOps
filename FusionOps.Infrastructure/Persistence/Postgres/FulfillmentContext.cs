@@ -14,8 +14,8 @@ public class FulfillmentContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new OutboxConfig());
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(FulfillmentContext).Assembly);
 
-        // Domain entity configurations will be applied later.
+        base.OnModelCreating(modelBuilder);
     }
 } 

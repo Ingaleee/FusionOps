@@ -15,8 +15,8 @@ public class WorkforceContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfiguration(new OutboxConfig());
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(WorkforceContext).Assembly);
 
-        // Domain entity configurations will be applied in separate configuration classes (added later)
+        base.OnModelCreating(modelBuilder);
     }
 } 
