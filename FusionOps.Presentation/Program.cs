@@ -11,7 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration);
 
 // MediatR / AutoMapper
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(AssemblyReference).Assembly));
+builder.Services.AddMediatR(typeof(AssemblyReference).Assembly);
 builder.Services.AddAutoMapper(typeof(AssemblyReference).Assembly);
 
 // Swagger & endpoints
@@ -19,7 +19,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // HealthChecks
-builder.Services.AddHealthChecks().AddDbContextCheck<WorkforceContext>();
+builder.Services.AddHealthChecks();
 
 // Hosted services
 builder.Services.AddHostedService<OutboxDispatcher>();

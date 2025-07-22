@@ -7,6 +7,7 @@ using FusionOps.Infrastructure.UnitOfWork;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MassTransit;
 
 namespace FusionOps.Presentation.Extensions;
 
@@ -20,7 +21,16 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAllocationRepository, AllocationRepository>();
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
-        services.AddSingleton<IEventBus, ConsoleEventBus>();
+        services.AddMassTransit(mtCfg =>
+        {
+            mtCfg.SetKebabCaseEndpointNameFormatter();
+            mtCfg.UsingRabbitMq((ctx, busCfg) =>
+            {
+                busCfg.Host(cfg.GetSection("Rabbit")?["Host"] ?? "localhost", "/", h => { });
+            });
+        });
+
+        services.AddScoped<IEventBus, RabbitBus>();
 
         return services;
     }

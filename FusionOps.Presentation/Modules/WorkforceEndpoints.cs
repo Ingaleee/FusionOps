@@ -14,8 +14,8 @@ public static class WorkforceEndpoints
             var cmd = new AllocateCommand(dto.ProjectId, dto.ResourceIds, dto.PeriodFrom, dto.PeriodTo);
             try
             {
-                await sender.Send(cmd);
-                return Results.Ok();
+                var ids = await sender.Send(cmd);
+                return Results.Created("/api/v1/allocations", ids);
             }
             catch (DomainException ex)
             {

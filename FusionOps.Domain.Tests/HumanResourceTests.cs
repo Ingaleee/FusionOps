@@ -15,7 +15,7 @@ public class HumanResourceTests
         var skill = new Skill("csharp", SkillLevel.Senior);
         hr.AddSkill(skill);
 
-        Assert.IsTrue(hr.HasSkill("csharp", SkillLevel.Senior));
-        Assert.IsFalse(hr.HasSkill("java", SkillLevel.Junior));
+        Assert.That(hr.HasSkill("csharp", SkillLevel.Senior), Is.True);
+        Assert.That(hr.HasSkill("java", SkillLevel.Junior), Is.False);
     }
 } 
