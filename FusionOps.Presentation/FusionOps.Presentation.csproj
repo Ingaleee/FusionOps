@@ -10,6 +10,12 @@
       <ProjectReference Include="..\FusionOps.Application\FusionOps.Application.csproj" />
       <ProjectReference Include="..\FusionOps.Domain\FusionOps.Domain.csproj" />
       <ProjectReference Include="..\FusionOps.Infrastructure\FusionOps.Infrastructure.csproj" />
+      <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
+      <PackageReference Include="MediatR" Version="11.1.0" />
+      <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
+      <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.3" />
+      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.2" />
     </ItemGroup>
 
 </Project>
