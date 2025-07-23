@@ -4,6 +4,11 @@ using FusionOps.Presentation.Extensions;
 using FusionOps.Presentation.Modules;
 using FusionOps.Infrastructure.Persistence.SqlServer;
 using MediatR;
+using Serilog;
+using Serilog.Events;
+using FusionOps.Presentation.Middleware;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,9 +19,51 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddMediatR(typeof(AssemblyReference).Assembly);
 builder.Services.AddAutoMapper(typeof(AssemblyReference).Assembly);
 
+// top after builder creation
+builder.Host.UseSerilog((ctx, cfg) =>
+{
+    cfg.MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+       .Enrich.FromLogContext()
+       .Enrich.WithEnvironmentName()
+       .WriteTo.Console();
+});
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracer =>
+    {
+        tracer.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("fusionops-api"))
+              .AddAspNetCoreInstrumentation()
+              .AddEntityFrameworkCoreInstrumentation()
+              .AddJaegerExporter();
+    });
+
+// Add middleware
+builder.Services.AddTransient<CorrelationMiddleware>();
+builder.Services.AddTransient<ExceptionMiddleware>();
+
 // Swagger & endpoints
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "JWT Authorization header using the Bearer scheme."
+    });
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" }
+            }, new string[] {}
+        }
+    });
+});
 
 // HealthChecks
 builder.Services.AddHealthChecks();
@@ -36,5 +83,8 @@ app.UseSwaggerUI();
 
 app.MapWorkforceEndpoints();
 app.MapHealthChecks("/health");
+
+app.UseMiddleware<CorrelationMiddleware>();
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.Run();
