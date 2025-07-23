@@ -24,13 +24,18 @@ public static class ServiceCollectionExtensions
         services.AddMassTransit(mtCfg =>
         {
             mtCfg.SetKebabCaseEndpointNameFormatter();
+            mtCfg.AddSagaStateMachine<FusionOps.Infrastructure.Saga.AllocationStateMachine, FusionOps.Infrastructure.Saga.AllocationState>()
+                .InMemoryRepository();
+
             mtCfg.UsingRabbitMq((ctx, busCfg) =>
             {
                 busCfg.Host(cfg.GetSection("Rabbit")?["Host"] ?? "localhost", "/", h => { });
+                busCfg.ConfigureEndpoints(ctx);
             });
         });
 
         services.AddScoped<IEventBus, RabbitBus>();
+        services.AddSingleton<ITelemetryProducer, KafkaTelemetryProducer>();
 
         return services;
     }

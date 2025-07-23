@@ -1,8 +1,26 @@
 {
   "version": 2,
-  "dgSpecHash": "gL0Hgnlj8kA=",
+  "dgSpecHash": "DlM5bG8I4Xw=",
   "success": true,
   "projectFilePath": "C:\\Users\\Egor Solovyev\\Desktop\\Work\\Sinor-Project\\FusionOps\\FusionOps.Infrastructure.SagaContracts\\FusionOps.Infrastructure.SagaContracts.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\masstransit\\8.1.0\\masstransit.8.1.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\masstransit.abstractions\\8.1.0\\masstransit.abstractions.8.1.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\microsoft.extensions.configuration.abstractions\\7.0.0\\microsoft.extensions.configuration.abstractions.7.0.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\7.0.0\\microsoft.extensions.dependencyinjection.abstractions.7.0.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\microsoft.extensions.diagnostics.healthchecks\\7.0.1\\microsoft.extensions.diagnostics.healthchecks.7.0.1.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\microsoft.extensions.diagnostics.healthchecks.abstractions\\7.0.1\\microsoft.extensions.diagnostics.healthchecks.abstractions.7.0.1.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\microsoft.extensions.fileproviders.abstractions\\7.0.0\\microsoft.extensions.fileproviders.abstractions.7.0.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\microsoft.extensions.hosting.abstractions\\7.0.0\\microsoft.extensions.hosting.abstractions.7.0.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\7.0.1\\microsoft.extensions.logging.abstractions.7.0.1.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\microsoft.extensions.options\\7.0.1\\microsoft.extensions.options.7.0.1.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\microsoft.extensions.primitives\\7.0.0\\microsoft.extensions.primitives.7.0.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\system.diagnostics.diagnosticsource\\7.0.1\\system.diagnostics.diagnosticsource.7.0.1.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\system.reflection.emit\\4.7.0\\system.reflection.emit.4.7.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\system.reflection.emit.lightweight\\4.7.0\\system.reflection.emit.lightweight.4.7.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\system.text.encodings.web\\7.0.0\\system.text.encodings.web.7.0.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\system.text.json\\7.0.3\\system.text.json.7.0.3.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\system.threading.channels\\7.0.0\\system.threading.channels.7.0.0.nupkg.sha512"
+  ],
   "logs": []
 }

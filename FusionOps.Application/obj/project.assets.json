@@ -137,6 +137,9 @@
       "FusionOps.Domain/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
+        "dependencies": {
+          "MediatR": "11.1.0"
+        },
         "compile": {
           "bin/placeholder/FusionOps.Domain.dll": {}
         },

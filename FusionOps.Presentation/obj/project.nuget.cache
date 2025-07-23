@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "LqHQRE0xNUs=",
+  "dgSpecHash": "qm2a+wI4Zpo=",
   "success": true,
   "projectFilePath": "C:\\Users\\Egor Solovyev\\Desktop\\Work\\Sinor-Project\\FusionOps\\FusionOps.Presentation\\FusionOps.Presentation.csproj",
   "expectedPackageFiles": [
@@ -8,10 +8,13 @@
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\automapper.extensions.microsoft.dependencyinjection\\12.0.1\\automapper.extensions.microsoft.dependencyinjection.12.0.1.nupkg.sha512",
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\azure.core\\1.35.0\\azure.core.1.35.0.nupkg.sha512",
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\azure.identity\\1.10.3\\azure.identity.1.10.3.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\confluent.kafka\\2.4.0\\confluent.kafka.2.4.0.nupkg.sha512",
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\fluentvalidation\\11.7.0\\fluentvalidation.11.7.0.nupkg.sha512",
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\fluentvalidation.dependencyinjectionextensions\\11.7.0\\fluentvalidation.dependencyinjectionextensions.11.7.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\librdkafka.redist\\2.4.0\\librdkafka.redist.2.4.0.nupkg.sha512",
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\masstransit\\8.1.0\\masstransit.8.1.0.nupkg.sha512",
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\masstransit.abstractions\\8.1.0\\masstransit.abstractions.8.1.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\masstransit.entityframeworkcore\\8.1.0\\masstransit.entityframeworkcore.8.1.0.nupkg.sha512",
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\masstransit.rabbitmq\\8.1.0\\masstransit.rabbitmq.8.1.0.nupkg.sha512",
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\mediatr\\11.1.0\\mediatr.11.1.0.nupkg.sha512",
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\mediatr.contracts\\1.0.1\\mediatr.contracts.1.0.1.nupkg.sha512",
@@ -86,5 +89,18 @@
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512",
     "C:\\Users\\Egor Solovyev\\.nuget\\packages\\system.windows.extensions\\6.0.0\\system.windows.extensions.6.0.0.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "message": "FusionOps.Infrastructure зависит от Confluent.Kafka (>= 2.3.1), но версия Confluent.Kafka 2.3.1 не найдена. Использовалась версия Confluent.Kafka 2.4.0.",
+      "projectPath": "C:\\Users\\Egor Solovyev\\Desktop\\Work\\Sinor-Project\\FusionOps\\FusionOps.Presentation\\FusionOps.Presentation.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Egor Solovyev\\Desktop\\Work\\Sinor-Project\\FusionOps\\FusionOps.Presentation\\FusionOps.Presentation.csproj",
+      "libraryId": "Confluent.Kafka",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    }
+  ]
 }

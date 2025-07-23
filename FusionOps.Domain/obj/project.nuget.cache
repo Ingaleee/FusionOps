@@ -1,8 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "gKlFip/11l4=",
+  "dgSpecHash": "oRt9Ed/vU44=",
   "success": true,
   "projectFilePath": "C:\\Users\\Egor Solovyev\\Desktop\\Work\\Sinor-Project\\FusionOps\\FusionOps.Domain\\FusionOps.Domain.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\mediatr\\11.1.0\\mediatr.11.1.0.nupkg.sha512",
+    "C:\\Users\\Egor Solovyev\\.nuget\\packages\\mediatr.contracts\\1.0.1\\mediatr.contracts.1.0.1.nupkg.sha512"
+  ],
   "logs": []
 }
