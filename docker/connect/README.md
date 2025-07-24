@@ -1,0 +1,2 @@
+This directory can contain helper scripts for Kafka Connect / Debezium initialization.
+Currently registration is performed by the application `CdcConnectorRegistrationService`. Feel free to place additional bash scripts here if needed. 

@@ -86,6 +86,10 @@ builder.Services.AddHealthChecks();
 
 // Hosted services
 builder.Services.AddHostedService<OutboxDispatcher>();
+builder.Services.AddHostedService<CdcConnectorRegistrationService>();
+builder.Services.AddHostedService<CdcKafkaListener>();
+
+builder.Services.AddHttpClient("debezium");
 
 // MediatR pipeline behaviors
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.ValidationBehavior<,>));

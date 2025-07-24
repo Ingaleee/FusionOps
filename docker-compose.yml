@@ -17,6 +17,7 @@ services:
     image: confluentinc/cp-kafka:7.4.0
     depends_on:
       - zookeeper
+      - sqlserver
     ports:
       - "9092:9092"
     environment:
@@ -67,3 +68,37 @@ services:
       POSTGRES_PASSWORD: keycloak
     ports:
       - "5433:5432" 
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    ports:
+      - "1433:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      SA_PASSWORD: "Pass@word1"
+    volumes:
+      - ./docker/sqlserver/init/:/docker-entrypoint-initdb.d/
+    healthcheck:
+      test: [ "CMD-SHELL", "\"/opt/mssql-tools/bin/sqlcmd\" -S localhost -U sa -P Pass@word1 -Q \"SELECT 1\"" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  connect:
+    image: debezium/connect:2.5
+    depends_on:
+      - kafka
+      - sqlserver
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: debezium_connect_config
+      OFFSET_STORAGE_TOPIC: debezium_connect_offset
+      STATUS_STORAGE_TOPIC: debezium_connect_status
+      KEY_CONVERTER_SCHEMAS_ENABLE: "false"
+      VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
+    volumes:
+      - ./docker/connect/:/docker/scripts/ 
