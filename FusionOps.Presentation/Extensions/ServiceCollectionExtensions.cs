@@ -21,11 +21,22 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAllocationRepository, AllocationRepository>();
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
+        services.AddDbContext<FusionOps.Infrastructure.Persistence.SqlServer.AllocationSagaContext>(o =>
+            o.UseSqlServer(cfg.GetConnectionString("sql")));
+
         services.AddMassTransit(mtCfg =>
         {
             mtCfg.SetKebabCaseEndpointNameFormatter();
+
             mtCfg.AddSagaStateMachine<FusionOps.Infrastructure.Saga.AllocationStateMachine, FusionOps.Infrastructure.Saga.AllocationState>()
-                .InMemoryRepository();
+                .EntityFrameworkRepository(r =>
+                {
+                    r.AddDbContext<FusionOps.Infrastructure.Persistence.SqlServer.AllocationSagaContext, FusionOps.Infrastructure.Persistence.SqlServer.AllocationSagaContext>((provider, builder) =>
+                    {
+                        builder.UseSqlServer(cfg.GetConnectionString("sql"), sql => sql.MigrationsAssembly(typeof(FusionOps.Infrastructure.Persistence.SqlServer.AllocationSagaContext).Assembly.FullName));
+                    });
+                });
 
             mtCfg.UsingRabbitMq((ctx, busCfg) =>
             {
