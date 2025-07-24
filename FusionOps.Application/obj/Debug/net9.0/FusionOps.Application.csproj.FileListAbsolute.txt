@@ -13,3 +13,4 @@ C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Applicatio
 C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\refint\FusionOps.Application.dll
 C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\FusionOps.Application.pdb
 C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\ref\FusionOps.Application.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Application\obj\Debug\net9.0\FusionOps.Application.sourcelink.json

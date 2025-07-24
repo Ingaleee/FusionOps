@@ -21,7 +21,8 @@ public static class WorkforceEndpoints
             {
                 return Results.UnprocessableEntity(new { error = ex.Message });
             }
-        });
+        })
+        .RequireAuthorization("ManageResources");
 
         return endpoints;
     }

@@ -1,0 +1,24 @@
+{
+  "realm": "fusion",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      { "name": "Resource.Manager" },
+      { "name": "Stock.Admin" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "fusion-api",
+      "name": "fusion-api",
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "secret": "secret",
+      "standardFlowEnabled": false,
+      "serviceAccountsEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "defaultClientScopes": ["profile", "roles"],
+      "redirectUris": [ "*" ]
+    }
+  ]
+} 

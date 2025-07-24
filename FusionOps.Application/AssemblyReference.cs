@@ -1,3 +1,3 @@
 namespace FusionOps.Application;
 
-public static class AssemblyReference { } 
+public static class AssemblyReference {} 

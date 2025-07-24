@@ -22,6 +22,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStockRepository, StockRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
+        services.AddSingleton<IStockForecaster, FusionOps.Infrastructure.Optimizers.MlNetOptimizer>();
         services.AddDbContext<FusionOps.Infrastructure.Persistence.SqlServer.AllocationSagaContext>(o =>
             o.UseSqlServer(cfg.GetConnectionString("sql")));
 

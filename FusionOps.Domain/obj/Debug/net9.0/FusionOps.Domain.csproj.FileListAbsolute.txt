@@ -9,3 +9,5 @@ C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj
 C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\refint\FusionOps.Domain.dll
 C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\FusionOps.Domain.pdb
 C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\ref\FusionOps.Domain.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\FusionOps.Domain.csproj.AssemblyReference.cache
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Domain\obj\Debug\net9.0\FusionOps.Domain.sourcelink.json

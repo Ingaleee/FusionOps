@@ -15,3 +15,6 @@ C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastruc
 C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\ref\FusionOps.Infrastructure.dll
 C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\bin\Debug\net9.0\FusionOps.Infrastructure.runtimeconfig.json
 C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\FusionOps.Infrastructure.genruntimeconfig.cache
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\bin\Debug\net9.0\FusionOps.Infrastructure.SagaContracts.dll
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\bin\Debug\net9.0\FusionOps.Infrastructure.SagaContracts.pdb
+C:\Users\Egor Solovyev\Desktop\Work\Sinor-Project\FusionOps\FusionOps.Infrastructure\obj\Debug\net9.0\FusionOps.Infrastructure.sourcelink.json

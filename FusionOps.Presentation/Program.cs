@@ -37,9 +37,25 @@ builder.Services.AddOpenTelemetry()
               .AddJaegerExporter();
     });
 
+// AuthN/Z
+builder.Services.AddAuthentication("Bearer")
+       .AddJwtBearer("Bearer", o =>
+       {
+           o.Authority = builder.Configuration["Keycloak:Authority"] ?? "https://localhost:8443/realms/fusion";
+           o.Audience = "fusion-api";
+           o.RequireHttpsMetadata = false;
+       });
+
+builder.Services.AddAuthorization(opts =>
+{
+    opts.AddPolicy("ManageResources", p => p.RequireRole("Resource.Manager"));
+    opts.AddPolicy("AdminStock", p => p.RequireRole("Stock.Admin"));
+});
+
 // Add middleware
 builder.Services.AddTransient<CorrelationMiddleware>();
 builder.Services.AddTransient<ExceptionMiddleware>();
+builder.Services.AddTransient<UserContextEnricher>();
 
 // Swagger & endpoints
 builder.Services.AddEndpointsApiExplorer();
@@ -81,10 +97,15 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapWorkforceEndpoints();
+app.MapStockEndpoints();
 app.MapHealthChecks("/health");
 
 app.UseMiddleware<CorrelationMiddleware>();
+app.UseMiddleware<UserContextEnricher>();
 app.UseMiddleware<ExceptionMiddleware>();
 
 app.Run();
