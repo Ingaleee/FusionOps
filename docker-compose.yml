@@ -102,3 +102,23 @@ services:
       VALUE_CONVERTER_SCHEMAS_ENABLE: "false"
     volumes:
       - ./docker/connect/:/docker/scripts/ 
+
+  rabbitmq-exporter:
+    image: kbudde/rabbitmq-exporter
+    environment:
+      RABBIT_URL: http://rabbitmq:15672
+      RABBIT_USER: guest
+      RABBIT_PASSWORD: guest
+    ports:
+      - "9419:9419"
+    depends_on:
+      - rabbitmq
+
+  kafka-exporter:
+    image: quay.io/cloudhut/kminion:v2.0.4
+    environment:
+      KMINION_KAFKA_BROKERS: kafka:9092
+    ports:
+      - "8090:8080"
+    depends_on:
+      - kafka 

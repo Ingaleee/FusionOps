@@ -8,6 +8,7 @@ namespace FusionOps.Domain.Entities;
 /// <summary>
 /// Represents a SKU stored in a warehouse with quantity tracking.
 /// </summary>
+[FusionOps.Infrastructure.Persistence.Postgres.Attributes.PartitionedTable("range_month")]
 public class StockItem : IEntity<StockItemId>
 {
     public StockItem(StockItemId id, string sku, int quantity, int reorderPoint, Money unitCost)

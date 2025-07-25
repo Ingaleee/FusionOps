@@ -13,4 +13,8 @@ public interface IStockRepository
     Task<StockItem?> GetBySkuAsync(string sku);
     Task<IReadOnlyCollection<StockItem>> GetLowStockAsync();
     Task UpdateAsync(StockItem item);
+    /// <summary>
+    /// Массовое пополнение склада: быстрое обновление количества для списка позиций.
+    /// </summary>
+    Task BulkRestockAsync(IEnumerable<StockItemDelta> deltas);
 } 
