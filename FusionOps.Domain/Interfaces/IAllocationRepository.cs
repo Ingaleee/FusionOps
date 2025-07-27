@@ -16,4 +16,4 @@ public interface IAllocationRepository
     Task<Allocation?> GetAsync(AllocationId id);
     Task<IReadOnlyCollection<Allocation>> FindForResourceAsync(Guid resourceId);
     Task<IReadOnlyCollection<Allocation>> FindFreeAsync(TimeRange period);
-} 
+}

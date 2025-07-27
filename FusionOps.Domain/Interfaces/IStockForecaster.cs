@@ -12,4 +12,4 @@ public interface IStockForecaster
     /// <param name="days">Горизонт прогноза в днях.</param>
     /// <returns>Ожидаемое количество, которое потребуется в течение периода.</returns>
     Task<float> ForecastAsync(StockItem item, int days);
-} 
+}

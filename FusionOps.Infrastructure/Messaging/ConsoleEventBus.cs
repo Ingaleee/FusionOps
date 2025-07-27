@@ -14,4 +14,4 @@ public class ConsoleEventBus : IEventBus
         _logger.LogInformation("[CONSOLE BUS] Event published: {Event}", domainEvent.GetType().Name);
         return Task.CompletedTask;
     }
-} 
+}

@@ -35,4 +35,4 @@ public class KafkaTelemetryProducer : ITelemetryProducer, IDisposable
     }
 
     public void Dispose() => _producer?.Dispose();
-} 
+}

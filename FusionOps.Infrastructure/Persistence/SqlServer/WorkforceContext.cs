@@ -19,4 +19,4 @@ public class WorkforceContext : DbContext
 
         base.OnModelCreating(modelBuilder);
     }
-} 
+}

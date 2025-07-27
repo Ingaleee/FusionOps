@@ -6,4 +6,4 @@ namespace FusionOps.Domain.Interfaces;
 public interface IEventBus
 {
     Task PublishAsync(IDomainEvent domainEvent);
-} 
+}

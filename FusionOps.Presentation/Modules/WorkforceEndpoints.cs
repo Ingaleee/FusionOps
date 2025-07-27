@@ -28,4 +28,4 @@ public static class WorkforceEndpoints
     }
 
     public record AllocateCommandDTO(Guid ProjectId, IReadOnlyCollection<Guid> ResourceIds, DateTime PeriodFrom, DateTime PeriodTo);
-} 
+}

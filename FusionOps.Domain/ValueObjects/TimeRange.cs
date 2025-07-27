@@ -9,7 +9,7 @@ public readonly record struct TimeRange
 {
     public DateTimeOffset Start { get; }
     public DateTimeOffset End { get; }
-    
+
     public TimeRange(DateTimeOffset start, DateTimeOffset end)
     {
         if (end < start)
@@ -18,7 +18,7 @@ public readonly record struct TimeRange
         Start = start;
         End = end;
     }
-    
+
     public bool Overlaps(TimeRange other) => Start < other.End && other.Start < End;
 
     public bool Contains(DateTimeOffset moment) => moment >= Start && moment <= End;
@@ -38,4 +38,4 @@ public readonly record struct TimeRange
     }
 
     public override string ToString() => $"{Start:u} - {End:u}";
-} 
+}

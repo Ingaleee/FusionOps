@@ -16,4 +16,4 @@ public readonly record struct SkillLevel(int Value, string Name) : IEnumeration
     public static IReadOnlyCollection<SkillLevel> All => new[] { Junior, Middle, Senior, Expert };
 
     public override string ToString() => Name;
-} 
+}

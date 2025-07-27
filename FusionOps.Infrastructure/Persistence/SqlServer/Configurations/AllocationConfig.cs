@@ -20,4 +20,4 @@ public class AllocationConfig : IEntityTypeConfiguration<Allocation>
         builder.HasIndex(a => a.ResourceId);
         // Additional indexes can be configured in a migration later.
     }
-} 
+}

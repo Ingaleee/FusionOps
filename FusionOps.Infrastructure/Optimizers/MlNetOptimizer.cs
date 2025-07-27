@@ -28,4 +28,4 @@ public sealed class MlNetOptimizer : IStockForecaster
         var forecast = item.Quantity * factor;
         return Task.FromResult(forecast);
     }
-} 
+}

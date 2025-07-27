@@ -7,4 +7,4 @@ public sealed class PartitionedTableAttribute : Attribute
 {
     public string Strategy { get; }
     public PartitionedTableAttribute(string strategy) => Strategy = strategy;
-} 
+}

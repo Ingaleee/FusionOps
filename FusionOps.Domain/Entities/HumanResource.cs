@@ -44,4 +44,4 @@ public class HumanResource : IEntity<HumanResourceId>, IHasDomainEvents
         }
         return true;
     }
-} 
+}

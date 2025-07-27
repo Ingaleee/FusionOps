@@ -11,4 +11,4 @@ public class AllocationState : SagaStateMachineInstance
     public Guid ProjectId { get; set; }
     public DateTime? ReservedAt { get; set; }
     public DateTime? ShippedAt { get; set; }
-} 
+}

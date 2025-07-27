@@ -19,4 +19,4 @@ public class StockItemConfig : IEntityTypeConfiguration<StockItem>
 
         builder.Ignore(s => s.UnitCost);
     }
-} 
+}

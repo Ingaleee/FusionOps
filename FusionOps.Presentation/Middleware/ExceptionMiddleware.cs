@@ -59,4 +59,4 @@ public class ExceptionMiddleware
         ctx.Response.ContentType = "application/json";
         return ctx.Response.WriteAsJsonAsync(pb);
     }
-} 
+}

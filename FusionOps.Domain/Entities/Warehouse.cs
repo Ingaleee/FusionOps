@@ -45,4 +45,4 @@ public class Warehouse : IEntity<WarehouseId>, IHasDomainEvents
             AddDomainEvent(new ReorderPointReached(Id, sku, item.Quantity));
         }
     }
-} 
+}

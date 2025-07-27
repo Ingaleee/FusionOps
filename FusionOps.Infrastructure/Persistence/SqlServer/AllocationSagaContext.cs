@@ -26,4 +26,4 @@ public class AllocationStateMap : SagaClassMap<AllocationState>
         entity.Property(x => x.ReservedAt);
         entity.Property(x => x.ShippedAt);
     }
-} 
+}

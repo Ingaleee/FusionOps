@@ -12,4 +12,4 @@ public interface IHasDomainEvents
     void AddDomainEvent(IDomainEvent domainEvent);
 
     void ClearDomainEvents();
-} 
+}

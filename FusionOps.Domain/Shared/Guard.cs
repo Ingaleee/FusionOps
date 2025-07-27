@@ -34,4 +34,4 @@ public static class Guard
             throw new DomainException($"{paramName} cannot be negative.");
         return input;
     }
-} 
+}

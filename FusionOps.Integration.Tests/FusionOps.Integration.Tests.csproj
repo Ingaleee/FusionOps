@@ -8,11 +8,13 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.5.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.0" />
     <PackageReference Include="NUnit" Version="4.2.2" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
     <PackageReference Include="MassTransit" Version="8.1.0" />
-    <PackageReference Include="Testcontainers" Version="3.7.0" />
+    <PackageReference Include="DotNet.Testcontainers" Version="1.7.0-beta.2269" />
     <PackageReference Include="Npgsql" Version="8.0.3" />
   </ItemGroup>
 

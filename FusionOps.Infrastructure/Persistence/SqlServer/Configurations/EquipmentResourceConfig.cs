@@ -23,4 +23,4 @@ public class EquipmentResourceConfig : IEntityTypeConfiguration<EquipmentResourc
 
         builder.Ignore(e => e.HourRate);
     }
-} 
+}

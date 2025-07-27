@@ -36,4 +36,4 @@ public class HungarianOptimizerTests
         // Assert
         Assert.That(result.Count, Is.EqualTo(4));
     }
-} 
+}

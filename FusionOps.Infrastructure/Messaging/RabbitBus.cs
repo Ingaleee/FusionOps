@@ -29,4 +29,4 @@ public class RabbitBus : IEventBus
         _logger.LogInformation("Publishing domain event {EventName} via MassTransit", domainEvent.GetType().Name);
         await _retryPolicy.ExecuteAsync(() => _publish.Publish(domainEvent));
     }
-} 
+}

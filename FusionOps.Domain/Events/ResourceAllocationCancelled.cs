@@ -13,4 +13,4 @@ public readonly record struct ResourceAllocationCancelled(AllocationId Allocatio
 {
     public Guid Id { get; } = Guid.NewGuid();
     public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
-} 
+}

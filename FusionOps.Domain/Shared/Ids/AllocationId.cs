@@ -14,4 +14,4 @@ public readonly record struct AllocationId(Guid Value)
     public static implicit operator Guid(AllocationId id) => id.Value;
 
     public static implicit operator AllocationId(Guid value) => new(value);
-} 
+}

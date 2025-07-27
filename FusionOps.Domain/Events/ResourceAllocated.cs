@@ -16,4 +16,4 @@ public readonly record struct ResourceAllocated(AllocationId AllocationId,
 {
     public Guid Id { get; } = Guid.NewGuid();
     public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
-} 
+}

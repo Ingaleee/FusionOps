@@ -39,4 +39,4 @@ public class AllocationRepository : IAllocationRepository
             .Where(a => !(period.Start < a.Period.End && a.Period.Start < period.End))
             .ToListAsync();
     }
-} 
+}

@@ -42,4 +42,4 @@ public readonly record struct Money(decimal Amount, Currency Currency)
     }
 
     public override string ToString() => $"{Amount} {Currency.Name}";
-} 
+}

@@ -20,8 +20,22 @@ jobs:
       run: dotnet run --project FusionOps.Presentation/FusionOps.Presentation.csproj &
     - name: Wait API
       run: sleep 20
-    - name: Run NBomber scenario
-      run: dotnet run --project FusionOps.Perf.Tests/FusionOps.Perf.Tests.csproj --no-build
+    - name: Check code format
+      run: dotnet format --verify-no-changes
+    - name: Analyze code
+      run: dotnet build --no-restore -warnaserror
+    # Best practice: Запуск всех тестов (включая Perf.Tests как тестовый проект)
+    - name: Run all tests
+      run: dotnet test FusionOps.sln --no-build --logger "trx;LogFileName=test-results.trx"
+    - name: Publish test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: "**/TestResults/*.trx"
+    # NBomber сценарий (оставляю, если он действительно нужен как dotnet run)
+    # - name: Run NBomber scenario
+    #   run: dotnet run --project FusionOps.Perf.Tests/FusionOps.Perf.Tests.csproj --no-build
     - name: Fail on 5xx
       if: failure()
       run: exit 1 

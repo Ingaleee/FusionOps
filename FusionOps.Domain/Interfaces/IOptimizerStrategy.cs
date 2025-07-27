@@ -10,4 +10,4 @@ public interface IOptimizerStrategy
                                                         IReadOnlyCollection<EquipmentResource> equipment,
                                                         int requiredHumans,
                                                         int requiredEquipment);
-} 
+}

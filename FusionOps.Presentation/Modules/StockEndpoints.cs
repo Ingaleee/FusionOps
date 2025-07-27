@@ -16,4 +16,4 @@ public static class StockEndpoints
 
         return endpoints;
     }
-} 
+}

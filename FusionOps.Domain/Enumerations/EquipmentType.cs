@@ -15,4 +15,4 @@ public readonly record struct EquipmentType(int Value, string Name) : IEnumerati
     public static IReadOnlyCollection<EquipmentType> All => new[] { CNC, Printer, GPU };
 
     public override string ToString() => Name;
-} 
+}

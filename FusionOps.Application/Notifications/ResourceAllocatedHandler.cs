@@ -27,4 +27,4 @@ public class ResourceAllocatedHandler : INotificationHandler<ResourceAllocated>
             notification.Period
         });
     }
-} 
+}

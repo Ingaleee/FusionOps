@@ -37,4 +37,4 @@ public class EquipmentResource : IEntity<EquipmentResourceId>, IHasDomainEvents
             throw new System.InvalidOperationException("Currency must match existing rate");
         HourRate = newRate;
     }
-} 
+}

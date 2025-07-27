@@ -23,4 +23,4 @@ public class HumanResourceConfig : IEntityTypeConfiguration<HumanResource>
         // HourRate as owned value object (default column names)
         builder.Ignore(hr => hr.HourRate);
     }
-} 
+}

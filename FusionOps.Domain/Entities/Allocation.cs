@@ -50,4 +50,4 @@ public class Allocation : IEntity<AllocationId>, IHasDomainEvents
         AddDomainEvent(new ResourceAllocationCancelled(Id, ResourceId, ProjectId));
         return this;
     }
-} 
+}

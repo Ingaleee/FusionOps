@@ -14,4 +14,4 @@ public class WarehouseConfig : IEntityTypeConfiguration<Warehouse>
         builder.Ignore(w => w.DomainEvents);
         builder.Ignore("_items");
     }
-} 
+}

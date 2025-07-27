@@ -8,4 +8,4 @@ public class DomainToDtoProfile : Profile
     {
         // mapping configurations will be added later
     }
-} 
+}

@@ -70,4 +70,4 @@ public class CdcConnectorRegistrationService : BackgroundService
             await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
         }
     }
-} 
+}

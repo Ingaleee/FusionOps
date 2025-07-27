@@ -52,4 +52,4 @@ public sealed class GreedyOptimizerStrategy : IOptimizerStrategy
 
         return list;
     }
-} 
+}

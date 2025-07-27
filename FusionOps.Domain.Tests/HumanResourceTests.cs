@@ -18,4 +18,4 @@ public class HumanResourceTests
         Assert.That(hr.HasSkill("csharp", SkillLevel.Senior), Is.True);
         Assert.That(hr.HasSkill("java", SkillLevel.Junior), Is.False);
     }
-} 
+}

@@ -14,4 +14,4 @@ public class AllocateValidator : AbstractValidator<AllocateCommand>
             .WithMessage("ResourceIds must be unique");
         RuleFor(x => x.PeriodFrom).LessThan(x => x.PeriodTo);
     }
-} 
+}

@@ -18,4 +18,4 @@ public readonly record struct Skill
     }
 
     public override string ToString() => $"{Name} (L{Level.Value})";
-} 
+}

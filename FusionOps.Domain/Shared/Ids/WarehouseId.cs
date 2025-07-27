@@ -14,4 +14,4 @@ public readonly record struct WarehouseId(Guid Value)
     public static implicit operator Guid(WarehouseId id) => id.Value;
 
     public static implicit operator WarehouseId(Guid value) => new(value);
-} 
+}

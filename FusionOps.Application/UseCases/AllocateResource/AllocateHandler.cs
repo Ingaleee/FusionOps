@@ -33,4 +33,4 @@ public class AllocateHandler : IRequestHandler<AllocateCommand, IReadOnlyCollect
         await _uow.CommitAsync();
         return resultIds;
     }
-} 
+}

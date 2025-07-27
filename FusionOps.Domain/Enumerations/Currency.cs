@@ -15,4 +15,4 @@ public readonly record struct Currency(int Value, string Name) : IEnumeration
     public static IReadOnlyCollection<Currency> All => new[] { USD, EUR, RUB };
 
     public override string ToString() => Name;
-} 
+}

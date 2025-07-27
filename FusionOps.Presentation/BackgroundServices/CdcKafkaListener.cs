@@ -57,4 +57,4 @@ public class CdcKafkaListener : BackgroundService
         _consumer?.Dispose();
         base.Dispose();
     }
-} 
+}

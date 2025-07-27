@@ -1,20 +1,33 @@
-# Build artifacts
+# .NET build artifacts
 bin/
 obj/
-
-# Rider/JetBrains IDE files
-.idea/
-*.sln.iml
-
-# Visual Studio
-.vs/
 *.user
 *.suo
-*.userosscache
-*.sln.docstates
-
-# VS Code
+*.cache
+*.pdb
+*.dll
+*.exe
+*.vs/
 .vscode/
-
-# Other
-*.log 
+TestResults/
+*.log
+*.tmp
+*.db
+*.DS_Store
+*.swp
+*.sln.docstates
+# Rider/JetBrains
+.idea/
+*.sln.iml
+# OS junk
+Thumbs.db
+.DS_Store
+# npm/yarn/pnpm
+node_modules/
+# Python venv
+venv/
+__pycache__/
+# Docker
+*.pid
+# Ignore local settings
+appsettings.Development.json 

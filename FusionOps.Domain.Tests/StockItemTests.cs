@@ -24,4 +24,4 @@ public class StockItemTests
         var item = new StockItem(StockItemId.New(), "SKU1", 5, 2, Money.Usd(10));
         Assert.Throws<ArgumentException>(() => item.Deduct(-1));
     }
-} 
+}

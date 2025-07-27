@@ -71,4 +71,4 @@ public sealed class HungarianOptimizerStrategy : IOptimizerStrategy
 
         return list;
     }
-} 
+}

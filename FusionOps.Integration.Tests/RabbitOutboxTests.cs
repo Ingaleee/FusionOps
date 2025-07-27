@@ -9,4 +9,4 @@ public class RabbitOutboxTests
     {
         Assert.Pass("Integration tests placeholder");
     }
-} 
+}

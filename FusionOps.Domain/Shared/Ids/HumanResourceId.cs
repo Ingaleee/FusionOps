@@ -14,4 +14,4 @@ public readonly record struct HumanResourceId(Guid Value)
     public static implicit operator Guid(HumanResourceId id) => id.Value;
 
     public static implicit operator HumanResourceId(Guid value) => new(value);
-} 
+}

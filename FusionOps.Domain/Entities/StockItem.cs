@@ -40,4 +40,4 @@ public class StockItem : IEntity<StockItemId>
     }
 
     public bool NeedsReorder() => Quantity <= ReorderPoint;
-} 
+}

@@ -22,4 +22,4 @@ public class OutboxConfig : IEntityTypeConfiguration<OutboxMessage>
         builder.HasIndex(o => o.ProcessedAt)
                .HasDatabaseName("IX_Outbox_ProcessedAt");
     }
-} 
+}

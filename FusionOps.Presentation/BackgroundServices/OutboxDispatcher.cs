@@ -49,4 +49,4 @@ public class OutboxDispatcher : BackgroundService
     }
 
     private record OutboxDomainEvent(Guid Id, DateTimeOffset OccurredOn, string Type, string Payload) : IDomainEvent;
-} 
+}

@@ -40,4 +40,4 @@ public class ForecastHandler : IRequestHandler<ForecastQuery, IReadOnlyCollectio
 
         return list;
     }
-} 
+}

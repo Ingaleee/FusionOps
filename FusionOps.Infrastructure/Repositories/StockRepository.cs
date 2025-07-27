@@ -66,4 +66,4 @@ public class StockRepository : IStockRepository
         await using var cmd = new Npgsql.NpgsqlCommand(sql, conn);
         await cmd.ExecuteNonQueryAsync();
     }
-} 
+}

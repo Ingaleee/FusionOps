@@ -14,4 +14,4 @@ public readonly record struct EquipmentResourceId(Guid Value)
     public static implicit operator Guid(EquipmentResourceId id) => id.Value;
 
     public static implicit operator EquipmentResourceId(Guid value) => new(value);
-} 
+}
