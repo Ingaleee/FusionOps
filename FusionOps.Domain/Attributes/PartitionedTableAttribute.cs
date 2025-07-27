@@ -1,6 +1,6 @@
 using System;
 
-namespace FusionOps.Infrastructure.Persistence.Postgres.Attributes;
+namespace FusionOps.Domain.Attributes;
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
 public sealed class PartitionedTableAttribute : Attribute

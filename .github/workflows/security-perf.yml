@@ -1,0 +1,27 @@
+name: security-perf
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  nbomber:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x'
+    - name: Build
+      run: dotnet build
+    - name: Run API
+      run: dotnet run --project FusionOps.Presentation/FusionOps.Presentation.csproj &
+    - name: Wait API
+      run: sleep 20
+    - name: Run NBomber scenario
+      run: dotnet run --project FusionOps.Perf.Tests/FusionOps.Perf.Tests.csproj --no-build
+    - name: Fail on 5xx
+      if: failure()
+      run: exit 1 

@@ -1,7 +1,7 @@
 using FusionOps.Domain.Entities;
 using FusionOps.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
-using FusionOps.Infrastructure.Persistence.Postgres.Attributes;
+using FusionOps.Domain.Attributes;
 
 namespace FusionOps.Infrastructure.Persistence.Postgres;
 

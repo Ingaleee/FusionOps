@@ -1,0 +1,35 @@
+{
+  "info": {
+    "name": "FusionOps API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Allocate (auth)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{jwt}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": { "raw": "{{baseUrl}}/api/v1/allocate", "host": ["{{baseUrl}}"], "path": ["api","v1","allocate"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"resourceIds\": [ \"{{resourceId}}\" ],\n  \"periodFrom\": \"{{from}}\",\n  \"periodTo\": \"{{to}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Allocate (no auth)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "url": { "raw": "{{baseUrl}}/api/v1/allocate", "host": ["{{baseUrl}}"], "path": ["api","v1","allocate"] },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"projectId\": \"{{projectId}}\",\n  \"resourceIds\": [ \"{{resourceId}}\" ],\n  \"periodFrom\": \"{{from}}\",\n  \"periodTo\": \"{{to}}\"\n}"
+        }
+      }
+    }
+  ]
+} 

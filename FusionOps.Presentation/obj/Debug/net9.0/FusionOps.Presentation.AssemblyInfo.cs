@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FusionOps.Presentation")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+396f2a4432800005527625aaff1cd8b0e4e7d1c0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4a90fe8ee501f5576a2381bfa64b5d20570c24bf")]
 [assembly: System.Reflection.AssemblyProductAttribute("FusionOps.Presentation")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FusionOps.Presentation")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
