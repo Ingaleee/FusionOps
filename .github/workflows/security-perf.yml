@@ -1,12 +1,14 @@
 name: security-perf
 
 on:
-  pull_request:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
+  # pull_request:
+  # push:
+  #   branches: [ main ]
 
 jobs:
   nbomber:
+    if: false # Отключено временно, чтобы не тратить лимит
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
