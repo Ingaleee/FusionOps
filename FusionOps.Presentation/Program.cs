@@ -9,6 +9,7 @@ using Serilog.Events;
 using FusionOps.Presentation.Middleware;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using FusionOps.Presentation.Realtime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -96,6 +97,13 @@ builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.App
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.LoggingBehavior<,>));
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.TransactionBehavior<,>));
 
+// SignalR
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IResourceNotification, SignalRNotificationService>();
+// (опционально) Serilog Sink
+// builder.Host.UseSerilog((ctx, cfg) =>
+//     cfg.WriteTo.SignalR(builder.Services, "/hubs/notify", restrictedToMinimumLevel: LogEventLevel.Information));
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -107,6 +115,7 @@ app.UseAuthorization();
 app.MapWorkforceEndpoints();
 app.MapStockEndpoints();
 app.MapHealthChecks("/health");
+app.MapHub<NotificationHub>("/hubs/notify");
 
 app.UseMiddleware<CorrelationMiddleware>();
 app.UseMiddleware<UserContextEnricher>();
