@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MassTransit;
+using FusionOps.Presentation.Authorization;
+using FusionOps.Presentation.Modules;
 
 namespace FusionOps.Presentation.Extensions;
 
@@ -49,6 +51,19 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IEventBus, RabbitBus>();
         services.AddSingleton<ITelemetryProducer, KafkaTelemetryProducer>();
 
+        return services;
+    }
+
+    public static IServiceCollection AddPresentationServices(this IServiceCollection services)
+    {
+        // Регистрация аудита
+        services.AddScoped<IAuthorizationHandler, AuditAuthorizationHandler>();
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy(AuditReadRequirement.PolicyName, policy =>
+                policy.Requirements.Add(new AuditReadRequirement()));
+        });
+        
         return services;
     }
 }

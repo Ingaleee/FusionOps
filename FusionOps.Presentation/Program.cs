@@ -114,6 +114,7 @@ app.UseAuthorization();
 
 app.MapWorkforceEndpoints();
 app.MapStockEndpoints();
+app.MapAuditEndpoints(); // Добавляем аудит
 app.MapHealthChecks("/health");
 app.MapHub<NotificationHub>("/hubs/notify");
 
