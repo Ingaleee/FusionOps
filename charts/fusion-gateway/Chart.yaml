@@ -1,0 +1,5 @@
+apiVersion: v2
+name: fusion-gateway
+version: 0.1.0
+appVersion: "0.3.0"
+description: Production-grade GraphQL Gateway for FusionOps

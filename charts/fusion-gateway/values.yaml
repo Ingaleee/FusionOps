@@ -1,0 +1,21 @@
+image:
+  repository: ghcr.io/yourorg/fusion-gateway
+  tag: ""
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+env:
+  FUSIONAPI__BASE: "http://fusion-api:80"
+  FUSIONAPI__SIGNALR: "http://fusion-api:80/hubs/notify"
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 256Mi
+
+ingress:
+  enabled: true
+  host: gateway.local

@@ -1,0 +1,16 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: p95-success
+spec:
+  metrics:
+  - name: req-latency
+    interval: 30s
+    successCondition: result < 0.3
+    failureLimit: 2
+    provider:
+      prometheus:
+        address: http://prometheus:9090
+        query: |
+          histogram_quantile(0.95,
+            sum(rate_http_request_duration_seconds_bucket{app="fusion-gateway"}[1m]))

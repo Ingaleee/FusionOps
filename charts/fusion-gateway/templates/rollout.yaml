@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: fusion-gateway
+spec:
+  replicas: 2
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: fusion-gateway
+  template:
+    metadata:
+      labels:
+        app: fusion-gateway
+    spec:
+      containers:
+      - name: gateway
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - containerPort: 8080
+        env:
+        - name: FusionApi__Base
+          value: "{{ .Values.env.FUSIONAPI__BASE }}"
+        - name: FusionApi__SignalR
+          value: "{{ .Values.env.FUSIONAPI__SIGNALR }}"
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+        readinessProbe:
+          httpGet:
+            path: /graphql
+            port: 8080
+  strategy:
+    blueGreen:
+      autoPromotionEnabled: false
+      activeService: fusion-gateway
+      previewService: fusion-gateway-preview
+      analysis:
+        templates:
+        - templateName: p95-success

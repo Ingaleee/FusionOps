@@ -1,0 +1,29 @@
+name: build-gateway
+
+on:
+  push:
+    paths: [ "FusionOps.Gateway/**", "charts/fusion-gateway/**" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with: { dotnet-version: 8.x }
+    - name: Build & publish
+      run: dotnet publish FusionOps.Gateway -c Release -o out
+    - name: Docker build
+      run: |
+        docker build -t ghcr.io/${{ github.repository }}:${{ github.sha }} -f Dockerfile .
+        echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
+    - name: Package Helm
+      run: helm package charts/fusion-gateway --version 0.1.${{ github.run_number }} --app-version ${{ github.sha }}
+    - name: Rollout sync
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        yq e '.image.tag=strenv(IMAGE_TAG)' -i charts/fusion-gateway/values.yaml
+        argocd app sync fusion-gateway --prune --timeout 300
