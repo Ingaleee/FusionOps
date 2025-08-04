@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: fusionops-api-quick-check
+spec:
+  metrics:
+  - name: error-rate
+    interval: 1m
+    count: 5
+    successCondition: result[0] < 0.01
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring:9090
+        query: |
+          sum(rate(http_server_requests_errors_total{app="fusionops-api",rollout="%s"}[1m]))
+          /
+          sum(rate(http_server_requests_total{app="fusionops-api",rollout="%s"}[1m]))
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: fusionops-api-full-check
+spec:
+  metrics:
+  - name: latency-p95
+    interval: 1m
+    count: 5
+    successCondition: result[0] < 0.5
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring:9090
+        query: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{app="fusionops-api",rollout="%s"}[1m]))
+          )

@@ -1,0 +1,37 @@
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build & push image
+        uses: docker/build-push-action@v5
+        with:
+          push: true
+          tags: ghcr.io/yourorg/fusionops-api:${{ github.ref_name }}
+      - name: Helm package
+        run: |
+          helm lint charts/fusionops-api
+          helm package charts/fusionops-api --version ${{ github.ref_name }}
+      - name: Upload Helm artefact
+        uses: actions/upload-artifact@v3
+        with:
+          name: helm-chart
+          path: fusionops-api-${{ github.ref_name }}.tgz
+
+  deploy:
+    needs: build-push
+    environment: prod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download chart
+        uses: actions/download-artifact@v3
+        with:
+          name: helm-chart
+      - name: Helm upgrade
+        run: |
+          helm upgrade fusionops-api fusionops-api-${{ github.ref_name }}.tgz \
+            --namespace fusionops --install --wait --values deploy/prod-values.yaml

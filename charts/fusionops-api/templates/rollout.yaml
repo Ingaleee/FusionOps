@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: fusionops-api
+  labels:
+    app: fusionops-api
+spec:
+  revisionHistoryLimit: 3
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: fusionops-api
+  template:
+    metadata:
+      labels:
+        app: fusionops-api
+        version: "{{ .Values.image.tag }}"
+    spec:
+      containers:
+      - name: api
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - containerPort: 80
+        env:
+        - name: ASPNETCORE_ENVIRONMENT
+          value: {{ .Values.env.ASPNETCORE_ENVIRONMENT | quote }}
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+  strategy:
+    canary:
+      steps:
+      - setWeight: 10
+      - pause: { duration: 5m }
+      - analysis:
+          templates:
+          - templateName: fusionops-api-quick-check
+      - setWeight: 50
+      - pause: { duration: 10m }
+      - analysis:
+          templates:
+          - templateName: fusionops-api-full-check
+      - setWeight: 100

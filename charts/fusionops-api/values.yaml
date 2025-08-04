@@ -1,0 +1,22 @@
+image:
+  repository: ghcr.io/yourorg/fusionops-api
+  tag: ""
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 512Mi
+
+env:
+  ASPNETCORE_ENVIRONMENT: "Production"
+
+service:
+  port: 80
+
+ingress:
+  enabled: true
+  host: api.example.com
+  previewHost: preview-api.example.com
