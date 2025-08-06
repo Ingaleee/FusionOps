@@ -11,6 +11,7 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
 using FusionOps.Presentation.Realtime;
+using OpenTelemetry.Exporter.Prometheus.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,7 +43,8 @@ builder.Services.AddOpenTelemetry()
     {
         m.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("fusionops-api"))
          .AddAspNetCoreInstrumentation()
-         .AddHttpClientInstrumentation();
+         .AddHttpClientInstrumentation()
+         .AddPrometheusExporter();
     });
 
 // AuthN/Z
@@ -127,6 +129,8 @@ app.MapAuditEndpoints();
 app.MapProjectEndpoints();
 app.MapHealthChecks("/health");
 app.MapHub<NotificationHub>("/hubs/notify");
+
+app.MapPrometheusScrapingEndpoint();
 
 app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<CorrelationMiddleware>();

@@ -31,6 +31,7 @@
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3" />
       <PackageReference Include="AspNet.Security.OAuth.Keycloak" Version="7.0.0" />
       <PackageReference Include="Confluent.Kafka" Version="2.4.0" />
+      <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.7.0" />
     </ItemGroup>
 
 </Project>

@@ -3,6 +3,8 @@ image:
   tag: ""
   pullPolicy: IfNotPresent
 
+enableKeda: true
+
 replicaCount: 2
 
 resources:
@@ -12,6 +14,7 @@ resources:
 
 env:
   ASPNETCORE_ENVIRONMENT: "Production"
+  Rabbit__ConnectionString: "amqp://user:pass@rabbitmq:5672/"
 
 service:
   port: 80

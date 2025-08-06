@@ -3,11 +3,21 @@ kind: Service
 metadata:
   name: fusion-gateway
 spec:
-  type: {{ .Values.service.type }}
-  ports:
-    - port: {{ .Values.service.port }}
-      targetPort: 8080
-      protocol: TCP
-      name: http
   selector:
     app: fusion-gateway
+    rollout-type: active
+  ports:
+  - port: 80
+    targetPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fusion-gateway-preview
+spec:
+  selector:
+    app: fusion-gateway
+    rollout-type: preview
+  ports:
+  - port: 80
+    targetPort: 80

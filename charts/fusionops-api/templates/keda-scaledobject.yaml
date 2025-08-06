@@ -1,0 +1,23 @@
+{{- if .Values.enableKeda }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: fusionops-consumer-scaledobject
+  labels:
+    app: fusionops-consumer
+spec:
+  scaleTargetRef:
+    name: fusionops-api # замените на имя deployment/rollout consumer-а, если отдельный
+  pollingInterval: 30 # seconds
+  cooldownPeriod: 300
+  minReplicaCount: 1
+  maxReplicaCount: 10
+  triggers:
+  - type: rabbitmq
+    metadata:
+      protocol: amqp
+      hostFromEnv: Rabbit__ConnectionString
+      queueName: outbox
+      mode: QueueLength
+      value: "200"
+{{- end }}
