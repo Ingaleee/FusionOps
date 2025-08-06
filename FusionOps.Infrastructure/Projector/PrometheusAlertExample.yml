@@ -1,0 +1,11 @@
+groups:
+- name: fusionops-alerts
+  rules:
+  - alert: ProjectorLagHigh
+    expr: projection_lag_seconds > 30
+    for: 2m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Projection lag is high"
+      description: "Projector lag exceeds 30 seconds for more than 2 minutes"
