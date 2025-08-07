@@ -1,0 +1,19 @@
+name: zap-scan
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch: {}
+jobs:
+  zap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ZAP full scan
+        uses: zaproxy/action-full-scan@v0.10.0
+        with:
+          target: ${{ secrets.ZAP_TARGET_URL }}
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a -m 5'
+      - name: Fail on High alerts
+        if: always()
+        run: |
+          if grep -q "High" zap_report.md; then echo "High alerts found"; exit 1; fi

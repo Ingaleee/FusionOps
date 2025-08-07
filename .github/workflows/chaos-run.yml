@@ -1,0 +1,21 @@
+name: chaos-run
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch: {}
+jobs:
+  litmus:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: azure/setup-kubectl@v4
+        with:
+          version: 'v1.29.0'
+      - name: Kube config
+        run: |
+          mkdir -p ~/.kube
+          echo "${KUBE_CONFIG}" > ~/.kube/config
+        env:
+          KUBE_CONFIG: ${{ secrets.KUBE_CONFIG_STAGING }}
+      - name: Apply ChaosEngine
+        run: |
+          kubectl apply -f chaos/rabbitmq-pod-kill.yaml

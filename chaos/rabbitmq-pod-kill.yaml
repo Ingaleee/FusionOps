@@ -1,0 +1,20 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: rabbitmq-pod-kill
+  namespace: fusion
+spec:
+  appinfo:
+    appns: fusion
+    applabel: "app=rabbitmq"
+    appkind: deployment
+  chaosServiceAccount: litmus-admin
+  experiments:
+  - name: pod-delete
+    spec:
+      components:
+        env:
+        - name: TOTAL_CHAOS_DURATION
+          value: "30"
+        - name: FORCE
+          value: "true"
