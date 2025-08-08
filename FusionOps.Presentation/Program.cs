@@ -9,8 +9,8 @@ using Serilog.Events;
 using FusionOps.Presentation.Middleware;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
 using FusionOps.Presentation.Realtime;
-using EventStore.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +37,12 @@ builder.Services.AddOpenTelemetry()
               .AddAspNetCoreInstrumentation()
               .AddEntityFrameworkCoreInstrumentation()
               .AddJaegerExporter();
+    })
+    .WithMetrics(m =>
+    {
+        m.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("fusionops-api"))
+         .AddAspNetCoreInstrumentation()
+         .AddHttpClientInstrumentation();
     });
 
 // AuthN/Z
@@ -93,38 +99,36 @@ builder.Services.AddHostedService<CdcKafkaListener>();
 
 builder.Services.AddHttpClient("debezium");
 
-// MediatR pipeline behaviors
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.ValidationBehavior<,>));
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.LoggingBehavior<,>));
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.TransactionBehavior<,>));
-
 // SignalR
 builder.Services.AddSignalR();
 builder.Services.AddScoped<IResourceNotification, SignalRNotificationService>();
-// (опционально) Serilog Sink
-// builder.Host.UseSerilog((ctx, cfg) =>
-//     cfg.WriteTo.SignalR(builder.Services, "/hubs/notify", restrictedToMinimumLevel: LogEventLevel.Information));
 
-builder.Services.AddSingleton(sp =>
-{
-    var settings = EventStoreClientSettings.Create("esdb://localhost:2113?tls=false");
-    return new EventStoreClient(settings);
-});
+// Presentation services (EventStore, pipeline, policies)
+builder.Services.AddPresentationServices(builder.Configuration);
 
 var app = builder.Build();
 
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+else
+{
+    app.UseHsts();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapWorkforceEndpoints();
 app.MapStockEndpoints();
-app.MapAuditEndpoints(); // Добавляем аудит
+app.MapAuditEndpoints();
+app.MapProjectEndpoints();
 app.MapHealthChecks("/health");
 app.MapHub<NotificationHub>("/hubs/notify");
 
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseMiddleware<CorrelationMiddleware>();
 app.UseMiddleware<UserContextEnricher>();
 app.UseMiddleware<ExceptionMiddleware>();

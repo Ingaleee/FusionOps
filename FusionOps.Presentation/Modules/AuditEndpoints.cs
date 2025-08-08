@@ -12,11 +12,11 @@ public static class AuditEndpoints
     {
         app.MapGet("/api/v1/audit/allocations/{projectId:guid}",
             [Authorize(Policy = "Audit.Read")]
-            async (Guid projectId, 
-                   int? page, 
-                   int? pageSize, 
-                   DateTime? from, 
-                   DateTime? to, 
+            async (Guid projectId,
+                   int? page,
+                   int? pageSize,
+                   DateTime? from,
+                   DateTime? to,
                    ISender sender) =>
             {
                 var query = new GetAllocationHistoryQuery(projectId, from, to,

@@ -7,6 +7,7 @@ using FusionOps.Domain.Events.Attributes;
 using Microsoft.AspNetCore.Http;
 using EventStore.Client;
 using System.Text.Json;
+using FusionOps.Domain.Interfaces;
 
 namespace FusionOps.Application.Pipelines;
 

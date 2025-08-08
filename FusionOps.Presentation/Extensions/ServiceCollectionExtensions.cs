@@ -9,8 +9,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MassTransit;
 using FusionOps.Presentation.Authorization;
-using FusionOps.Presentation.Modules;
 using Microsoft.AspNetCore.Authorization;
+using MediatR;
+using EventStore.Client;
 
 namespace FusionOps.Presentation.Extensions;
 
@@ -55,8 +56,17 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    public static IServiceCollection AddPresentationServices(this IServiceCollection services)
+    public static IServiceCollection AddPresentationServices(this IServiceCollection services, IConfiguration cfg)
     {
+        // EventStore client for audit pipeline and projector clients
+        services.AddSingleton(sp => new EventStoreClient(EventStoreClientSettings.Create(cfg.GetConnectionString("EventStore") ?? "esdb://localhost:2113?tls=false")));
+
+        // Pipeline: validation -> logging -> transaction -> audit
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.ValidationBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.LoggingBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.TransactionBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.AuditBehavior<,>));
+
         services.AddScoped<IAuthorizationHandler, AuditAuthorizationHandler>();
         services.AddAuthorization(options =>
         {

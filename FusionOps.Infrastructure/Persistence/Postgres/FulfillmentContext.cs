@@ -2,6 +2,7 @@ using FusionOps.Domain.Entities;
 using FusionOps.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 using FusionOps.Domain.Attributes;
+using FusionOps.Infrastructure.Persistence.Postgres.Models;
 
 namespace FusionOps.Infrastructure.Persistence.Postgres;
 
@@ -12,6 +13,8 @@ public class FulfillmentContext : DbContext
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
     public DbSet<StockItem> StockItems => Set<StockItem>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+
+    public DbSet<AllocationHistoryRow> AllocationHistory => Set<AllocationHistoryRow>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,16 +30,6 @@ public class FulfillmentContext : DbContext
                 entity.SetAnnotation("PartitionedTable", attr.Strategy);
             }
         }
-
-        // Ensure parent partitioned table exists
-        Database.ExecuteSqlRaw(@"CREATE TABLE IF NOT EXISTS stock_items (
-            id UUID PRIMARY KEY,
-            sku TEXT NOT NULL,
-            quantity INT NOT NULL,
-            reorder_point INT NOT NULL,
-            unit_cost NUMERIC(18,2) NOT NULL,
-            created_at TIMESTAMPTZ DEFAULT now()
-        ) PARTITION BY RANGE (date_trunc('month', created_at));");
 
         base.OnModelCreating(modelBuilder);
     }
