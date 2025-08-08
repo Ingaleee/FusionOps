@@ -10,6 +10,7 @@ using FusionOps.Presentation.Middleware;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using FusionOps.Presentation.Realtime;
+using EventStore.Client;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -104,6 +105,12 @@ builder.Services.AddScoped<IResourceNotification, SignalRNotificationService>();
 // builder.Host.UseSerilog((ctx, cfg) =>
 //     cfg.WriteTo.SignalR(builder.Services, "/hubs/notify", restrictedToMinimumLevel: LogEventLevel.Information));
 
+builder.Services.AddSingleton(sp =>
+{
+    var settings = EventStoreClientSettings.Create("esdb://localhost:2113?tls=false");
+    return new EventStoreClient(settings);
+});
+
 var app = builder.Build();
 
 app.UseSwagger();
@@ -121,5 +128,6 @@ app.MapHub<NotificationHub>("/hubs/notify");
 app.UseMiddleware<CorrelationMiddleware>();
 app.UseMiddleware<UserContextEnricher>();
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<AuditResponseHeadersMiddleware>();
 
 app.Run();

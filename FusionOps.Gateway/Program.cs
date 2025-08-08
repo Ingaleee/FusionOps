@@ -19,6 +19,7 @@ builder.Services.AddSingleton<SignalRClientFactory>();
 // 3. HotChocolate
 builder.Services
     .AddGraphQLServer()
+    .AddDocumentFromFile("Schema.graphql")
     .AddQueryType<Query>()
     .AddSubscriptionType<Subscription>()
     .AddInMemorySubscriptions()
