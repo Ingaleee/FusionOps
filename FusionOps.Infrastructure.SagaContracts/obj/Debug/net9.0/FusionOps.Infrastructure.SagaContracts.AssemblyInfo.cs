@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FusionOps.Infrastructure.SagaContracts")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f6ddb0b5b8ceae93963aae7cdd46dbdacc07ec09")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b0d3c8941af537e25d24a9bfe72ac232bc8a7907")]
 [assembly: System.Reflection.AssemblyProductAttribute("FusionOps.Infrastructure.SagaContracts")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FusionOps.Infrastructure.SagaContracts")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
