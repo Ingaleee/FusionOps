@@ -15,6 +15,8 @@ using FusionOps.Application.Abstractions;
 using FusionOps.Presentation.Infrastructure;
 using FusionOps.Infrastructure.Costing;
 using Microsoft.Extensions.Options;
+using FusionOps.Infrastructure.Repositories;
+using FusionOps.Infrastructure.Persistence.Postgres.Configurations;
 
 namespace FusionOps.Presentation.Extensions;
 
@@ -62,6 +64,7 @@ public static class ServiceCollectionExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<ICostEngine, DefaultCostEngine>();
+        services.AddScoped<ILicenseRepository, LicenseRepository>();
 
         return services;
     }
