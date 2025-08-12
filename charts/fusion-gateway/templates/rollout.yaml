@@ -2,6 +2,8 @@ apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
   name: fusion-gateway
+  labels:
+    app: fusion-gateway
 spec:
   replicas: 2
   revisionHistoryLimit: 2
@@ -13,6 +15,10 @@ spec:
       labels:
         app: fusion-gateway
         version: "{{ .Values.image.tag }}"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "80"
     spec:
       containers:
       - name: gateway
@@ -29,10 +35,18 @@ spec:
           limits:
             cpu: {{ .Values.resources.limits.cpu }}
             memory: {{ .Values.resources.limits.memory }}
+        livenessProbe:
+          httpGet:
+            path: /live
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
         readinessProbe:
           httpGet:
-            path: /graphql
+            path: /ready
             port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 10
   strategy:
     blueGreen:
       autoPromotionEnabled: false

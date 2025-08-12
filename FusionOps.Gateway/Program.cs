@@ -5,11 +5,84 @@ using Microsoft.IdentityModel.Tokens;
 using Polly;
 using Polly.Extensions.Http;
 using System.Net.Http.Headers;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Exporter.Prometheus.AspNetCore;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // auth context accessor
 builder.Services.AddHttpContextAccessor();
+
+// Response compression (gzip/br)
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+    options.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(new[]
+    {
+        "application/graphql-response+json",
+        "application/json",
+        "application/problem+json",
+        "text/plain"
+    });
+});
+
+// OpenTelemetry Metrics (service name: fusionops-gateway)
+builder.Services.AddOpenTelemetry()
+    .WithMetrics(m =>
+    {
+        m.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("fusionops-gateway"))
+         .AddAspNetCoreInstrumentation()
+         .AddHttpClientInstrumentation()
+         .AddPrometheusExporter();
+    });
+
+// Rate limiting: глобально + именованные политики для GraphQL и /metrics
+builder.Services.AddRateLimiter(options =>
+{
+    // Глобальный сейфгард
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(partitionKey: "global", factory: _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 100,
+            Window = TimeSpan.FromSeconds(1),
+            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+            QueueLimit = 50,
+            AutoReplenishment = true
+        }));
+
+    // Политика по умолчанию для GraphQL
+    options.AddFixedWindowLimiter("default", opt =>
+    {
+        opt.PermitLimit = 80;
+        opt.Window = TimeSpan.FromSeconds(1);
+        opt.QueueLimit = 40;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.AutoReplenishment = true;
+    });
+
+    // Более строгая политика для /metrics
+    options.AddFixedWindowLimiter("metrics", opt =>
+    {
+        opt.PermitLimit = 10;
+        opt.Window = TimeSpan.FromSeconds(1);
+        opt.QueueLimit = 5;
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.AutoReplenishment = true;
+    });
+
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
+// HealthChecks
+builder.Services.AddHealthChecks();
 
 // 1. resilient REST клиент к FusionOps.Api + JWT propagation
 builder.Services.AddHttpClient("FusionApi", c =>
@@ -25,7 +98,7 @@ builder.Services.AddHttpClient("FusionApi", c =>
     .WaitAndRetryAsync(3, i => TimeSpan.FromMilliseconds(100 * i)))
 .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(5)));
 
-// 2. SignalR клиент factory (auth pass-through может быть добавлен внутри фабрики)
+// 2. SignalR клиент factory
 builder.Services.AddSingleton<SignalRClientFactory>();
 
 // 3. HotChocolate
@@ -39,13 +112,18 @@ builder.Services
     .AddDataLoader<AllocationDataLoader>();
 
 // 4. CORS / Auth (разрешаем нужные источники из конфигурации)
-var allowedOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? new[] { "*" };
+var allowedOrigins = builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? Array.Empty<string>();
 builder.Services.AddCors(o => o.AddDefaultPolicy(p =>
-    p.WithOrigins(allowedOrigins)
-     .AllowAnyHeader()
-     .AllowAnyMethod()
-     .AllowCredentials()
-));
+{
+    if (allowedOrigins.Length == 0 || (allowedOrigins.Length == 1 && allowedOrigins[0] == "*"))
+    {
+        p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    }
+    else
+    {
+        p.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials();
+    }
+}));
 
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -63,12 +141,31 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 var app = builder.Build();
+
+// За прокси (ingress): корректная схема/host из X-Forwarded-*
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
 app.UseWebSockets();
+app.UseResponseCompression();
+app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseMiddleware<CorrelationMiddleware>();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapGraphQL();
-app.MapGet("/healthz", () => "OK");
+app.MapGraphQL().RequireRateLimiting("default");
+app.MapHealthChecks("/live").RequireRateLimiting("default");
+app.MapHealthChecks("/ready").RequireRateLimiting("default");
+app.MapGet("/healthz", () => "OK").RequireRateLimiting("default");
+app.MapPrometheusScrapingEndpoint().RequireRateLimiting("metrics");
 app.Run();
 
 public class JwtPropagationHandler : DelegatingHandler
@@ -85,6 +182,49 @@ public class JwtPropagationHandler : DelegatingHandler
         {
             request.Headers.Authorization = AuthenticationHeaderValue.Parse(token);
         }
+        var correlationId = _httpContextAccessor.HttpContext?.TraceIdentifier
+            ?? _httpContextAccessor.HttpContext?.Request.Headers["X-Correlation-ID"].ToString();
+        if (!string.IsNullOrWhiteSpace(correlationId))
+        {
+            request.Headers.TryAddWithoutValidation("X-Correlation-ID", correlationId);
+        }
         return base.SendAsync(request, cancellationToken);
+    }
+}
+
+public sealed class CorrelationMiddleware
+{
+    private const string HeaderName = "X-Correlation-ID";
+    private readonly RequestDelegate _next;
+    public CorrelationMiddleware(RequestDelegate next) => _next = next;
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        if (!context.Request.Headers.TryGetValue(HeaderName, out var cid) || string.IsNullOrWhiteSpace(cid))
+        {
+            cid = context.TraceIdentifier;
+            context.Response.Headers[HeaderName] = cid;
+        }
+        else
+        {
+            context.Response.Headers[HeaderName] = cid.ToString();
+        }
+        await _next(context);
+    }
+}
+
+public sealed class SecurityHeadersMiddleware
+{
+    private readonly RequestDelegate _next;
+    public SecurityHeadersMiddleware(RequestDelegate next) => _next = next;
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        var headers = context.Response.Headers;
+        headers["X-Content-Type-Options"] = "nosniff";
+        headers["X-Frame-Options"] = "DENY";
+        headers["Referrer-Policy"] = "no-referrer";
+        headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none'; object-src 'none'";
+        await _next(context);
     }
 }
