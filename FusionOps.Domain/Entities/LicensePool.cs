@@ -96,6 +96,6 @@ public class LicensePool : IEntity<Guid>, IHasDomainEvents
     }
 }
 
-public readonly record struct LicenseAllocationRef(Guid ProjectId, int Seats);
+public record LicenseAllocationRef(Guid ProjectId, int Seats);
 
 

@@ -4,7 +4,8 @@
   "roles": {
     "realm": [
       { "name": "Resource.Manager" },
-      { "name": "Stock.Admin" }
+      { "name": "Stock.Admin" },
+      { "name": "License.Manager" }
     ]
   },
   "clients": [

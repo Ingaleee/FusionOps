@@ -32,11 +32,11 @@ public class AuditResponseHeadersMiddleware
         }
     }
 
-    private static async Task<string> GetResponseContent(HttpResponse response)
+    private static Task<string> GetResponseContent(HttpResponse response)
     {
         // В реальном приложении здесь нужно получить содержимое ответа
         // Для простоты возвращаем пустую строку
-        return string.Empty;
+        return Task.FromResult(string.Empty);
     }
 
     private static string GenerateETag(string content)

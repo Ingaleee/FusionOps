@@ -14,7 +14,7 @@ public class LicensePoolConfig : IEntityTypeConfiguration<LicensePool>
         builder.Property(x => x.TotalSeats).IsRequired();
         builder.Property(x => x.AllocatedSeats).IsRequired();
 
-        builder.OwnsMany(x => x.Allocations, b =>
+        builder.OwnsMany(x => x.Allocations, (Action<OwnedNavigationBuilder<LicensePool, LicenseAllocationRef>>)(b =>
         {
             b.ToTable("license_allocations");
             b.WithOwner().HasForeignKey("pool_id");
@@ -22,7 +22,7 @@ public class LicensePoolConfig : IEntityTypeConfiguration<LicensePool>
             b.HasKey("id");
             b.Property(p => p.ProjectId).HasColumnName("project_id");
             b.Property(p => p.Seats).HasColumnName("seats");
-        });
+        }));
 
         builder.HasIndex(x => x.Product).IsUnique();
     }
