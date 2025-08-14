@@ -1,6 +1,7 @@
 using FusionOps.Domain.Entities;
 using FusionOps.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
+using FusionOps.Infrastructure.Persistence.SqlServer.Configurations;
 
 namespace FusionOps.Infrastructure.Persistence.SqlServer;
 
@@ -15,7 +16,10 @@ public class WorkforceContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(WorkforceContext).Assembly);
+        // Apply only SQL Server configurations relevant to this context
+        modelBuilder.ApplyConfiguration(new HumanResourceConfig());
+        modelBuilder.ApplyConfiguration(new EquipmentResourceConfig());
+        modelBuilder.ApplyConfiguration(new AllocationConfig());
 
         base.OnModelCreating(modelBuilder);
     }

@@ -13,6 +13,8 @@ public class EquipmentResource : IEntity<EquipmentResourceId>, IHasDomainEvents
 {
     private readonly List<IDomainEvent> _domainEvents = new();
 
+    private EquipmentResource() { }
+
     public EquipmentResource(EquipmentResourceId id, string model, EquipmentType type, Money hourRate)
     {
         Id = id;
@@ -21,7 +23,7 @@ public class EquipmentResource : IEntity<EquipmentResourceId>, IHasDomainEvents
         HourRate = hourRate;
     }
 
-    public EquipmentResourceId Id { get; }
+    public EquipmentResourceId Id { get; private set; }
     public string Model { get; private set; }
     public EquipmentType Type { get; private set; }
     public Money HourRate { get; private set; }

@@ -11,6 +11,9 @@ public class HumanResourceConfig : IEntityTypeConfiguration<HumanResource>
     {
         builder.ToTable("HumanResources");
         builder.HasKey(hr => hr.Id);
+        builder.Property(hr => hr.Id)
+               .HasConversion(id => id.Value, v => new FusionOps.Domain.Shared.Ids.HumanResourceId(v))
+               .ValueGeneratedNever();
 
         builder.Property(hr => hr.FullName)
                .HasMaxLength(200)
@@ -20,7 +23,16 @@ public class HumanResourceConfig : IEntityTypeConfiguration<HumanResource>
         builder.Ignore(hr => hr.DomainEvents);
         builder.Ignore(hr => hr.Skills);
 
-        // HourRate as owned value object (default column names)
-        builder.Ignore(hr => hr.HourRate);
+        // HourRate as complex value object (struct)
+        builder.ComplexProperty(hr => hr.HourRate, rate =>
+        {
+            rate.Property(m => m.Amount)
+                .HasColumnName("HourRateAmount")
+                .IsRequired();
+            rate.Property(m => m.Currency)
+                .HasConversion(c => c.Value, v => new FusionOps.Domain.Enumerations.Currency(v, string.Empty))
+                .HasColumnName("HourRateCurrency")
+                .IsRequired();
+        });
     }
 }

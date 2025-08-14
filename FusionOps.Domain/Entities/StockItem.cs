@@ -11,6 +11,8 @@ namespace FusionOps.Domain.Entities;
 [FusionOps.Domain.Attributes.PartitionedTable("range_month")]
 public class StockItem : IEntity<StockItemId>
 {
+    private StockItem() { }
+
     public StockItem(StockItemId id, string sku, int quantity, int reorderPoint, Money unitCost)
     {
         Id = id;
@@ -20,7 +22,7 @@ public class StockItem : IEntity<StockItemId>
         UnitCost = unitCost;
     }
 
-    public StockItemId Id { get; }
+    public StockItemId Id { get; private set; }
     public string Sku { get; private set; }
     public int Quantity { get; private set; }
     public int ReorderPoint { get; private set; }

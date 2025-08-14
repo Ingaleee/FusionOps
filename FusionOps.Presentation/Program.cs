@@ -1,8 +1,10 @@
 using FusionOps.Application;
+using FusionOps.Application.Abstractions;
 using FusionOps.Presentation.BackgroundServices;
 using FusionOps.Presentation.Extensions;
 using FusionOps.Presentation.Modules;
 using FusionOps.Infrastructure.Persistence.SqlServer;
+using FusionOps.Infrastructure.Persistence.Postgres;
 using MediatR;
 using Serilog;
 using Serilog.Events;
@@ -11,7 +13,6 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
 using FusionOps.Presentation.Realtime;
-using OpenTelemetry.Exporter.Prometheus.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,7 +44,6 @@ builder.Services.AddOpenTelemetry()
     {
         m.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("fusionops-api"))
          .AddAspNetCoreInstrumentation()
-         .AddHttpClientInstrumentation()
          .AddPrometheusExporter();
     });
 
@@ -62,10 +62,7 @@ builder.Services.AddAuthorization(opts =>
     opts.AddPolicy("AdminStock", p => p.RequireRole("Stock.Admin"));
 });
 
-// Add middleware
-builder.Services.AddTransient<CorrelationMiddleware>();
-builder.Services.AddTransient<ExceptionMiddleware>();
-builder.Services.AddTransient<UserContextEnricher>();
+// Middlewares are added to the pipeline directly via app.UseMiddleware<>()
 
 // Swagger & endpoints
 builder.Services.AddEndpointsApiExplorer();
@@ -109,6 +106,36 @@ builder.Services.AddScoped<IResourceNotification, SignalRNotificationService>();
 builder.Services.AddPresentationServices(builder.Configuration);
 
 var app = builder.Build();
+
+// Ensure SQL database exists (dev convenience)
+try
+{
+    using var scope = app.Services.CreateScope();
+    var cfg = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    var connStr = cfg.GetConnectionString("sql");
+    if (!string.IsNullOrWhiteSpace(connStr))
+    {
+        var csb = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(connStr);
+        var dbName = csb.InitialCatalog;
+        csb.InitialCatalog = "master";
+        using var master = new Microsoft.Data.SqlClient.SqlConnection(csb.ConnectionString);
+        await master.OpenAsync();
+        using var cmd = master.CreateCommand();
+        cmd.CommandText = $"IF DB_ID('{dbName}') IS NULL CREATE DATABASE [{dbName}]";
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    // Create schema if missing (no migrations in repo)
+    var wf = scope.ServiceProvider.GetRequiredService<FusionOps.Infrastructure.Persistence.SqlServer.WorkforceContext>();
+    await wf.Database.EnsureCreatedAsync();
+    var saga = scope.ServiceProvider.GetRequiredService<FusionOps.Infrastructure.Persistence.SqlServer.AllocationSagaContext>();
+    await saga.Database.EnsureCreatedAsync();
+
+    // Ensure Postgres schemas exist for fulfillment (dev convenience)
+    var ff = scope.ServiceProvider.GetRequiredService<FusionOps.Infrastructure.Persistence.Postgres.FulfillmentContext>();
+    await ff.Database.EnsureCreatedAsync();
+}
+catch { }
 
 if (app.Environment.IsDevelopment())
 {

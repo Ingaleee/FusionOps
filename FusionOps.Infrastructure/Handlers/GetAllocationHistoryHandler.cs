@@ -10,7 +10,7 @@ using FusionOps.Application.Dto;
 using FusionOps.Application.Queries;
 using FusionOps.Infrastructure.Persistence.Postgres;
 
-namespace FusionOps.Application.Handlers;
+namespace FusionOps.Infrastructure.Handlers;
 
 public sealed class GetAllocationHistoryHandler
     : IRequestHandler<GetAllocationHistoryQuery, PagedResult<AllocationHistoryDto>>
@@ -21,7 +21,7 @@ public sealed class GetAllocationHistoryHandler
     private static readonly Func<FulfillmentContext, Guid, DateTime?, DateTime?, int, int,
                                  Task<(List<AllocationHistoryDto>, int)>> _compiled =
         EF.CompileAsyncQuery((FulfillmentContext ctx, Guid projectId, DateTime? from, DateTime? to, int skip, int take) =>
-            (
+            new ValueTuple<List<AllocationHistoryDto>, int>(
                 ctx.AllocationHistory
                    .Where(r => r.ProjectId == projectId
                              && (from == null || r.Recorded >= from)
@@ -67,3 +67,6 @@ public sealed class GetAllocationHistoryHandler
         return result;
     }
 }
+
+
+

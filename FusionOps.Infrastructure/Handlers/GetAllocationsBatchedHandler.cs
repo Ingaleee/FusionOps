@@ -10,7 +10,7 @@ using FusionOps.Application.Dto;
 using FusionOps.Application.Queries;
 using FusionOps.Infrastructure.Persistence.SqlServer;
 
-namespace FusionOps.Application.Handlers;
+namespace FusionOps.Infrastructure.Handlers;
 
 public sealed class GetAllocationsBatchedHandler
     : IRequestHandler<GetAllocationsBatchedQuery, IDictionary<Guid, IEnumerable<AllocationDto>>>
@@ -53,3 +53,6 @@ public sealed class GetAllocationsBatchedHandler
         return dict;
     }
 }
+
+
+

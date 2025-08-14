@@ -1,7 +1,12 @@
+using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using FusionOps.Domain.Interfaces;
+using FusionOps.Domain.Shared.Interfaces;
 using FusionOps.Infrastructure.Persistence.Postgres;
 using FusionOps.Infrastructure.Persistence.SqlServer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace FusionOps.Infrastructure.UnitOfWork;
@@ -42,5 +47,28 @@ public class EfUnitOfWork : IUnitOfWork
             await _txn.DisposeAsync();
             _txn = null;
         }
+    }
+
+    public IReadOnlyCollection<IDomainEvent> GetDomainEventsAndClear()
+    {
+        var events = new List<IDomainEvent>();
+
+        void CollectFrom(ChangeTracker tracker)
+        {
+            var sources = tracker.Entries()
+                .Where(e => e.Entity is IHasDomainEvents)
+                .Select(e => (IHasDomainEvents)e.Entity);
+
+            foreach (var source in sources)
+            {
+                events.AddRange(source.DomainEvents);
+                source.ClearDomainEvents();
+            }
+        }
+
+        CollectFrom(_workforce.ChangeTracker);
+        CollectFrom(_fulfillment.ChangeTracker);
+
+        return events;
     }
 }

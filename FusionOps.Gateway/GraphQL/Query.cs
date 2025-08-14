@@ -8,5 +8,5 @@ public class Query
         Guid projectId,
         [Service] AllocationDataLoader loader,
         CancellationToken ct) =>
-        loader.LoadAsync(projectId, ct);
+        loader.LoadAsync(projectId, ct).ContinueWith(t => t.Result ?? Enumerable.Empty<Allocation>(), ct);
 }

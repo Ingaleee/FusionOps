@@ -10,6 +10,9 @@ public class EquipmentResourceConfig : IEntityTypeConfiguration<EquipmentResourc
     {
         builder.ToTable("EquipmentResources");
         builder.HasKey(e => e.Id);
+        builder.Property(e => e.Id)
+               .HasConversion(id => id.Value, v => new FusionOps.Domain.Shared.Ids.EquipmentResourceId(v))
+               .ValueGeneratedNever();
 
         builder.Property(e => e.Model)
                .HasMaxLength(200)
@@ -21,6 +24,16 @@ public class EquipmentResourceConfig : IEntityTypeConfiguration<EquipmentResourc
 
         builder.Ignore(e => e.DomainEvents);
 
-        builder.Ignore(e => e.HourRate);
+        // Map Money as complex value object
+        builder.ComplexProperty(e => e.HourRate, rate =>
+        {
+            rate.Property(m => m.Amount)
+                .HasColumnName("HourRateAmount")
+                .IsRequired();
+            rate.Property(m => m.Currency)
+                .HasConversion(c => c.Value, v => new FusionOps.Domain.Enumerations.Currency(v, string.Empty))
+                .HasColumnName("HourRateCurrency")
+                .IsRequired();
+        });
     }
 }

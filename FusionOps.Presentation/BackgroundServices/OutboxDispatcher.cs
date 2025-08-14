@@ -4,19 +4,20 @@ using FusionOps.Infrastructure.Outbox;
 using FusionOps.Infrastructure.Persistence.SqlServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace FusionOps.Presentation.BackgroundServices;
 
 public class OutboxDispatcher : BackgroundService
 {
-    private readonly WorkforceContext _ctx;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly IEventBus _bus;
     private readonly ILogger<OutboxDispatcher> _logger;
 
-    public OutboxDispatcher(WorkforceContext ctx, IEventBus bus, ILogger<OutboxDispatcher> logger)
+    public OutboxDispatcher(IServiceScopeFactory scopeFactory, IEventBus bus, ILogger<OutboxDispatcher> logger)
     {
-        _ctx = ctx;
+        _scopeFactory = scopeFactory;
         _bus = bus;
         _logger = logger;
     }
@@ -25,11 +26,13 @@ public class OutboxDispatcher : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            var messages = await _ctx.OutboxMessages
-                .Where(m => m.ProcessedAt == null)
-                .OrderBy(m => m.OccurredOn)
-                .Take(50)
-                .ToListAsync(stoppingToken);
+            using var scope = _scopeFactory.CreateScope();
+            var ctx = scope.ServiceProvider.GetRequiredService<WorkforceContext>();
+            var messages = await ctx.OutboxMessages
+                                    .Where(m => m.ProcessedAt == null)
+                                    .OrderBy(m => m.OccurredOn)
+                                    .Take(50)
+                                    .ToListAsync(stoppingToken);
 
             foreach (var msg in messages)
             {
@@ -40,7 +43,7 @@ public class OutboxDispatcher : BackgroundService
 
             if (messages.Count > 0)
             {
-                await _ctx.SaveChangesAsync(stoppingToken);
+                await ctx.SaveChangesAsync(stoppingToken);
                 _logger.LogInformation("Dispatched {Count} outbox messages", messages.Count);
             }
 

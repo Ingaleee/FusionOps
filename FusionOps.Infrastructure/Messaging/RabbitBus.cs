@@ -8,13 +8,13 @@ namespace FusionOps.Infrastructure.Messaging;
 
 public class RabbitBus : IEventBus
 {
-    private readonly IPublishEndpoint _publish;
+    private readonly IBus _bus;
     private readonly ILogger<RabbitBus> _logger;
     private readonly AsyncPolicy _retryPolicy;
 
-    public RabbitBus(IPublishEndpoint publish, ILogger<RabbitBus> logger)
+    public RabbitBus(IBus bus, ILogger<RabbitBus> logger)
     {
-        _publish = publish;
+        _bus = bus;
         _logger = logger;
         _retryPolicy = Policy.Handle<Exception>()
             .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
@@ -27,6 +27,6 @@ public class RabbitBus : IEventBus
     public async Task PublishAsync(IDomainEvent domainEvent)
     {
         _logger.LogInformation("Publishing domain event {EventName} via MassTransit", domainEvent.GetType().Name);
-        await _retryPolicy.ExecuteAsync(() => _publish.Publish(domainEvent));
+        await _retryPolicy.ExecuteAsync(() => _bus.Publish(domainEvent));
     }
 }

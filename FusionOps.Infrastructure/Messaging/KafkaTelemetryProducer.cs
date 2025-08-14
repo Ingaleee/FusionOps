@@ -15,7 +15,8 @@ public class KafkaTelemetryProducer : ITelemetryProducer, IDisposable
     public KafkaTelemetryProducer(ILogger<KafkaTelemetryProducer> logger)
     {
         _logger = logger;
-        var config = new ProducerConfig { BootstrapServers = "localhost:9092" };
+        var host = Environment.GetEnvironmentVariable("KAFKA_BOOTSTRAP") ?? "localhost:9092";
+        var config = new ProducerConfig { BootstrapServers = host };
         _producer = new ProducerBuilder<string, string>(config).Build();
         _circuitBreaker = Policy.Handle<Exception>()
             .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30),

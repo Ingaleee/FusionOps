@@ -25,18 +25,6 @@ public static class AuditEndpoints
                 return Results.Ok(result);
             })
             .WithName("GetAllocationHistory")
-            .WithOpenApi(operation =>
-            {
-                operation.Summary = "Get allocation history for a project";
-                operation.Description = "Retrieves paginated allocation history with optional date filtering. " +
-                                     "Requires Audit.Read permission. Supports pagination and date range filtering.";
-                operation.Parameters[0].Description = "Project identifier";
-                operation.Parameters[1].Description = "Page number (default: 1)";
-                operation.Parameters[2].Description = "Page size (10-500, default: 100)";
-                operation.Parameters[3].Description = "Filter from date (optional)";
-                operation.Parameters[4].Description = "Filter to date (optional)";
-                return operation;
-            })
             .Produces<PagedResult<AllocationHistoryDto>>(StatusCodes.Status200OK)
             .ProducesValidationProblem()
             .Produces(StatusCodes.Status401Unauthorized)

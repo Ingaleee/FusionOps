@@ -11,7 +11,10 @@ using MassTransit;
 using FusionOps.Presentation.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using MediatR;
-using EventStore.Client;
+using FusionOps.Application.Abstractions;
+using FusionOps.Presentation.Infrastructure;
+using FusionOps.Infrastructure.Costing;
+using Microsoft.Extensions.Options;
 
 namespace FusionOps.Presentation.Extensions;
 
@@ -50,22 +53,29 @@ public static class ServiceCollectionExtensions
             });
         });
 
-        services.AddScoped<IEventBus, RabbitBus>();
+        services.AddSingleton<IEventBus, RabbitBus>();
         services.AddSingleton<ITelemetryProducer, KafkaTelemetryProducer>();
+
+        // Costing
+        services.AddOptions<CostingOptions>()
+            .Bind(cfg.GetSection("Costing"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddSingleton<ICostEngine, DefaultCostEngine>();
 
         return services;
     }
 
     public static IServiceCollection AddPresentationServices(this IServiceCollection services, IConfiguration cfg)
     {
-        // EventStore client for audit pipeline and projector clients
-        services.AddSingleton(sp => new EventStoreClient(EventStoreClientSettings.Create(cfg.GetConnectionString("EventStore") ?? "esdb://localhost:2113?tls=false")));
-
         // Pipeline: validation -> logging -> transaction -> audit
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.LoggingBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.TransactionBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.AuditBehavior<,>));
+
+        // Audit writer (no-op writer to keep build simple in this environment)
+        services.AddSingleton<IAuditWriter, EventStoreAuditWriter>();
 
         services.AddScoped<IAuthorizationHandler, AuditAuthorizationHandler>();
         services.AddAuthorization(options =>

@@ -10,6 +10,9 @@ public class StockItemConfig : IEntityTypeConfiguration<StockItem>
     {
         builder.ToTable("StockItems");
         builder.HasKey(s => s.Id);
+        builder.Property(s => s.Id)
+               .HasConversion(id => id.Value, v => new FusionOps.Domain.Shared.Ids.StockItemId(v))
+               .ValueGeneratedNever();
 
         builder.Property(s => s.Sku)
                .HasMaxLength(100)
@@ -17,6 +20,15 @@ public class StockItemConfig : IEntityTypeConfiguration<StockItem>
 
         builder.HasIndex(s => s.Sku).IsUnique();
 
-        builder.Ignore(s => s.UnitCost);
+        builder.ComplexProperty(s => s.UnitCost, rate =>
+        {
+            rate.Property(m => m.Amount)
+                .HasColumnName("UnitCostAmount")
+                .IsRequired();
+            rate.Property(m => m.Currency)
+                .HasConversion(c => c.Value, v => new FusionOps.Domain.Enumerations.Currency(v, string.Empty))
+                .HasColumnName("UnitCostCurrency")
+                .IsRequired();
+        });
     }
 }

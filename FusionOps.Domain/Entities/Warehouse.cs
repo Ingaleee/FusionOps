@@ -13,12 +13,14 @@ public class Warehouse : IEntity<WarehouseId>, IHasDomainEvents
     private readonly Dictionary<string, StockItem> _items = new();
     private readonly List<IDomainEvent> _domainEvents = new();
 
+    private Warehouse() { }
+
     public Warehouse(WarehouseId id)
     {
         Id = id;
     }
 
-    public WarehouseId Id { get; }
+    public WarehouseId Id { get; private set; }
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
     public void AddDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);

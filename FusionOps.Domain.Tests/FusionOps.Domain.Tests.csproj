@@ -22,6 +22,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\FusionOps.Domain\FusionOps.Domain.csproj" />
+      <ProjectReference Include="..\FusionOps.Application\FusionOps.Application.csproj" />
+      <ProjectReference Include="..\FusionOps.Infrastructure\FusionOps.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>

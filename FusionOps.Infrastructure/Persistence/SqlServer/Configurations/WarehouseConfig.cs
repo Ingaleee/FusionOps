@@ -2,7 +2,7 @@ using FusionOps.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FusionOps.Infrastructure.Persistence.Postgres.Configurations;
+namespace FusionOps.Infrastructure.Persistence.SqlServer.Configurations;
 
 public class WarehouseConfig : IEntityTypeConfiguration<Warehouse>
 {
@@ -18,3 +18,6 @@ public class WarehouseConfig : IEntityTypeConfiguration<Warehouse>
         builder.Ignore("_items");
     }
 }
+
+
+

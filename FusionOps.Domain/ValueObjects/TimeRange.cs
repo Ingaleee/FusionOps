@@ -5,7 +5,7 @@ namespace FusionOps.Domain.ValueObjects;
 /// <summary>
 /// Immutable time interval expressed in UTC.
 /// </summary>
-public readonly record struct TimeRange
+public sealed record TimeRange
 {
     public DateTimeOffset Start { get; }
     public DateTimeOffset End { get; }

@@ -14,6 +14,9 @@ public class Allocation : IEntity<AllocationId>, IHasDomainEvents
 {
     private readonly List<IDomainEvent> _domainEvents = new();
 
+    // For EF
+    private Allocation() { }
+
     private Allocation(AllocationId id, Guid resourceId, Guid projectId, TimeRange period)
     {
         Id = id;
@@ -22,10 +25,10 @@ public class Allocation : IEntity<AllocationId>, IHasDomainEvents
         Period = period;
     }
 
-    public AllocationId Id { get; }
-    public Guid ResourceId { get; }
-    public Guid ProjectId { get; }
-    public TimeRange Period { get; }
+    public AllocationId Id { get; private set; }
+    public Guid ResourceId { get; private set; }
+    public Guid ProjectId { get; private set; }
+    public TimeRange Period { get; private set; }
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
     public void AddDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);

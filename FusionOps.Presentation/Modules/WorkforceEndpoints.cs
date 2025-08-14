@@ -9,7 +9,7 @@ public static class WorkforceEndpoints
 {
     public static IEndpointRouteBuilder MapWorkforceEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapPost("/api/v1/allocate", async (AllocateCommandDTO dto, ISender sender) =>
+        var allocate = endpoints.MapPost("/api/v1/allocate", async (AllocateCommandDTO dto, ISender sender) =>
         {
             var cmd = new AllocateCommand(dto.ProjectId, dto.ResourceIds, dto.PeriodFrom, dto.PeriodTo);
             try
@@ -21,8 +21,14 @@ public static class WorkforceEndpoints
             {
                 return Results.UnprocessableEntity(new { error = ex.Message });
             }
-        })
-        .RequireAuthorization("ManageResources");
+        });
+
+        // В dev-окружении разрешаем сидинг без авторизации
+        var env = endpoints.ServiceProvider.GetRequiredService<IHostEnvironment>();
+        if (!env.IsDevelopment())
+        {
+            allocate.RequireAuthorization("ManageResources");
+        }
 
         return endpoints;
     }

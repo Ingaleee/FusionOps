@@ -1,4 +1,4 @@
-using HotChocolate.DataLoader;
+using GreenDonut;
 using FusionOps.Gateway.Models;
 using System.Net.Http.Json;
 
@@ -7,7 +7,11 @@ namespace FusionOps.Gateway.GraphQL;
 public class AllocationDataLoader : BatchDataLoader<Guid, IEnumerable<Allocation>>
 {
     private readonly IHttpClientFactory _factory;
-    public AllocationDataLoader(IBatchScheduler b, IHttpClientFactory f) : base(b) => _factory = f;
+    public AllocationDataLoader(IBatchScheduler b, IHttpClientFactory f)
+        : base(b, new DataLoaderOptions())
+    {
+        _factory = f;
+    }
 
     protected override async Task<IReadOnlyDictionary<Guid, IEnumerable<Allocation>>> LoadBatchAsync(
                 IReadOnlyList<Guid> keys, CancellationToken ct)

@@ -14,6 +14,8 @@ public class HumanResource : IEntity<HumanResourceId>, IHasDomainEvents
 {
     private readonly List<IDomainEvent> _domainEvents = new();
 
+    private HumanResource() { }
+
     public HumanResource(HumanResourceId id, string fullName, Money hourRate)
     {
         Id = id;
@@ -21,7 +23,7 @@ public class HumanResource : IEntity<HumanResourceId>, IHasDomainEvents
         HourRate = hourRate;
     }
 
-    public HumanResourceId Id { get; }
+    public HumanResourceId Id { get; private set; }
     public string FullName { get; private set; }
     public HashSet<Skill> Skills { get; } = new();
     public Money HourRate { get; private set; }

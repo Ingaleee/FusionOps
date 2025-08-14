@@ -7,7 +7,6 @@ using Polly.Extensions.Http;
 using System.Net.Http.Headers;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
-using OpenTelemetry.Exporter.Prometheus.AspNetCore;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
@@ -93,7 +92,7 @@ builder.Services.AddHttpClient("FusionApi", c =>
 {
     AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
 })
-.AddHttpMessageHandler(() => new JwtPropagationHandler(builder.Services.BuildServiceProvider()))
+.AddHttpMessageHandler(sp => new JwtPropagationHandler(sp.GetRequiredService<IHttpContextAccessor>()))
 .AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError().OrResult(r => (int)r.StatusCode == 429)
     .WaitAndRetryAsync(3, i => TimeSpan.FromMilliseconds(100 * i)))
 .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromSeconds(5)));
@@ -104,7 +103,6 @@ builder.Services.AddSingleton<SignalRClientFactory>();
 // 3. HotChocolate
 builder.Services
     .AddGraphQLServer()
-    .AddDocumentFromFile("Schema.graphql")
     .AddQueryType<Query>()
     .AddSubscriptionType<Subscription>()
     .AddInMemorySubscriptions()
@@ -224,7 +222,27 @@ public sealed class SecurityHeadersMiddleware
         headers["X-Content-Type-Options"] = "nosniff";
         headers["X-Frame-Options"] = "DENY";
         headers["Referrer-Policy"] = "no-referrer";
-        headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none'; object-src 'none'";
+
+        // Relax CSP for GraphQL IDE to avoid blank screen due to blocked inline scripts/styles
+        if (context.Request.Path.StartsWithSegments("/graphql"))
+        {
+            headers["Content-Security-Policy"] = string.Join("; ", new[]
+            {
+                "default-src 'self'",
+                "object-src 'none'",
+                "frame-ancestors 'none'",
+                // Banana Cake Pop needs inline/eval and websockets for subscriptions
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https: blob:",
+                "style-src 'self' 'unsafe-inline' https:",
+                "img-src 'self' data: blob: https:",
+                "font-src 'self' data: https:",
+                "connect-src 'self' http: https: ws: wss:"
+            });
+        }
+        else
+        {
+            headers["Content-Security-Policy"] = "default-src 'self'; frame-ancestors 'none'; object-src 'none'";
+        }
         await _next(context);
     }
 }

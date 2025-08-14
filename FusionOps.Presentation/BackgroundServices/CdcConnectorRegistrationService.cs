@@ -20,7 +20,7 @@ public class CdcConnectorRegistrationService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var connectUrl = _cfg["Kafka:ConnectUrl"] ?? "http://connect:8083";
+        var connectUrl = _cfg["Kafka:ConnectUrl"] ?? "http://localhost:8083";
         var client = _factory.CreateClient("debezium");
         client.BaseAddress = new Uri(connectUrl);
 
@@ -48,7 +48,7 @@ public class CdcConnectorRegistrationService : BackgroundService
                         ["database.names"] = "FusionOpsWorkforce",
                         ["table.include.list"] = "dbo.Allocations",
                         ["topic.prefix"] = "dbserver1",
-                        ["schema.history.internal.kafka.bootstrap.servers"] = "kafka:9092",
+                        ["schema.history.internal.kafka.bootstrap.servers"] = _cfg["Kafka:Host"] ?? "localhost:9092",
                         ["schema.history.internal.kafka.topic"] = "schema-changes.sqlserver",
                         ["snapshot.mode"] = "schema_only"
                     }

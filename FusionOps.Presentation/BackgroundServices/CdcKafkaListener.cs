@@ -21,7 +21,7 @@ public class CdcKafkaListener : BackgroundService
     {
         var conf = new ConsumerConfig
         {
-            BootstrapServers = _cfg["Kafka:Host"] ?? "kafka:9092",
+            BootstrapServers = _cfg["Kafka:Host"] ?? "localhost:9092",
             GroupId = "fusionops-cdc",
             AutoOffsetReset = AutoOffsetReset.Earliest,
             EnableAutoCommit = true
