@@ -154,6 +154,7 @@ app.MapWorkforceEndpoints();
 app.MapStockEndpoints();
 app.MapAuditEndpoints();
 app.MapLicenseEndpoints();
+app.MapScenarioEndpoints();
 app.MapProjectEndpoints();
 app.MapHealthChecks("/health");
 app.MapHub<NotificationHub>("/hubs/notify");

@@ -17,4 +17,5 @@ public interface IStockRepository
     /// Массовое пополнение склада: быстрое обновление количества для списка позиций.
     /// </summary>
     Task BulkRestockAsync(IEnumerable<StockItemDelta> deltas);
+    Task<IReadOnlyCollection<StockItem>> GetAllAsync(CancellationToken cancellationToken);
 }

@@ -5,7 +5,8 @@
     "realm": [
       { "name": "Resource.Manager" },
       { "name": "Stock.Admin" },
-      { "name": "License.Manager" }
+      { "name": "License.Manager" },
+      { "name": "Scenario.Run" }
     ]
   },
   "clients": [

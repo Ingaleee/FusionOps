@@ -28,6 +28,9 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IAllocationRepository, AllocationRepository>();
         services.AddScoped<IStockRepository, StockRepository>();
+        services.AddScoped<ILicenseRepository, LicenseRepository>();
+        services.AddScoped<IHumanResourceRepository, HumanResourceRepository>();
+        services.AddScoped<IEquipmentResourceRepository, EquipmentResourceRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
         services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
         services.AddSingleton<IStockForecaster, FusionOps.Infrastructure.Optimizers.MlNetOptimizer>();
@@ -63,7 +66,7 @@ public static class ServiceCollectionExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<ICostEngine, DefaultCostEngine>();
-        services.AddScoped<ILicenseRepository, LicenseRepository>();
+        services.AddScoped<IScenarioRunner, ScenarioRunner>();
 
         return services;
     }

@@ -66,4 +66,9 @@ public class StockRepository : IStockRepository
         await using var cmd = new Npgsql.NpgsqlCommand(sql, conn);
         await cmd.ExecuteNonQueryAsync();
     }
+
+    public async Task<IReadOnlyCollection<StockItem>> GetAllAsync(CancellationToken cancellationToken)
+    {
+        return await _ctx.StockItems.ToListAsync(cancellationToken);
+    }
 }

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using FusionOps.Domain.Entities;
 using FusionOps.Domain.Shared.Ids;
 using FusionOps.Domain.ValueObjects;
+using System.Threading;
 
 namespace FusionOps.Domain.Interfaces;
 
@@ -16,4 +17,5 @@ public interface IAllocationRepository
     Task<Allocation?> GetAsync(AllocationId id);
     Task<IReadOnlyCollection<Allocation>> FindForResourceAsync(Guid resourceId);
     Task<IReadOnlyCollection<Allocation>> FindFreeAsync(TimeRange period);
+    Task<IReadOnlyCollection<Allocation>> GetAllAsync(CancellationToken cancellationToken);
 }
