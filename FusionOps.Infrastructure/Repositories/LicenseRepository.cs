@@ -24,6 +24,11 @@ public sealed class LicenseRepository : ILicenseRepository
         _ctx.Update(pool);
         await _ctx.SaveChangesAsync(ct);
     }
+
+    public async Task<IReadOnlyCollection<LicensePool>> GetAllAsync(CancellationToken ct = default)
+    {
+        return await _ctx.Set<LicensePool>().Include(p => p.Allocations).ToListAsync(ct);
+    }
 }
 
 
