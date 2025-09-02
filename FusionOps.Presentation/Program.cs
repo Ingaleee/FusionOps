@@ -44,7 +44,8 @@ builder.Services.AddOpenTelemetry()
     {
         m.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("fusionops-api"))
          .AddAspNetCoreInstrumentation()
-         .AddPrometheusExporter();
+         .AddPrometheusExporter()
+         .AddMeter("FusionOps.ScenarioEngine");
     });
 
 // AuthN/Z

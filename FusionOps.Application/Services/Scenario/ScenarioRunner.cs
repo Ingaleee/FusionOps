@@ -3,6 +3,7 @@ using FusionOps.Domain.Entities;
 using FusionOps.Domain.Interfaces;
 using FusionOps.Domain.Services;
 using FusionOps.Application.Services.Costing;
+using System.Diagnostics.Metrics;
 
 namespace FusionOps.Application.Services.Scenario;
 
@@ -15,6 +16,13 @@ public class ScenarioRunner : IScenarioRunner
     private readonly ICostEngine _costEngine;
     private readonly IHumanResourceRepository _humanResourceRepository;
     private readonly IEquipmentResourceRepository _equipmentResourceRepository;
+
+    private readonly Meter _meter;
+    private readonly Counter<long> _scenarioRunCounter;
+    private readonly Histogram<double> _scenarioRuntimeMs;
+    private readonly Counter<double> _scenarioTotalCost;
+    private readonly Counter<long> _scenarioBackorderQty;
+    private readonly Counter<long> _scenarioLicenseViolations;
 
     public ScenarioRunner(
         IAllocationRepository allocationRepository,
@@ -32,10 +40,21 @@ public class ScenarioRunner : IScenarioRunner
         _costEngine = costEngine;
         _humanResourceRepository = humanResourceRepository;
         _equipmentResourceRepository = equipmentResourceRepository;
+
+        _meter = new Meter("FusionOps.ScenarioEngine");
+        _scenarioRunCounter = _meter.CreateCounter<long>("scenario_runs_total", "runs", "Total number of scenario runs");
+        _scenarioRuntimeMs = _meter.CreateHistogram<double>("scenario_runtime_ms", "ms", "Scenario execution time in milliseconds");
+        _scenarioTotalCost = _meter.CreateCounter<double>("scenario_total_cost", "USD", "Total cost of the scenario");
+        _scenarioBackorderQty = _meter.CreateCounter<long>("scenario_backorder_qty", "items", "Total backorder quantity in scenario");
+        _scenarioLicenseViolations = _meter.CreateCounter<long>("scenario_license_violations", "violations", "Total license violations in scenario");
     }
 
     public async Task<ScenarioResultDto> RunScenario(RunScenarioCommand command, CancellationToken cancellationToken)
     {
+        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
+        _scenarioRunCounter.Add(1);
+
         // 1. Load data from repositories (or use in-memory copies)
         var currentAllocations = (await _allocationRepository.GetAllAsync(cancellationToken)).ToList();
         var currentStockItems = (await _stockRepository.GetAllAsync(cancellationToken)).ToList();
@@ -89,6 +108,12 @@ public class ScenarioRunner : IScenarioRunner
         var utilizationPercentage = (decimal)optimizedAllocations.Count / (scenarioHumanResources.Count + scenarioEquipmentResources.Count) * 100;
         // BackorderQuantity and LicenseViolations are currently placeholders, will be calculated based on optimization results.
         var suggestedProcurements = Enumerable.Empty<SuggestedProcurementDto>(); // Placeholder
+
+        stopwatch.Stop();
+        _scenarioRuntimeMs.Record(stopwatch.Elapsed.TotalMilliseconds);
+        _scenarioTotalCost.Add(totalCost.Total.Amount);
+        _scenarioBackorderQty.Add(backorderQuantity);
+        _scenarioLicenseViolations.Add(licenseViolations);
 
         return new ScenarioResultDto(
             TotalCost: totalCost,
