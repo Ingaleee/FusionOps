@@ -3,6 +3,7 @@ using FusionOps.Domain.Shared.Interfaces;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using Polly;
+using FusionOps.Application.Abstractions;
 
 namespace FusionOps.Infrastructure.Messaging;
 
@@ -10,12 +11,14 @@ public class RabbitBus : IEventBus
 {
     private readonly IBus _bus;
     private readonly ILogger<RabbitBus> _logger;
+    private readonly ITenantProvider _tenantProvider;
     private readonly AsyncPolicy _retryPolicy;
 
-    public RabbitBus(IBus bus, ILogger<RabbitBus> logger)
+    public RabbitBus(IBus bus, ILogger<RabbitBus> logger, ITenantProvider tenantProvider)
     {
         _bus = bus;
         _logger = logger;
+        _tenantProvider = tenantProvider;
         _retryPolicy = Policy.Handle<Exception>()
             .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)),
                 (ex, ts, attempt, ctx) =>
@@ -27,6 +30,12 @@ public class RabbitBus : IEventBus
     public async Task PublishAsync(IDomainEvent domainEvent)
     {
         _logger.LogInformation("Publishing domain event {EventName} via MassTransit", domainEvent.GetType().Name);
-        await _retryPolicy.ExecuteAsync(() => _bus.Publish(domainEvent));
+        await _retryPolicy.ExecuteAsync(() => _bus.Publish(domainEvent, ctx =>
+        {
+            if (_tenantProvider.IsSet)
+            {
+                ctx.Headers.Set("tenant_id", _tenantProvider.TenantId);
+            }
+        }));
     }
 }
