@@ -16,6 +16,7 @@ using FusionOps.Presentation.Infrastructure;
 using FusionOps.Infrastructure.Costing;
 using Microsoft.Extensions.Options;
 using FusionOps.Infrastructure.Persistence.Postgres.Configurations;
+using FusionOps.Application.Services.Scenario;
 
 namespace FusionOps.Presentation.Extensions;
 
