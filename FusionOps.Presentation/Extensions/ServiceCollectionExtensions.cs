@@ -33,7 +33,15 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IHumanResourceRepository, HumanResourceRepository>();
         services.AddScoped<IEquipmentResourceRepository, EquipmentResourceRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
-        services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
+        var strategy = cfg.GetSection("Optimization")?["Strategy"] ?? "Hungarian";
+        if (string.Equals(strategy, "OrTools", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddScoped<IOptimizerStrategy, FusionOps.Infrastructure.Optimizers.OrToolsOptimizer>();
+        }
+        else
+        {
+            services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
+        }
         services.AddSingleton<IStockForecaster, FusionOps.Infrastructure.Optimizers.MlNetOptimizer>();
         services.AddDbContext<FusionOps.Infrastructure.Persistence.SqlServer.AllocationSagaContext>(o =>
             o.UseSqlServer(cfg.GetConnectionString("sql")));

@@ -1,0 +1,64 @@
+{
+  "title": "FusionOps - Scenario & Optimizer",
+  "uid": "fusionops-scenario-optimizer",
+  "schemaVersion": 38,
+  "version": 1,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Scenario runtime (ms)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(scenario_runtime_ms_bucket[5m])) by (le))", "legendFormat": "p95" },
+        { "expr": "sum(rate(scenario_runtime_ms_sum[5m])) / sum(rate(scenario_runtime_ms_count[5m]))", "legendFormat": "avg" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Scenario runs (5m)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "targets": [ { "expr": "sum(rate(scenario_runs_total[5m]))", "legendFormat": "runs/s" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Scenario total cost (USD/s)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "targets": [ { "expr": "sum(rate(scenario_total_cost[5m]))", "legendFormat": "USD/s" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Backorder qty (items/s)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "targets": [ { "expr": "sum(rate(scenario_backorder_qty[5m]))", "legendFormat": "items/s" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "License violations (count/s)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "targets": [ { "expr": "sum(rate(scenario_license_violations[5m]))", "legendFormat": "violations/s" } ]
+    },
+    {
+      "type": "timeseries",
+      "title": "ILP duration (ms)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "targets": [
+        { "expr": "histogram_quantile(0.95, sum(rate(optimizer_ilp_duration_ms_bucket[5m])) by (le))", "legendFormat": "p95" },
+        { "expr": "sum(rate(optimizer_ilp_duration_ms_sum[5m])) / sum(rate(optimizer_ilp_duration_ms_count[5m]))", "legendFormat": "avg" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "ILP calls (5m)",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "targets": [ { "expr": "sum(rate(optimizer_ilp_calls_total[5m]))", "legendFormat": "calls/s" } ]
+    },
+    {
+      "type": "bargauge",
+      "title": "ILP status split",
+      "datasource": { "type": "prometheus", "uid": "prom" },
+      "targets": [ { "expr": "sum(rate(optimizer_status_total[5m])) by (status)", "legendFormat": "{{status}}" } ]
+    }
+  ]
+}
+
+

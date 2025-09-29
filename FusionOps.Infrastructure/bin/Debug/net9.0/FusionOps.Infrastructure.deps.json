@@ -12,6 +12,7 @@
           "FusionOps.Application": "1.0.0",
           "FusionOps.Domain": "1.0.0",
           "FusionOps.Infrastructure.SagaContracts": "1.0.0",
+          "Google.OrTools": "9.9.3963",
           "MassTransit": "8.1.0",
           "MassTransit.EntityFrameworkCore": "8.1.0",
           "MassTransit.RabbitMQ": "8.1.0",
@@ -102,6 +103,95 @@
           "lib/netstandard2.1/FluentValidation.DependencyInjectionExtensions.dll": {
             "assemblyVersion": "11.0.0.0",
             "fileVersion": "11.7.0.0"
+          }
+        }
+      },
+      "Google.OrTools/9.9.3963": {
+        "dependencies": {
+          "Google.OrTools.runtime.linux-arm64": "9.9.3963",
+          "Google.OrTools.runtime.linux-x64": "9.9.3963",
+          "Google.OrTools.runtime.osx-arm64": "9.9.3963",
+          "Google.OrTools.runtime.osx-x64": "9.9.3963",
+          "Google.OrTools.runtime.win-x64": "9.9.3963",
+          "Google.Protobuf": "3.25.3"
+        },
+        "runtime": {
+          "lib/net6.0/Google.OrTools.dll": {
+            "assemblyVersion": "9.9.3963.0",
+            "fileVersion": "9.9.3963.0"
+          }
+        }
+      },
+      "Google.OrTools.runtime.linux-arm64/9.9.3963": {
+        "runtimeTargets": {
+          "runtimes/linux-arm64/native/google-ortools-native.so": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-arm64/native/libortools.so.9": {
+            "rid": "linux-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Google.OrTools.runtime.linux-x64/9.9.3963": {
+        "runtimeTargets": {
+          "runtimes/linux-x64/native/google-ortools-native.so": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/linux-x64/native/libortools.so.9": {
+            "rid": "linux-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Google.OrTools.runtime.osx-arm64/9.9.3963": {
+        "runtimeTargets": {
+          "runtimes/osx-arm64/native/google-ortools-native.dylib": {
+            "rid": "osx-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/osx-arm64/native/libortools.9.dylib": {
+            "rid": "osx-arm64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Google.OrTools.runtime.osx-x64/9.9.3963": {
+        "runtimeTargets": {
+          "runtimes/osx-x64/native/google-ortools-native.dylib": {
+            "rid": "osx-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          },
+          "runtimes/osx-x64/native/libortools.9.dylib": {
+            "rid": "osx-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Google.OrTools.runtime.win-x64/9.9.3963": {
+        "runtimeTargets": {
+          "runtimes/win-x64/native/google-ortools-native.dll": {
+            "rid": "win-x64",
+            "assetType": "native",
+            "fileVersion": "0.0.0.0"
+          }
+        }
+      },
+      "Google.Protobuf/3.25.3": {
+        "runtime": {
+          "lib/net5.0/Google.Protobuf.dll": {
+            "assemblyVersion": "3.25.3.0",
+            "fileVersion": "3.25.3.0"
           }
         }
       },
@@ -1408,6 +1498,55 @@
       "sha512": "sha512-cPJjXQnMPUp0HQx1eWjxPVwRjYKGV66oelLIPgfTOJu2TZUktNqd2mETd87Rt2rZEsOg/cok42/u/2HLhj+sdA==",
       "path": "fluentvalidation.dependencyinjectionextensions/11.7.0",
       "hashPath": "fluentvalidation.dependencyinjectionextensions.11.7.0.nupkg.sha512"
+    },
+    "Google.OrTools/9.9.3963": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-7sS6B1AgRHdMlP6KOiIOtWNjV6QACGCoMUrMZ4dGQy+2Y/phqFfh61SBn0gKnzHSNZRAU8E/BtUGOa7sUv7v5g==",
+      "path": "google.ortools/9.9.3963",
+      "hashPath": "google.ortools.9.9.3963.nupkg.sha512"
+    },
+    "Google.OrTools.runtime.linux-arm64/9.9.3963": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-+xEhOkBBe1udy+eJ5j780Tn/MQZ2JdFL4IOwjH1zAuJjWYBw4VMBD8lzGinT8cG2bTmdaGJA+bkL+zZVZWI3Lg==",
+      "path": "google.ortools.runtime.linux-arm64/9.9.3963",
+      "hashPath": "google.ortools.runtime.linux-arm64.9.9.3963.nupkg.sha512"
+    },
+    "Google.OrTools.runtime.linux-x64/9.9.3963": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-wfDR1cifntypi6aHVfwKEHY2tauTOE33n1Yq68x8d3dIZMWM6mxkAxZXARIwZD35IVRQMYK+KHaEziV4xZb10w==",
+      "path": "google.ortools.runtime.linux-x64/9.9.3963",
+      "hashPath": "google.ortools.runtime.linux-x64.9.9.3963.nupkg.sha512"
+    },
+    "Google.OrTools.runtime.osx-arm64/9.9.3963": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-LiJSLcdFeRb57scpiAuKEiP3vcZihKXC+HecvQvR72HiJoCrw3FpQNT2gyd1YEmdmjK+nZwGEjr1fVjfaYcXHQ==",
+      "path": "google.ortools.runtime.osx-arm64/9.9.3963",
+      "hashPath": "google.ortools.runtime.osx-arm64.9.9.3963.nupkg.sha512"
+    },
+    "Google.OrTools.runtime.osx-x64/9.9.3963": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-EHno6lHjUZeHg3pBjheaUBaIj07ynuSGh697FuGbkdkVjIdq5+k0Jx3L6hyYf6p8PbhXeJwKu13e59eyDZzGrQ==",
+      "path": "google.ortools.runtime.osx-x64/9.9.3963",
+      "hashPath": "google.ortools.runtime.osx-x64.9.9.3963.nupkg.sha512"
+    },
+    "Google.OrTools.runtime.win-x64/9.9.3963": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-9yXXTzkmPD6qUree85zp6YzPvakIszjL/XKiA43WJpvuy5S/tH4rP4Kqfd4cJNzB0nkOpKgJM7qfS8UNB4LVnA==",
+      "path": "google.ortools.runtime.win-x64/9.9.3963",
+      "hashPath": "google.ortools.runtime.win-x64.9.9.3963.nupkg.sha512"
+    },
+    "Google.Protobuf/3.25.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-fDY/kt0gy2nVcoeMmiyDMtwgvDJG5qaU7+Ic77szKTvVkIvoo7tyf+d+QDlKSosB+FjoKocX/ObObxqKCq60uA==",
+      "path": "google.protobuf/3.25.3",
+      "hashPath": "google.protobuf.3.25.3.nupkg.sha512"
     },
     "Humanizer.Core/2.14.1": {
       "type": "package",

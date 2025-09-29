@@ -15,5 +15,6 @@ var rootCommand = new RootCommand("FusionOps CLI - Resource Management Tool");
 rootCommand.AddCommand(new AllocateCommand(serviceProvider));
 rootCommand.AddCommand(new StockCommand(serviceProvider));
 rootCommand.AddCommand(new NotifyCommand(serviceProvider));
+rootCommand.AddCommand(new ScenarioCommand(serviceProvider));
 
 return await rootCommand.InvokeAsync(args); 
