@@ -13,6 +13,8 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
 using FusionOps.Presentation.Realtime;
+using FusionOps.Presentation.Security;
+using FusionOps.Presentation.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,11 +61,16 @@ builder.Services.AddAuthentication("Bearer")
 
 builder.Services.AddAuthorization(opts =>
 {
+    // Backward-compatible role checks
     opts.AddPolicy("ManageResources", p => p.RequireRole("Resource.Manager"));
     opts.AddPolicy("AdminStock", p => p.RequireRole("Stock.Admin"));
+
+    // Tenant-scoped policies via claims from Keycloak mappers
+    opts.AddPolicy("T:ManageResources", p => p.RequireClaim("tenant_roles", "Resource.Manager"));
+    opts.AddPolicy("T:AdminStock", p => p.RequireClaim("tenant_roles", "Stock.Admin"));
 });
 
-// Middlewares are added to the pipeline directly via app.UseMiddleware<>()
+builder.Services.AddTransient<TenantResolutionMiddleware>();
 
 // Swagger & endpoints
 builder.Services.AddEndpointsApiExplorer();
@@ -135,6 +142,7 @@ try
     // Ensure Postgres schemas exist for fulfillment (dev convenience)
     var ff = scope.ServiceProvider.GetRequiredService<FusionOps.Infrastructure.Persistence.Postgres.FulfillmentContext>();
     await ff.Database.EnsureCreatedAsync();
+    await FusionOps.Infrastructure.Persistence.Postgres.Configurations.RlsInitializer.EnsureRlsAsync(ff);
 }
 catch { }
 
@@ -149,6 +157,7 @@ else
 }
 
 app.UseAuthentication();
+app.UseMiddleware<TenantResolutionMiddleware>();
 app.UseAuthorization();
 
 app.MapWorkforceEndpoints();
@@ -157,6 +166,7 @@ app.MapAuditEndpoints();
 app.MapLicenseEndpoints();
 app.MapScenarioEndpoints();
 app.MapProjectEndpoints();
+app.MapTenantOpsEndpoints();
 app.MapHealthChecks("/health");
 app.MapHub<NotificationHub>("/hubs/notify");
 
@@ -167,5 +177,6 @@ app.UseMiddleware<CorrelationMiddleware>();
 app.UseMiddleware<UserContextEnricher>();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseMiddleware<AuditResponseHeadersMiddleware>();
+app.UseMiddleware<TenantResolutionMiddleware>();
 
 app.Run();

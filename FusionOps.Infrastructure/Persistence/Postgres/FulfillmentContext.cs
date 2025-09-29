@@ -3,12 +3,18 @@ using FusionOps.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 using FusionOps.Domain.Attributes;
 using FusionOps.Infrastructure.Persistence.Postgres.Models;
+using FusionOps.Infrastructure.Persistence.Common;
+using FusionOps.Application.Abstractions;
 
 namespace FusionOps.Infrastructure.Persistence.Postgres;
 
 public class FulfillmentContext : DbContext
 {
-    public FulfillmentContext(DbContextOptions<FulfillmentContext> options) : base(options) { }
+    private readonly ITenantProvider _tenantProvider;
+    public FulfillmentContext(DbContextOptions<FulfillmentContext> options, ITenantProvider tenantProvider) : base(options)
+    {
+        _tenantProvider = tenantProvider;
+    }
 
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
     public DbSet<StockItem> StockItems => Set<StockItem>();
@@ -31,6 +37,21 @@ public class FulfillmentContext : DbContext
             }
         }
 
+        modelBuilder.AddTenantShadowProperty();
+        if (_tenantProvider.IsSet)
+        {
+            modelBuilder.AddGlobalTenantFilter(_tenantProvider);
+        }
+
         base.OnModelCreating(modelBuilder);
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        foreach (var entry in ChangeTracker.Entries().Where(e => e.State == EntityState.Added))
+        {
+            entry.Property("TenantId").CurrentValue = _tenantProvider.IsSet ? _tenantProvider.TenantId : null;
+        }
+        return base.SaveChangesAsync(cancellationToken);
     }
 }

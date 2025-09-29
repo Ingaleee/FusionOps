@@ -17,6 +17,10 @@ using FusionOps.Infrastructure.Costing;
 using Microsoft.Extensions.Options;
 using FusionOps.Infrastructure.Persistence.Postgres.Configurations;
 using FusionOps.Application.Services.Scenario;
+using FusionOps.Presentation.Security;
+using FusionOps.Infrastructure.Persistence.Common;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using FusionOps.Application.Abstractions;
 
 namespace FusionOps.Presentation.Extensions;
 
@@ -24,8 +28,21 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration cfg)
     {
+        services.AddOptions<TenancyOptions>().Bind(cfg.GetSection("MultiTenancy")).ValidateOnStart();
+        services.AddScoped<TenantProvider>();
+        services.AddScoped<ITenantProvider>(sp => sp.GetRequiredService<TenantProvider>());
+        services.AddSingleton<NpgsqlTenantConnectionInterceptor>();
+        services.AddSingleton<NpgsqlSearchPathTransactionInterceptor>();
+        services.TryAddSingleton<Microsoft.EntityFrameworkCore.Infrastructure.IModelCacheKeyFactory, TenantModelCacheKeyFactory>();
+
         services.AddDbContext<WorkforceContext>(o => o.UseSqlServer(cfg.GetConnectionString("sql")));
-        services.AddDbContext<FulfillmentContext>(o => o.UseNpgsql(cfg.GetConnectionString("pg")));
+        services.AddDbContext<FulfillmentContext>((sp, o) =>
+        {
+            var interceptor = sp.GetRequiredService<NpgsqlTenantConnectionInterceptor>();
+            var spInterceptor = sp.GetRequiredService<NpgsqlSearchPathTransactionInterceptor>();
+            o.UseNpgsql(cfg.GetConnectionString("pg"));
+            o.AddInterceptors(interceptor, spInterceptor);
+        });
 
         services.AddScoped<IAllocationRepository, AllocationRepository>();
         services.AddScoped<IStockRepository, StockRepository>();
