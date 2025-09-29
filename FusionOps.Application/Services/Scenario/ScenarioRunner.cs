@@ -82,19 +82,37 @@ public class ScenarioRunner : IScenarioRunner
         
         var optimizedAllocations = optimizedAllocationsResult.ToList();
 
-        // 5. Calculate costs using CostEngine
+        // 5. Calculate costs using CostEngine (baseline vs scenario)
         var period = new TimeRange(command.From, command.To);
+        // Baseline approximation (no delta)
+        var baselineLaborCost = _costEngine.ForAllocation(currentHumanResources.FirstOrDefault()!, period);
+        var baselineEquipmentCost = _costEngine.ForEquipment(currentEquipmentResources.FirstOrDefault()!, period);
+        var baselineBackorderQty = 0;
+        var baselineBackorderPenalty = _costEngine.ForBackorder("sample_sku", baselineBackorderQty, 5);
+        var baselineLicenseViolations = 0;
+        var baselineLicensePenalty = _costEngine.ForLicensePenalty("sample_product", baselineLicenseViolations, 10);
+        var baselineTotalCost = _costEngine.Sum(baselineLaborCost, baselineEquipmentCost, baselineBackorderPenalty, baselineLicensePenalty);
+
+        // Scenario
         var laborCost = _costEngine.ForAllocation(scenarioHumanResources.FirstOrDefault()!, period);
         var equipmentCost = _costEngine.ForEquipment(scenarioEquipmentResources.FirstOrDefault()!, period);
         var backorderQuantity = 0; // Placeholder for actual calculation after optimization
         var backorderPenalty = _costEngine.ForBackorder("sample_sku", backorderQuantity, 5); // Placeholder
         var licenseViolations = 0; // Placeholder for actual calculation after optimization
         var licensePenalty = _costEngine.ForLicensePenalty("sample_product", licenseViolations, 10); // Placeholder
-
         var totalCost = _costEngine.Sum(laborCost, equipmentCost, backorderPenalty, licensePenalty);
 
-        // 6. Determine KPI deltas
-        var utilizationPercentage = (decimal)optimizedAllocations.Count / (scenarioHumanResources.Count + scenarioEquipmentResources.Count) * 100;
+        // 6. Determine KPI and deltas
+        var baselineUtilization = (decimal)currentAllocations.Count / (currentHumanResources.Count + currentEquipmentResources.Count == 0 ? 1 : currentHumanResources.Count + currentEquipmentResources.Count) * 100;
+        var utilizationPercentage = (decimal)optimizedAllocations.Count / (scenarioHumanResources.Count + scenarioEquipmentResources.Count == 0 ? 1 : scenarioHumanResources.Count + scenarioEquipmentResources.Count) * 100;
+        var deltaUtilization = utilizationPercentage - baselineUtilization;
+
+        var deltaBackorderQty = backorderQuantity - baselineBackorderQty;
+        var deltaLicenseViolations = licenseViolations - baselineLicenseViolations;
+        var deltaTotalCost = new CostBreakdown(new[]
+        {
+            new CostComponent("DeltaTotal", totalCost.Total - baselineTotalCost.Total)
+        });
         var suggestedProcurements = Enumerable.Empty<SuggestedProcurementDto>();
 
         stopwatch.Stop();
@@ -108,6 +126,14 @@ public class ScenarioRunner : IScenarioRunner
             UtilizationPercentage: utilizationPercentage,
             BackorderQuantity: backorderQuantity,
             LicenseViolations: licenseViolations,
-            SuggestedProcurements: suggestedProcurements);
+            SuggestedProcurements: suggestedProcurements,
+            BaselineTotalCost: baselineTotalCost,
+            BaselineUtilizationPercentage: baselineUtilization,
+            BaselineBackorderQuantity: baselineBackorderQty,
+            BaselineLicenseViolations: baselineLicenseViolations,
+            DeltaTotalCost: deltaTotalCost,
+            DeltaUtilizationPercentage: deltaUtilization,
+            DeltaBackorderQuantity: deltaBackorderQty,
+            DeltaLicenseViolations: deltaLicenseViolations);
     }
 }
