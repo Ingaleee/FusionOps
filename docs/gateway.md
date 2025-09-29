@@ -53,3 +53,24 @@ curl -H "Authorization: Bearer <token>" \
 
 - `kubectl argo rollouts list`
 - `kubectl argo rollouts promote fusion-gateway`
+
+## Multi-tenancy
+
+- Tenant resolution: из JWT `tenant_id`, поддомена `{tenant}.gateway.local`, либо заголовка `X-Tenant-Id` (для внутренних вызовов).
+- Пробрасываем `tenant_id` в backend сервисы как заголовок и контекст, сохраняем консистентность с API.
+- Policy: для GraphQL резолверов используйте политики `T:*` (например, `T:AdminStock`) на основе клейма `tenant_roles`.
+
+### Примеры
+
+```sh
+curl -H "Authorization: Bearer <token-with-tenant_id=acme>" \
+     -H "X-Tenant-Id: acme" \
+     -X POST https://acme.gateway.local/graphql \
+     -d '{"query":"{ allocation(projectId:\"...\"){ allocationId } }"}'
+```
+
+### Keycloak
+
+- Protocol mappers:
+  - `tenant_id` (из группы `/tenants/{tenant}/roles/...`)
+  - `tenant_roles` (массив ролей для текущего арендатора)
