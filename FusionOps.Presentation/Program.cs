@@ -103,6 +103,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddHostedService<OutboxDispatcher>();
 builder.Services.AddHostedService<CdcConnectorRegistrationService>();
 builder.Services.AddHostedService<CdcKafkaListener>();
+builder.Services.AddHostedService<FusionOps.Infrastructure.Policies.PolicyHotReloadService>();
 
 builder.Services.AddHttpClient("debezium");
 
@@ -166,6 +167,7 @@ app.MapAuditEndpoints();
 app.MapLicenseEndpoints();
 app.MapScenarioEndpoints();
 app.MapProjectEndpoints();
+app.MapPolicyAdminEndpoints();
 app.MapTenantOpsEndpoints();
 app.MapHealthChecks("/health");
 app.MapHub<NotificationHub>("/hubs/notify");

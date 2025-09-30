@@ -21,6 +21,12 @@ using FusionOps.Presentation.Security;
 using FusionOps.Infrastructure.Persistence.Common;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using FusionOps.Application.Abstractions;
+using FusionOps.Application.Policies;
+using FusionOps.Infrastructure.Policies;
+using FusionOps.Infrastructure.Policies.NRules;
+using FusionOps.Infrastructure.Policies.Opa;
+using FusionOps.Infrastructure.Policies;
+using FusionOps.Infrastructure.Policies.NRules;
 
 namespace FusionOps.Presentation.Extensions;
 
@@ -85,6 +91,15 @@ public static class ServiceCollectionExtensions
 
         services.AddSingleton<IEventBus, RabbitBus>();
         services.AddSingleton<ITelemetryProducer, KafkaTelemetryProducer>();
+
+        // Policies
+        services.AddDbContext<PolicyContext>(o => o.UseNpgsql(cfg.GetConnectionString("pg")));
+        services.AddScoped<IPolicyEngine, NRulesPolicyEngine>();
+        services.AddScoped<NRulesPolicyEngine>();
+        services.AddScoped<OpaPolicyEngine>();
+        services.AddSingleton<NRulesCompiler>();
+        services.AddSingleton<OpaWasmRuntime>();
+        services.AddScoped<IPolicyAudit, PolicyAudit>();
 
         // Costing
         services.AddOptions<CostingOptions>()

@@ -35,3 +35,4 @@ CREATE INDEX IF NOT EXISTS ix_stock_items_tenant_sku ON stock_items(tenant_id, s
 }
 
 
+
