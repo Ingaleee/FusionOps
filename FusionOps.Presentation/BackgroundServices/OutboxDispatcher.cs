@@ -28,23 +28,47 @@ public class OutboxDispatcher : BackgroundService
         {
             using var scope = _scopeFactory.CreateScope();
             var ctx = scope.ServiceProvider.GetRequiredService<WorkforceContext>();
-            var messages = await ctx.OutboxMessages
-                                    .Where(m => m.ProcessedAt == null)
-                                    .OrderBy(m => m.OccurredOn)
-                                    .Take(50)
-                                    .ToListAsync(stoppingToken);
-
-            foreach (var msg in messages)
+            
+            await using var txn = await ctx.Database.BeginTransactionAsync(stoppingToken);
+            try
             {
-                var evt = new OutboxDomainEvent(msg.Id, msg.OccurredOn, msg.Type, msg.Payload);
-                await _bus.PublishAsync(evt);
-                msg.ProcessedAt = DateTime.UtcNow;
+                var messages = await ctx.OutboxMessages
+                                        .FromSqlRaw(@"
+                                            SELECT TOP 50 * FROM Outbox WITH (UPDLOCK, ROWLOCK)
+                                            WHERE ProcessedAt IS NULL
+                                            ORDER BY OccurredOn")
+                                        .ToListAsync(stoppingToken);
+
+                foreach (var msg in messages)
+                {
+                    try
+                    {
+                        var evt = new OutboxDomainEvent(msg.Id, msg.OccurredOn, msg.Type, msg.Payload);
+                        await _bus.PublishAsync(evt);
+                        msg.ProcessedAt = DateTime.UtcNow;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Failed to publish outbox message {MessageId}", msg.Id);
+                        throw;
+                    }
+                }
+
+                if (messages.Count > 0)
+                {
+                    await ctx.SaveChangesAsync(stoppingToken);
+                    await txn.CommitAsync(stoppingToken);
+                    _logger.LogInformation("Dispatched {Count} outbox messages", messages.Count);
+                }
+                else
+                {
+                    await txn.RollbackAsync(stoppingToken);
+                }
             }
-
-            if (messages.Count > 0)
+            catch (Exception ex)
             {
-                await ctx.SaveChangesAsync(stoppingToken);
-                _logger.LogInformation("Dispatched {Count} outbox messages", messages.Count);
+                await txn.RollbackAsync(stoppingToken);
+                _logger.LogError(ex, "Error processing outbox messages");
             }
 
             await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);

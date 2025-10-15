@@ -17,6 +17,7 @@ public class AllocationRepository : IAllocationRepository
 
     public async Task AddAsync(Allocation allocation)
     {
+        if (allocation == null) throw new ArgumentNullException(nameof(allocation));
         await _ctx.Allocations.AddAsync(allocation);
     }
 

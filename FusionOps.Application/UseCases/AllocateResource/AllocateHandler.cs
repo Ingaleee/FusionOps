@@ -19,6 +19,10 @@ public class AllocateHandler : IRequestHandler<AllocateCommand, IReadOnlyCollect
 
     public async Task<IReadOnlyCollection<Guid>> Handle(AllocateCommand request, CancellationToken cancellationToken)
     {
+        if (request == null) throw new ArgumentNullException(nameof(request));
+        if (request.ResourceIds == null || request.ResourceIds.Count == 0)
+            throw new ArgumentException("ResourceIds cannot be null or empty", nameof(request));
+
         var period = new TimeRange(new DateTimeOffset(request.PeriodFrom, TimeSpan.Zero), new DateTimeOffset(request.PeriodTo, TimeSpan.Zero));
         var resultIds = new List<Guid>();
 

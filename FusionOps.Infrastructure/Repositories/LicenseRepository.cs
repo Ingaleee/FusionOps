@@ -16,13 +16,12 @@ public sealed class LicenseRepository : ILicenseRepository
     public async Task AddAsync(LicensePool pool, CancellationToken ct = default)
     {
         await _ctx.Set<LicensePool>().AddAsync(pool, ct);
-        await _ctx.SaveChangesAsync(ct);
     }
 
-    public async Task UpdateAsync(LicensePool pool, CancellationToken ct = default)
+    public Task UpdateAsync(LicensePool pool, CancellationToken ct = default)
     {
         _ctx.Update(pool);
-        await _ctx.SaveChangesAsync(ct);
+        return Task.CompletedTask;
     }
 
     public async Task<IReadOnlyCollection<LicensePool>> GetAllAsync(CancellationToken ct = default)

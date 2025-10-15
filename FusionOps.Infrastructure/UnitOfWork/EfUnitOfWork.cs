@@ -32,6 +32,11 @@ public class EfUnitOfWork : IUnitOfWork
             await _fulfillment.SaveChangesAsync();
             await _txn.CommitAsync();
         }
+        catch
+        {
+            await _txn.RollbackAsync();
+            throw;
+        }
         finally
         {
             await _txn.DisposeAsync();
