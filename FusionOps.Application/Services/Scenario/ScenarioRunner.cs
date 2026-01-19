@@ -2,7 +2,6 @@ using FusionOps.Application.UseCases.Scenario;
 using FusionOps.Domain.Entities;
 using FusionOps.Domain.Interfaces;
 using FusionOps.Domain.Services;
-using FusionOps.Application.Services.Costing;
 
 namespace FusionOps.Application.Services.Scenario;
 
@@ -75,8 +74,9 @@ public class ScenarioRunner : IScenarioRunner
         // 5. Calculate costs using CostEngine
         // This will require iterating over optimizedAllocations and potentially other scenario data.
         // For now, we'll just sum up some conceptual costs.
-        var laborCost = _costEngine.ForAllocation(scenarioHumanResources.FirstOrDefault()!, command.From, command.To); // Simplified, assuming not null
-        var equipmentCost = _costEngine.ForEquipment(scenarioEquipmentResources.FirstOrDefault()!, command.From, command.To); // Simplified, assuming not null
+        var period = new FusionOps.Domain.ValueObjects.TimeRange(command.From, command.To);
+        var laborCost = _costEngine.ForAllocation(scenarioHumanResources.FirstOrDefault()!, period); // Simplified, assuming not null
+        var equipmentCost = _costEngine.ForEquipment(scenarioEquipmentResources.FirstOrDefault()!, period); // Simplified, assuming not null
         var backorderQuantity = 0; // Placeholder for actual calculation after optimization
         var backorderPenalty = _costEngine.ForBackorder("sample_sku", backorderQuantity, 5); // Placeholder
         var licenseViolations = 0; // Placeholder for actual calculation after optimization

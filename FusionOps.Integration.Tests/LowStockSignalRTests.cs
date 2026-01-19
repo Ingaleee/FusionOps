@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
+namespace FusionOps.Integration.Tests;
+
 public class LowStockSignalRTests : IAsyncLifetime
 {
     private readonly TestcontainersContainer _pgContainer;
@@ -79,4 +81,4 @@ public class LowStockSignalRTests : IAsyncLifetime
         // Assert
         Assert.Equal(5, _lowStockQty);
     }
-} 
+}

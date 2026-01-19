@@ -66,7 +66,7 @@ public static class ServiceCollectionExtensions
             .ValidateDataAnnotations()
             .ValidateOnStart();
         services.AddSingleton<ICostEngine, DefaultCostEngine>();
-        services.AddScoped<IScenarioRunner, ScenarioRunner>();
+        services.AddScoped<FusionOps.Application.Services.Scenario.IScenarioRunner, FusionOps.Application.Services.Scenario.ScenarioRunner>();
 
         return services;
     }

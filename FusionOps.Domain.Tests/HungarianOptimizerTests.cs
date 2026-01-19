@@ -11,7 +11,7 @@ namespace FusionOps.Domain.Tests;
 public class HungarianOptimizerTests
 {
     [Test]
-    public void AllocateAsync_ReturnsRequestedNumberOfAllocations()
+    public async Task AllocateAsync_ReturnsRequestedNumberOfAllocations()
     {
         // Arrange
         var humans = new List<HumanResource>
@@ -31,7 +31,7 @@ public class HungarianOptimizerTests
         var optimizer = new HungarianOptimizerStrategy();
 
         // Act
-        var result = optimizer.AllocateAsync(humans, equipment, requiredHumans: 2, requiredEquipment: 2).Result;
+        var result = await optimizer.AllocateAsync(humans, equipment, requiredHumans: 2, requiredEquipment: 2);
 
         // Assert
         Assert.That(result.Count, Is.EqualTo(4));
