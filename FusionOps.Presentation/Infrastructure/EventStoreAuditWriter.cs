@@ -4,10 +4,13 @@ using FusionOps.Domain.Events;
 
 namespace FusionOps.Presentation.Infrastructure;
 
+/// <summary>
+/// PLACEHOLDER: EventStore audit writer implementation.
+/// In this environment, EventStore client is optional; use a minimal no-op fallback if missing.
+/// TODO: Implement actual EventStoreDB write logic when EventStore client is configured.
+/// </summary>
 public sealed class EventStoreAuditWriter : IAuditWriter
 {
-    // In this environment, EventStore client is optional; use a minimal no-op fallback if missing
-
     public EventStoreAuditWriter()
     {
     }
@@ -18,7 +21,7 @@ public sealed class EventStoreAuditWriter : IAuditWriter
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
-        // no-op write in this environment
+        // PLACEHOLDER: no-op write in this environment
         await Task.CompletedTask;
     }
 }

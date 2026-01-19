@@ -24,7 +24,7 @@ public class AllocateHandler : IRequestHandler<AllocateCommand, IReadOnlyCollect
 
         foreach (var resourceId in request.ResourceIds)
         {
-            var existing = await _allocationRepo.FindForResourceAsync(resourceId);
+            var existing = await _allocationRepo.FindForResourceWithLockAsync(resourceId, cancellationToken);
             var allocation = Allocation.Reserve(resourceId, request.ProjectId, period, existing);
             await _allocationRepo.AddAsync(allocation);
             resultIds.Add(allocation.Id);

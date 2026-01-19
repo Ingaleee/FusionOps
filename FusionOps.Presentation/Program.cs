@@ -10,6 +10,7 @@ using FusionOps.Presentation.Middleware;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using FusionOps.Presentation.Realtime;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -119,5 +120,44 @@ app.MapHub<NotificationHub>("/hubs/notify");
 app.UseMiddleware<CorrelationMiddleware>();
 app.UseMiddleware<UserContextEnricher>();
 app.UseMiddleware<ExceptionMiddleware>();
+
+// Ensure database constraints are applied on startup
+using (var scope = app.Services.CreateScope())
+{
+    var workforce = scope.ServiceProvider.GetRequiredService<WorkforceContext>();
+    try
+    {
+        // Apply overlap prevention trigger if not exists
+        var sql = @"
+            IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'fn_CheckAllocationOverlap' AND type = 'FN')
+            BEGIN
+                EXEC('CREATE FUNCTION fn_CheckAllocationOverlap(@ResourceId UNIQUEIDENTIFIER, @PeriodStart DATETIMEOFFSET, @PeriodEnd DATETIMEOFFSET, @ExcludeAllocationId UNIQUEIDENTIFIER = NULL)
+                RETURNS BIT AS BEGIN
+                    DECLARE @HasOverlap BIT = 0;
+                    IF EXISTS (SELECT 1 FROM Allocations WHERE ResourceId = @ResourceId AND Id != ISNULL(@ExcludeAllocationId, ''00000000-0000-0000-0000-000000000000'') AND @PeriodStart < PeriodEnd AND PeriodStart < @PeriodEnd)
+                        SET @HasOverlap = 1;
+                    RETURN @HasOverlap;
+                END');
+            END
+            
+            IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'trg_PreventAllocationOverlap' AND type = 'TR')
+            BEGIN
+                EXEC('CREATE TRIGGER trg_PreventAllocationOverlap ON Allocations AFTER INSERT, UPDATE AS BEGIN
+                    SET NOCOUNT ON;
+                    IF EXISTS (SELECT 1 FROM inserted i CROSS APPLY (SELECT fn_CheckAllocationOverlap(i.ResourceId, i.PeriodStart, i.PeriodEnd, i.Id) AS HasOverlap) check_overlap WHERE check_overlap.HasOverlap = 1)
+                    BEGIN
+                        RAISERROR(''Allocation overlap detected'', 16, 1);
+                        ROLLBACK TRANSACTION;
+                        RETURN;
+                    END
+                END');
+            END";
+        workforce.Database.ExecuteSqlRaw(sql);
+    }
+    catch
+    {
+        // Ignore if already exists or database not ready
+    }
+}
 
 app.Run();

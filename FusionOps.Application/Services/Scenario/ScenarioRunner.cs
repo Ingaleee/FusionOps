@@ -35,12 +35,20 @@ public class ScenarioRunner : IScenarioRunner
 
     public async Task<ScenarioResultDto> RunScenario(RunScenarioCommand command, CancellationToken cancellationToken)
     {
-        // 1. Load data from repositories (or use in-memory copies)
-        var currentAllocations = (await _allocationRepository.GetAllAsync(cancellationToken)).ToList();
-        var currentStockItems = (await _stockRepository.GetAllAsync(cancellationToken)).ToList();
-        var currentLicensePools = (await _licenseRepository.GetAllAsync(cancellationToken)).ToList();
-        var currentHumanResources = (await _humanResourceRepository.GetAllAsync(cancellationToken)).ToList();
-        var currentEquipmentResources = (await _equipmentResourceRepository.GetAllAsync(cancellationToken)).ToList();
+        // 1. Load data from repositories in parallel (or use in-memory copies)
+        var allocationsTask = _allocationRepository.GetAllAsync(cancellationToken);
+        var stockItemsTask = _stockRepository.GetAllAsync(cancellationToken);
+        var licensePoolsTask = _licenseRepository.GetAllAsync(cancellationToken);
+        var humanResourcesTask = _humanResourceRepository.GetAllAsync(cancellationToken);
+        var equipmentResourcesTask = _equipmentResourceRepository.GetAllAsync(cancellationToken);
+
+        await Task.WhenAll(allocationsTask, stockItemsTask, licensePoolsTask, humanResourcesTask, equipmentResourcesTask);
+
+        var currentAllocations = allocationsTask.Result.ToList();
+        var currentStockItems = stockItemsTask.Result.ToList();
+        var currentLicensePools = licensePoolsTask.Result.ToList();
+        var currentHumanResources = humanResourcesTask.Result.ToList();
+        var currentEquipmentResources = equipmentResourcesTask.Result.ToList();
 
         // 2. Create in-memory copies for the "sandbox"
         var scenarioAllocations = new List<Allocation>(currentAllocations);

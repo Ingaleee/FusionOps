@@ -32,6 +32,17 @@ public class AllocationRepository : IAllocationRepository
             .ToListAsync();
     }
 
+    public async Task<IReadOnlyCollection<Allocation>> FindForResourceWithLockAsync(Guid resourceId, CancellationToken cancellationToken)
+    {
+        // Use UPDLOCK, ROWLOCK to prevent race conditions when checking for overlaps
+        var sql = @"
+            SELECT * FROM Allocations WITH (UPDLOCK, ROWLOCK)
+            WHERE ResourceId = {0}";
+        return await _ctx.Allocations
+            .FromSqlRaw(sql, resourceId)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IReadOnlyCollection<Allocation>> FindFreeAsync(TimeRange period)
     {
         // Allocations that DO NOT overlap with requested period

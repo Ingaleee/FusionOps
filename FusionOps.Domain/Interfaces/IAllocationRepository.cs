@@ -16,6 +16,7 @@ public interface IAllocationRepository
     Task AddAsync(Allocation allocation);
     Task<Allocation?> GetAsync(AllocationId id);
     Task<IReadOnlyCollection<Allocation>> FindForResourceAsync(Guid resourceId);
+    Task<IReadOnlyCollection<Allocation>> FindForResourceWithLockAsync(Guid resourceId, CancellationToken cancellationToken);
     Task<IReadOnlyCollection<Allocation>> FindFreeAsync(TimeRange period);
     Task<IReadOnlyCollection<Allocation>> GetAllAsync(CancellationToken cancellationToken);
 }
