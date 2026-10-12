@@ -82,6 +82,8 @@ public sealed partial class ReliabilityTests
         await workforce.OutboxMessages.ExecuteDeleteAsync();
         await workforce.Allocations.ExecuteDeleteAsync();
         await workforce.CommandReceipts.ExecuteDeleteAsync();
+        await workforce.PlanningQuotes.ExecuteDeleteAsync();
+        await workforce.ResourceCatalog.ExecuteDeleteAsync();
         await fulfillment.OutboxMessages.ExecuteDeleteAsync();
         await fulfillment.Set<WorkflowEffectReceipt>().ExecuteDeleteAsync();
         await fulfillment.Set<ReservationWorkflow>().ExecuteDeleteAsync();
@@ -106,6 +108,7 @@ public sealed partial class ReliabilityTests
     private async Task<IReadOnlyCollection<Guid>> ExecuteIdempotentAsync(AllocateCommand command, string actor = "tester",
         bool injectCommitFailure = false, Action? onHandler = null)
     {
+        await EnsureCatalogAsync(command.ResourceIds);
         await using var workforce = Workforce();
         await using var fulfillment = Fulfillment();
         var execution = new TestExecutionContext(actor);
@@ -233,6 +236,7 @@ public sealed partial class ReliabilityTests
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Add("Idempotency-Key", "http-retry-key");
         var command = new { projectId = Guid.NewGuid(), resourceIds = new[] { Guid.NewGuid() }, periodFrom = Period.Start, periodTo = Period.End };
+        await EnsureCatalogAsync(command.resourceIds);
         using var first = await client.PostAsJsonAsync("/api/v1/allocate", command);
         Assert.That(first.StatusCode, Is.EqualTo(HttpStatusCode.Created), await first.Content.ReadAsStringAsync());
         var originalResponse = await first.Content.ReadAsStringAsync();
@@ -298,6 +302,7 @@ public sealed partial class ReliabilityTests
     public async Task TwoConcurrentReservationsOnAnEmptyCalendarProduceOneWinnerAndOneOutboxEvent()
     {
         var resource = Guid.NewGuid();
+        await EnsureCatalogAsync([resource]);
         var ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var participants = 0;
         using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(40));
@@ -328,11 +333,13 @@ public sealed partial class ReliabilityTests
     [Test]
     public async Task FailedCommitRollsBackStateAndOutboxWithoutClearingTheOriginalEvent()
     {
+        var resource = Guid.NewGuid();
+        await EnsureCatalogAsync([resource]);
         await using var workforce = Workforce();
         await using var fulfillment = Fulfillment();
         var work = new EfUnitOfWork(workforce, fulfillment, new TestExecutionContext(new string('x', 300)));
         await work.BeginAsync(PersistenceBoundary.Workforce);
-        var allocation = Allocation.Reserve(Guid.NewGuid(), Guid.NewGuid(), Period, []);
+        var allocation = Allocation.Reserve(resource, Guid.NewGuid(), Period, []);
         workforce.Allocations.Add(allocation);
         Assert.ThrowsAsync<DbUpdateException>(() => work.CommitAsync());
         await work.RollbackAsync();

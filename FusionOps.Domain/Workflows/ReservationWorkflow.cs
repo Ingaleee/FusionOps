@@ -4,6 +4,7 @@ using FusionOps.Domain.Events;
 using FusionOps.Domain.Shared;
 using FusionOps.Domain.Shared.Interfaces;
 using FusionOps.Domain.ValueObjects;
+using FusionOps.Domain.Services.Planning;
 
 namespace FusionOps.Domain.Workflows;
 
@@ -24,6 +25,7 @@ public sealed class ReservationWorkflow : IHasDomainEvents
     public IReadOnlyCollection<LicenseRequirement> Licenses => _licenses.AsReadOnly();
     public IReadOnlyCollection<WorkflowTransition> Transitions => _transitions.AsReadOnly();
     public string SpecificationHash { get; private set; } = string.Empty;
+    public PlanningQuoteBinding? Quote { get; private set; }
     public string SubmittedBy { get; private set; } = string.Empty;
     public string? ApprovedBy { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
@@ -67,7 +69,7 @@ public sealed class ReservationWorkflow : IHasDomainEvents
             Id = id, ProjectId = specification.ProjectId, Period = specification.Period,
             _resourceIds = specification.ResourceIds.Order().ToArray(), SubmittedBy = actor,
             CreatedAt = now.ToUniversalTime(), CompletionTimeoutSeconds = specification.CompletionTimeoutSeconds,
-            State = WorkflowState.AwaitingApproval
+            State = WorkflowState.AwaitingApproval, Quote = specification.Quote
         };
         workflow._licenses.AddRange(specification.Licenses.OrderBy(l => l.Product, StringComparer.Ordinal));
         workflow.SpecificationHash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new
@@ -75,6 +77,14 @@ public sealed class ReservationWorkflow : IHasDomainEvents
             workflow.ProjectId, ResourceIds = workflow._resourceIds, From = workflow.Period.Start.UtcTicks,
             To = workflow.Period.End.UtcTicks, Licenses = workflow._licenses, workflow.CompletionTimeoutSeconds
         })));
+        if (workflow.Quote is { } quote)
+        {
+            if (quote.Id == Guid.Empty || quote.Digest is not { Length: 64 } || !quote.Digest.All(char.IsAsciiHexDigit)
+                || quote.TotalCost.Amount < 0 || !FusionOps.Domain.Enumerations.Currency.All.Contains(quote.TotalCost.Currency))
+                throw new DomainException("The quote binding is invalid");
+            // Leave historical unquoted workflow fingerprints unchanged.
+            workflow.SpecificationHash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { workflow.SpecificationHash, Quote = quote })));
+        }
         workflow.Record(null, actor, "proposed", now);
         return workflow;
     }

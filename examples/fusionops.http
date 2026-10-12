@@ -13,7 +13,19 @@ X-Correlation-Id: portfolio-specialist-plan
 
 < ./specialist-plan.json
 
-### Reserve the resulting resources in full mode
+### Full mode requires registered resources; preview IDs alone carry no authority
+POST {{base}}/api/v1/catalog/resources
+Content-Type: application/json
+
+{"id":"30000000-0000-0000-0000-000000000001","name":"Specialist","kind":"Human","hourlyRate":20,"currency":"USD","skills":{"csharp":5}}
+
+### Register the second candidate
+POST {{base}}/api/v1/catalog/resources
+Content-Type: application/json
+
+{"id":"30000000-0000-0000-0000-000000000002","name":"General engineer","kind":"Human","hourlyRate":10,"currency":"USD","skills":{}}
+
+### Reserve catalog resources in full mode; use workflows.http for a price-reviewed quote
 POST {{base}}/api/v1/allocate
 Content-Type: application/json
 X-Correlation-Id: portfolio-reservation

@@ -43,6 +43,15 @@ public sealed class ReservationWorkflowConfig : IEntityTypeConfiguration<Reserva
             l.Property(r => r.Product).HasMaxLength(128);
             l.HasKey("WorkflowId", nameof(LicenseRequirement.Product));
         });
+        b.OwnsOne(w => w.Quote, q =>
+        {
+            q.Property(v => v.Id).HasColumnName("QuoteId");
+            q.Property(v => v.Digest).HasColumnName("QuoteDigest").HasMaxLength(64);
+            q.Property(v => v.ExpiresAt).HasColumnName("QuoteExpiresAt");
+            q.Ignore(v => v.TotalCost);
+            q.Property(v => v.Amount).HasColumnName("QuoteAmount").HasColumnType("numeric");
+            q.Property(v => v.Currency).HasColumnName("QuoteCurrency").HasConversion(c => c.Value, c => FusionOps.Domain.Enumerations.Currency.FromValue(c));
+        });
         b.OwnsMany(w => w.Transitions, t =>
         {
             t.ToTable("workflow_transitions");

@@ -11,6 +11,7 @@ FusionOps answers two operations questions: **which feasible assignment costs le
 | Capability | Engineering evidence |
 | --- | --- |
 | Optimal, explainable assignment | Rectangular Hungarian solver; forbidden edges; skill/calendar/type constraints; primal/dual objective; 300 seeded cases checked against exhaustive search |
+| Authoritative commercial planning | Persisted versioned catalog and skills; immutable database quotes; exact reviewed price; atomic acceptance checks revision, calendar, expiry and one-time consumption |
 | Concurrent reservation | Transaction starts before the decision; empty-calendar range locks; sorted lock acquisition; conflict response 409 |
 | Safe HTTP retries | Durable actor/operation-scoped idempotency receipts; canonical command fingerprint; original response replay; state/outbox/receipt share a commit |
 | Approved cross-store reservation | Immutable proposals, ETag/If-Match approval, separate production approver, resource + license saga and ownership-preserving compensation |
@@ -39,7 +40,7 @@ Invoke-RestMethod http://localhost:5121/api/v1/planning/preview -Method Post -Co
 
 The example has a general slot and a C# specialist slot. The cheapest expert is already booked. The solver assigns the available specialist to the specialist slot and the general operator to the general slot. Expected total: **USD 60 for two hours**, complete plan, matching primal and dual objective. Rejections explain the excluded candidates.
 
-Planning previews use a caller-supplied snapshot and have no persistence side effects. [HTTP examples](examples/fusionops.http) also cover reservation and repeat-conflict behavior.
+Planning previews use a caller-supplied snapshot and have no persistence side effects. Full-mode reservations require registered catalog resources. [HTTP examples](examples/fusionops.http) cover catalog registration and reservation retry behavior; [authoritative quotes](docs/authoritative-planning.md) explain the commercial workflow.
 
 ## Run reservations and audit locally
 
@@ -64,7 +65,7 @@ With the full Development API running:
 pwsh -File examples/workflow-demo.ps1
 ```
 
-The walkthrough reserves workforce in SQL Server and licenses in PostgreSQL, cancels a successful reservation, then demonstrates compensation after insufficient license capacity. Each run creates its own identifiers. The background worker progresses approved proposals without manual dispatch.
+The walkthrough registers catalog resources, calculates a database-backed USD 100 quote, reserves workforce in SQL Server and licenses in PostgreSQL, cancels a successful reservation, then demonstrates compensation after insufficient license capacity. Each run creates its own identifiers. The background worker progresses approved proposals without manual dispatch.
 
 Workflow HTTP mutations require the current ETag in If-Match. Production workflow access requires both Resource.Manager and License.Manager; approval requires a different actor from the proposer. Confirmed participant rejection is retained, so a delayed worker cannot create a new reservation after compensation just because capacity became available. Ambiguous failures retry the original step and can pause for operator attention.
 
@@ -76,6 +77,10 @@ See [workflow operations and API contract](docs/reservation-workflows.md), [HTTP
 flowchart LR
     Client[REST client] --> Plan[Pure resource planner]
     Plan --> Solver[Hungarian solver + dual certificate]
+    Client --> Quote[Authoritative quote + commercial evidence]
+    Quote --> Catalog[(SQL catalog + skills + revisions)]
+    Quote --> Solver
+    Quote --> Workflow
     Client --> Pipeline[Validation / command transaction]
     Client --> Workflow[Proposal / versioned approval]
     Workflow --> Coordinator[(PostgreSQL workflow + history)]
@@ -119,8 +124,8 @@ $env:DOCKER_HOST = docker context inspect --format '{{.Endpoints.docker.Host}}'
 
 ## Scope and next milestones
 
-Implemented: single-horizon assignment, reservation conflict control, durable reservation idempotency keys, approved workforce/license saga with compensation, participant effect inbox, fenced worker claims, versioned transition history, operator resume, transactional outboxes, original typed contracts, durable audit and checkpointed allocation history.
+Implemented: single-horizon assignment, persisted resource catalog/skills, immutable authoritative quotes, atomic one-time acceptance with freshness checks, reservation conflict control, durable reservation idempotency keys, approved workforce/license saga with compensation, participant effect inbox, fenced worker claims, versioned transition history, operator resume, transactional outboxes, original typed contracts, durable audit and checkpointed allocation history.
 
-Planned: catalog/tenant enforcement, general broker consumer inbox, stock shipping saga, outbox replay API, authoritative planning snapshots, multi-period scheduling, SLOs and reproducible performance reports. The legacy MassTransit saga contracts, ML experiment, performance runner and deployment/chaos manifests remain exploratory material. The legacy `FusionOps.EventStore.IntegrationTests` directory is superseded by the active reliability suite. SignalR cannot deliver to disconnected clients, and API reservation locks do not govern direct SQL writers.
+Planned: tenant/project ownership, general broker consumer inbox, stock shipping saga, outbox replay API, multi-period scheduling, SLOs and reproducible performance reports. The legacy MassTransit saga contracts, ML experiment, performance runner and deployment/chaos manifests remain exploratory material. The legacy `FusionOps.EventStore.IntegrationTests` directory is superseded by the active reliability suite. SignalR cannot deliver to disconnected clients, and API reservation locks do not govern direct SQL writers.
 
-Resource IDs are caller-managed in this increment; catalog existence and tenant ownership are not enforced. No throughput or production readiness claim is made without a measured report. [Source audit and delivery roadmap](docs/engineering-roadmap.md) records the gaps and acceptance criteria for the next increments.
+New bookings require active catalog resources; public workflows derive their resources and reviewed price from persisted quotes. The catalog is currently shared: tenant and project ownership are not enforced. No throughput or production readiness claim is made without a measured report. [Source audit and delivery roadmap](docs/engineering-roadmap.md) records the gaps and acceptance criteria for the next increments.

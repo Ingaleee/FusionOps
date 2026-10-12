@@ -15,7 +15,7 @@ public static class DomainEventSerializer
     {
         typeof(ResourceAllocated), typeof(ResourceAllocationCancelled), typeof(StockReplenished),
         typeof(ReorderPointReached), typeof(LicenseSeatsAllocated), typeof(LicenseViolationDetected),
-        typeof(LicenseSeatsReleased), typeof(ReservationWorkflowChanged)
+        typeof(LicenseSeatsReleased), typeof(ReservationWorkflowChanged), typeof(CatalogResourceChanged)
     }.ToDictionary(GetName);
 
     public static string GetName(Type type) =>

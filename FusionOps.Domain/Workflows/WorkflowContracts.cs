@@ -1,4 +1,5 @@
 using FusionOps.Domain.ValueObjects;
+using FusionOps.Domain.Services.Planning;
 
 namespace FusionOps.Domain.Workflows;
 
@@ -13,7 +14,7 @@ public enum StepResultKind { Succeeded, Rejected, Retry }
 
 public sealed record LicenseRequirement(string Product, int Seats);
 public sealed record ReservationSpecification(Guid ProjectId, IReadOnlyList<Guid> ResourceIds, TimeRange Period,
-    IReadOnlyList<LicenseRequirement> Licenses, int CompletionTimeoutSeconds = 300);
+    IReadOnlyList<LicenseRequirement> Licenses, int CompletionTimeoutSeconds = 300, PlanningQuoteBinding? Quote = null);
 public sealed record WorkflowTransition(long Version, WorkflowState? From, WorkflowState To,
     string Actor, string Reason, DateTimeOffset At);
 public sealed record WorkflowStepResult(StepResultKind Kind, IReadOnlyList<Guid>? AllocationIds = null, string? Code = null)

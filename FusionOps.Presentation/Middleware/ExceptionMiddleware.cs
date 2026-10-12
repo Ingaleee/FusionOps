@@ -7,6 +7,8 @@ using Microsoft.Extensions.Logging;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
 using FusionOps.Domain.Workflows;
+using FusionOps.Domain.Catalog;
+using FusionOps.Domain.Services.Planning;
 
 namespace FusionOps.Presentation.Middleware;
 
@@ -30,6 +32,18 @@ public class ExceptionMiddleware
         catch (WorkflowVersionException ex)
         {
             await WriteProblem(context, HttpStatusCode.PreconditionFailed, "workflow_version_mismatch", ex.Message);
+        }
+        catch (CatalogVersionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.PreconditionFailed, "catalog_version_mismatch", ex.Message);
+        }
+        catch (ResourceAdmissionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, ex.Code, ex.Message);
+        }
+        catch (QuoteAdmissionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, ex.Code, ex.Message);
         }
         catch (WorkflowApprovalException ex)
         {

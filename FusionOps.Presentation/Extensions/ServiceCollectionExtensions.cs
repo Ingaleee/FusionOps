@@ -18,6 +18,8 @@ using Microsoft.Extensions.Options;
 using FusionOps.Infrastructure.Persistence.Postgres.Configurations;
 using FusionOps.Application.Workflows;
 using FusionOps.Infrastructure.Workflows;
+using FusionOps.Application.Planning;
+using FusionOps.Infrastructure.Planning;
 
 namespace FusionOps.Presentation.Extensions;
 
@@ -39,6 +41,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ILicenseWorkflowParticipant, PostgresLicenseWorkflowParticipant>();
         services.AddScoped<ReservationWorkflowService>();
         services.AddScoped<ReservationWorkflowRunner>();
+        services.AddScoped<IResourceCatalogStore, SqlResourceCatalogStore>();
+        services.AddScoped<IPlanningQuoteStore, SqlPlanningQuoteStore>();
         services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
         services.AddSingleton<IStockForecaster, FusionOps.Infrastructure.Optimizers.MlNetOptimizer>();
 

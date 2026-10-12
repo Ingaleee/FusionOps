@@ -40,6 +40,7 @@ public sealed partial class ReliabilityTests
 
     private async Task<ReservationWorkflow> ProposeAndApprove(Guid project, Guid[] resources, LicenseRequirement[] requirements)
     {
+        await EnsureCatalogAsync(resources);
         var proposal = ReservationWorkflow.Propose(Guid.NewGuid(), new(project, resources, Period, requirements), "proposer", DateTimeOffset.UtcNow);
         await WorkflowStore().CreateAsync(proposal, default);
         return (await WorkflowStore().MutateAsync(proposal.Id, 1, WorkflowMutation.Approve, "reviewer", true, default))!;
@@ -290,8 +291,8 @@ public sealed partial class ReliabilityTests
     {
         await using var factory = new ReservationFactory(_workforceOptions, _fulfillmentOptions);
         using var client = factory.CreateClient();
-        var proposal = new { workflowId = Guid.NewGuid(), projectId = Guid.NewGuid(), resourceIds = new[] { Guid.NewGuid() },
-            periodFrom = Period.Start, periodTo = Period.End, licenses = Array.Empty<LicenseRequirement>() };
+        var quote = await CreateQuoteAsync();
+        var proposal = new { workflowId = Guid.NewGuid(), quoteId = quote.Id, licenses = Array.Empty<LicenseRequirement>() };
         using var created = await client.PostAsJsonAsync("/api/v1/workflows", proposal);
         Assert.That(created.StatusCode, Is.EqualTo(HttpStatusCode.Created), await created.Content.ReadAsStringAsync());
         Assert.That(created.Headers.ETag!.Tag, Is.EqualTo("\"1\""));
@@ -301,7 +302,7 @@ public sealed partial class ReliabilityTests
         Assert.That(replay.Headers.ETag, Is.EqualTo(created.Headers.ETag));
         await using var sql = Workforce();
         Assert.That(await sql.Allocations.CountAsync(), Is.Zero, "Proposal alone must not reserve resources");
-        using var conflicting = await client.PostAsJsonAsync("/api/v1/workflows", proposal with { projectId = Guid.NewGuid() });
+        using var conflicting = await client.PostAsJsonAsync("/api/v1/workflows", proposal with { quoteId = (await CreateQuoteAsync()).Id });
         Assert.That(conflicting.StatusCode, Is.EqualTo(HttpStatusCode.Conflict));
         using var missing = await client.PostAsync($"{location}/approve", null);
         Assert.That((int)missing.StatusCode, Is.EqualTo(428));
@@ -418,10 +419,10 @@ public sealed partial class ReliabilityTests
         await using var factory = new ReservationFactory(_workforceOptions, _fulfillmentOptions, runWorkflowWorker: true);
         using var client = factory.CreateClient();
         var id = Guid.NewGuid();
+        var quote = await CreateQuoteAsync();
         using var created = await client.PostAsJsonAsync("/api/v1/workflows", new
         {
-            workflowId = id, projectId = Guid.NewGuid(), resourceIds = new[] { Guid.NewGuid() },
-            periodFrom = Period.Start, periodTo = Period.End, licenses = new[] { new LicenseRequirement(product, 2) }
+            workflowId = id, quoteId = quote.Id, licenses = new[] { new LicenseRequirement(product, 2) }
         });
         Assert.That(created.StatusCode, Is.EqualTo(HttpStatusCode.Created), await created.Content.ReadAsStringAsync());
         using var approve = new HttpRequestMessage(HttpMethod.Post, $"/api/v1/workflows/{id}/approve");

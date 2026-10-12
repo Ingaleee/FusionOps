@@ -4,6 +4,7 @@ using FusionOps.Domain.Shared.Ids;
 using FusionOps.Domain.ValueObjects;
 using FusionOps.Infrastructure.Persistence.SqlServer;
 using Microsoft.EntityFrameworkCore;
+using FusionOps.Infrastructure.Planning;
 
 namespace FusionOps.Infrastructure.Repositories;
 
@@ -33,10 +34,12 @@ public class AllocationRepository : IAllocationRepository
             .ToListAsync();
     }
 
-    public async Task<IReadOnlyCollection<Allocation>> FindForResourceWithLockAsync(Guid resourceId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyCollection<Allocation>> FindForResourceWithLockAsync(Guid resourceId, CancellationToken cancellationToken, bool requireActive = true)
     {
         if (_ctx.Database.CurrentTransaction is null)
             throw new InvalidOperationException("Reservation checks require an active transaction");
+
+        await CatalogLocks.RequireAsync(_ctx, resourceId, requireActive, cancellationToken);
 
         // HOLDLOCK protects the index key range even when this resource has no bookings yet.
         var sql = @"

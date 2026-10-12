@@ -104,6 +104,8 @@ if (!demoMode)
         await scope.ServiceProvider.GetRequiredService<FulfillmentContext>().Database.MigrateAsync();
     }
     app.MapWorkforceEndpoints();
+    app.MapCatalogEndpoints();
+    app.MapPlanningQuoteEndpoints();
     app.MapWorkflowEndpoints();
     app.MapStockEndpoints();
     app.MapLicenseEndpoints();

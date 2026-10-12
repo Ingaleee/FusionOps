@@ -130,5 +130,5 @@ public sealed class PostgresReservationWorkflowStore(IDbContextFactory<Fulfillme
     }
 
     private static IQueryable<ReservationWorkflow> Query(FulfillmentContext context) => context.Set<ReservationWorkflow>()
-        .Include(w => w.Licenses).Include(w => w.Transitions).AsSplitQuery();
+        .Include(w => w.Licenses).Include(w => w.Transitions).Include(w => w.Quote).AsSplitQuery();
 }

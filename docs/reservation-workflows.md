@@ -27,7 +27,9 @@ The [HTTP requests](../examples/workflows.http) expose each operation separately
 
 Mutation requires one strong quoted numeric ETag in If-Match. A missing condition returns 428, malformed input 400 and a stale version 412. A same-ID/same-proposer/same-specification submission returns the persisted current proposal. Changed meaning or proposer under the same ID returns 409. A lost mutation response is resolved by GET and its new version; approval is never silently repeated against a different reviewed version.
 
-The specification canonicalizes resource and product order and UTC-equivalent times. It permits 1–100 unique resource IDs, up to 20 distinct license products, positive bounded seat quantities and a 30–3600 second completion window. It is a selected reservation specification. The caller-supplied planning preview is not an authoritative catalog quote.
+Public proposals take workflowId, quoteId, licenses and completionTimeoutSeconds. The stored authoritative quote supplies project, period, resources and reviewed workforce price; its identity/digest enter the specification hash. Quote acceptance checks metadata revisions, calendar, expiry and one-time consumption at the SQL commit boundary. See [catalog and quote contract](authoritative-planning.md). Existing unquoted workflows remain recoverable, but the public API requires a quote.
+
+The specification canonicalizes resource and product order and UTC-equivalent times. It permits up to 20 distinct license products, positive bounded seat quantities and a 30–3600 second completion window. Quote expiry and workflow completion deadline are separate: approval can succeed but later acceptance can reject an expired quote.
 
 ## Execution and recovery
 

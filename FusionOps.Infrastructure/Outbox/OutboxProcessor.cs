@@ -38,6 +38,7 @@ public sealed class OutboxProcessor(
                     ResourceAllocated e => e.AllocationId.Value,
                     ResourceAllocationCancelled e => e.AllocationId.Value,
                     ReservationWorkflowChanged e => e.WorkflowId,
+                    CatalogResourceChanged e => e.ResourceId,
                     StockReplenished e => e.WarehouseId.Value,
                     ReorderPointReached e => e.WarehouseId.Value,
                     _ => Guid.Empty

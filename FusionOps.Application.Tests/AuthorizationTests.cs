@@ -45,6 +45,8 @@ public sealed class AuthorizationTests
     [InlineData("/api/v1/stock/forecast?days=7")]
     [InlineData("/api/v1/licenses/compiler")]
     [InlineData("/api/v1/workflows/10000000-0000-0000-0000-000000000001")]
+    [InlineData("/api/v1/catalog/resources")]
+    [InlineData("/api/v1/planning/quotes/10000000-0000-0000-0000-000000000001")]
     [InlineData("/api/v1/audit/allocations/10000000-0000-0000-0000-000000000001")]
     public async Task ProductionReadEndpointsRejectAnonymousCallers(string route)
     {

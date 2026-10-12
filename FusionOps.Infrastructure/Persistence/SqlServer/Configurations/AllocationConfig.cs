@@ -1,6 +1,7 @@
 using FusionOps.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using FusionOps.Domain.Catalog;
 
 namespace FusionOps.Infrastructure.Persistence.SqlServer.Configurations;
 
@@ -34,6 +35,7 @@ public class AllocationConfig : IEntityTypeConfiguration<Allocation>
         builder.Property(a => a.ProjectId).IsRequired();
 
         builder.HasIndex(a => a.ResourceId);
+        builder.HasOne<CatalogResource>().WithMany().HasForeignKey(a => a.ResourceId).OnDelete(DeleteBehavior.Restrict);
         // Additional indexes can be configured in a migration later.
     }
 }

@@ -31,7 +31,7 @@ public sealed class CancelWorkflowResourcesHandler(IAllocationRepository allocat
         var found = 0;
         foreach (var resource in command.ResourceIds.Order())
         {
-            var calendar = await allocations.FindForResourceWithLockAsync(resource, ct);
+            var calendar = await allocations.FindForResourceWithLockAsync(resource, ct, requireActive: false);
             foreach (var allocation in calendar.Where(a => expectedIds.Contains(a.Id.Value)))
             {
                 if (allocation.ProjectId != command.ProjectId || allocation.Period != command.Period)

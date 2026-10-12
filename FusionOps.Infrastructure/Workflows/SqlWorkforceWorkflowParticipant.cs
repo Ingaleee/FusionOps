@@ -12,6 +12,9 @@ using FusionOps.Infrastructure.Repositories;
 using FusionOps.Infrastructure.UnitOfWork;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using FusionOps.Domain.Catalog;
+using FusionOps.Domain.Services.Planning;
+using FusionOps.Infrastructure.Planning;
 
 namespace FusionOps.Infrastructure.Workflows;
 
@@ -26,8 +29,10 @@ public sealed class SqlWorkforceWorkflowParticipant(IDbContextFactory<WorkforceC
             {
                 try
                 {
+                    var quote = workflow.Quote is null ? null : await SqlQuoteAcceptance.ValidateAsync(context, workflow, token);
                     var ids = await new AllocateHandler(new AllocationRepository(context)).Handle(
                         new AllocateCommand(workflow.ProjectId, workflow.ResourceIds, workflow.Period.Start, workflow.Period.End), token);
+                    if (quote is not null) quote.Consume(workflow.Id, await SqlQuoteAcceptance.DatabaseTimeAsync(context, token));
                     return WorkflowStepResult.Success(ids.ToArray());
                 }
                 catch (AllocationConflictException)
@@ -36,6 +41,16 @@ public sealed class SqlWorkforceWorkflowParticipant(IDbContextFactory<WorkforceC
                     // retain the transaction-owned logical/calendar locks and persist the rejection.
                     context.ChangeTracker.Clear();
                     return WorkflowStepResult.Rejected("resource_conflict");
+                }
+                catch (ResourceAdmissionException error)
+                {
+                    context.ChangeTracker.Clear();
+                    return WorkflowStepResult.Rejected(error.Code);
+                }
+                catch (QuoteAdmissionException error)
+                {
+                    context.ChangeTracker.Clear();
+                    return WorkflowStepResult.Rejected(error.Code);
                 }
             }, ct);
         if (result.Kind == StepResultKind.Rejected) throw new WorkflowStepRejectedException(result.Code!);

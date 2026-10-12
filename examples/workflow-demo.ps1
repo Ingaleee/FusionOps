@@ -20,10 +20,23 @@ function New-ApprovedWorkflow([string]$Product, [int]$Capacity) {
     Invoke-RestMethod "$taskBase/api/v1/licenses/$Product/pool?totalSeats=$Capacity" -Method Post -TimeoutSec 10 | Out-Null
     $taskId = [Guid]::NewGuid()
     $taskStart = [DateTimeOffset]::UtcNow.AddDays(1)
+    $taskStart = [DateTimeOffset]::new([long]([Math]::Floor($taskStart.UtcTicks / [decimal]10) * 10), [TimeSpan]::Zero)
+    $taskResources = @([Guid]::NewGuid(), [Guid]::NewGuid())
+    foreach ($taskResource in $taskResources) {
+        $taskCatalogBody = @{id=$taskResource; name="Engineer $taskResource"; kind='Human'; hourlyRate=25; currency='USD'; skills=@{csharp=4}} | ConvertTo-Json -Depth 4
+        Invoke-RestMethod "$taskBase/api/v1/catalog/resources" -Method Post -ContentType 'application/json' -Body $taskCatalogBody -TimeoutSec 10 | Out-Null
+    }
+    $taskQuoteBody = @{
+        projectId=[Guid]::NewGuid(); from=$taskStart.ToString('o'); to=$taskStart.AddHours(2).ToString('o'); currency='USD'
+        candidateIds=$taskResources; slots=@(
+            @{id=[Guid]::NewGuid(); name='Backend lead'; kind='Human'; requiredSkills=@{csharp=4}},
+            @{id=[Guid]::NewGuid(); name='Backend engineer'; kind='Human'; requiredSkills=@{csharp=4}}
+        )
+    } | ConvertTo-Json -Depth 6
+    $taskQuote = Invoke-RestMethod "$taskBase/api/v1/planning/quotes" -Method Post -ContentType 'application/json' -Body $taskQuoteBody -TimeoutSec 10
+    if (-not $taskQuote.evidence.result.isComplete -or $taskQuote.evidence.result.totalCost.amount -ne 100) { throw 'The authoritative quote is incorrect.' }
     $taskProposal = @{
-        workflowId = $taskId; projectId = [Guid]::NewGuid()
-        resourceIds = @([Guid]::NewGuid(), [Guid]::NewGuid())
-        periodFrom = $taskStart.ToString('o'); periodTo = $taskStart.AddHours(2).ToString('o')
+        workflowId = $taskId; quoteId = $taskQuote.id
         licenses = @(@{product = $Product; seats = 2}); completionTimeoutSeconds = 300
     } | ConvertTo-Json -Depth 5
     $taskCreated = Invoke-WebRequest "$taskBase/api/v1/workflows" -Method Post -ContentType 'application/json' -Body $taskProposal -TimeoutSec 10

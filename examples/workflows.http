@@ -1,5 +1,33 @@
 @base = http://localhost:5121
 @workflow = 50000000-0000-0000-0000-000000000001
+@quote = replace-with-the-id-returned-by-planning-quotes
+
+### Register authoritative candidate metadata before planning
+POST {{base}}/api/v1/catalog/resources
+Content-Type: application/json
+
+{
+  "id": "30000000-0000-0000-0000-000000000003",
+  "name": "C# architect",
+  "kind": "Human",
+  "hourlyRate": 50,
+  "currency": "USD",
+  "skills": {"csharp": 5}
+}
+
+### Calculate a durable quote from persisted metadata and actual bookings
+POST {{base}}/api/v1/planning/quotes
+Content-Type: application/json
+
+{
+  "projectId": "10000000-0000-0000-0000-000000000002",
+  "from": "2026-10-20T08:00:00Z",
+  "to": "2026-10-20T10:00:00Z",
+  "currency": "USD",
+  "candidateIds": ["30000000-0000-0000-0000-000000000003"],
+  "slots": [{"id": "60000000-0000-0000-0000-000000000001", "name": "Lead", "kind": "Human", "requiredSkills": {"csharp": 5}}],
+  "validitySeconds": 300
+}
 
 ### Development: create a license pool
 POST {{base}}/api/v1/licenses/compiler/pool?totalSeats=5
@@ -10,10 +38,7 @@ Content-Type: application/json
 
 {
   "workflowId": "{{workflow}}",
-  "projectId": "10000000-0000-0000-0000-000000000002",
-  "resourceIds": ["30000000-0000-0000-0000-000000000003", "30000000-0000-0000-0000-000000000004"],
-  "periodFrom": "2026-10-20T08:00:00Z",
-  "periodTo": "2026-10-20T10:00:00Z",
+  "quoteId": "{{quote}}",
   "licenses": [{"product": "compiler", "seats": 2}],
   "completionTimeoutSeconds": 300
 }

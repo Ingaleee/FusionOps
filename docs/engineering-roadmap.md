@@ -52,7 +52,7 @@ Provide a dependency-light demo, request examples, architecture diagrams and ADR
 2. Durable idempotency keys tied atomically to reservation responses and command fingerprints: delivered for Workforce allocation; SQL concurrency, batch rollback and HTTP replay/Location scenarios pass in the reliability suite.
 3. Approved workforce/license reservation saga: delivered with deadline handling, ownership-preserving compensation, participant effect inbox, durable rejection, worker fencing, versioned history and operator resume. Stock shipment and general broker consumer inbox remain future work.
 4. Checkpointed audit projection, deterministic replay, event version migration and lag/readiness metrics.
-5. Immutable selected-reservation proposals and versioned approval are delivered. Authoritative planning snapshots, quote freshness, overtime and procurement optimization remain future work.
+5. Immutable selected-reservation proposals, authoritative catalog quotes, versioned approval, stale revision/expiry checks and one-time acceptance are delivered. Multi-period scheduling, overtime and procurement optimization remain future work.
 6. Performance report with dataset, hardware, throughput, p95/p99 and failure-recovery traces; capacity model and SLOs.
 7. Minimal operations UI that makes plan explanations, audit trails and workflow recovery visible.
 
@@ -60,7 +60,7 @@ Each increment must ship with runnable acceptance scenarios. Items marked delive
 
 ### Flagship delivery path after the workflow increment
 
-1. **Catalog and tenant authority.** Tenant-scoped resource catalogs, database-enforced ownership, claims/message propagation and adversarial isolation tests. Approval must reference an authoritative catalog version and reserve the exact reviewed snapshot.
+1. **Tenant authority.** The shared versioned catalog and authoritative quote acceptance are delivered. Next: tenant-scoped SQL/PostgreSQL data, project ownership, claims/message propagation, scoped receipts/audit/workers and adversarial isolation tests across every route. A catalog filter alone is insufficient.
 2. **Scheduling over time.** Multi-period demand, skill substitution, setup/maintenance windows, overtime and procurement decisions. Compare solver quality/time against exact small-instance search; report objective, feasible gap and rejection explanations.
 3. **Integration recovery.** General typed broker inbox, stock shipment compensation, event schema evolution, controlled outbox replay and full audit reconstruction. Inject reorder/duplicate deliveries and crashes between each commit boundary.
 4. **Measured operation.** Reproducible workload datasets, hardware/limits, p95/p99, lock-wait distributions, recovery time and SLO alerts. Measure claim queries and history growth before introducing sharding, leases for the outbox or alternative transports.

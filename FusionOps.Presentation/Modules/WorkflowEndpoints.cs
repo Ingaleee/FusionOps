@@ -2,6 +2,7 @@ using System.Globalization;
 using FusionOps.Application.Workflows;
 using FusionOps.Domain.ValueObjects;
 using FusionOps.Domain.Workflows;
+using FusionOps.Domain.Services.Planning;
 
 namespace FusionOps.Presentation.Modules;
 
@@ -15,8 +16,7 @@ public static class WorkflowEndpoints
 
         routes.MapPost("/", async (ProposalDto dto, ReservationWorkflowService service, HttpResponse response, CancellationToken ct) =>
         {
-            var workflow = await service.ProposeAsync(dto.WorkflowId, new(dto.ProjectId, dto.ResourceIds,
-                new TimeRange(dto.PeriodFrom, dto.PeriodTo), dto.Licenses, dto.CompletionTimeoutSeconds), ct);
+            var workflow = await service.ProposeQuoteAsync(dto.WorkflowId, dto.QuoteId, dto.Licenses, dto.CompletionTimeoutSeconds, ct);
             SetETag(response, workflow);
             return Results.Created($"/api/v1/workflows/{workflow.Id:D}", WorkflowView.From(workflow));
         });
@@ -57,17 +57,16 @@ public static class WorkflowEndpoints
         response.Headers.CacheControl = "no-store";
     }
 
-    public sealed record ProposalDto(Guid WorkflowId, Guid ProjectId, Guid[] ResourceIds, DateTimeOffset PeriodFrom,
-        DateTimeOffset PeriodTo, LicenseRequirement[] Licenses, int CompletionTimeoutSeconds = 300);
+    public sealed record ProposalDto(Guid WorkflowId, Guid QuoteId, LicenseRequirement[] Licenses, int CompletionTimeoutSeconds = 300);
     public sealed record WorkflowView(Guid Id, Guid ProjectId, WorkflowState State, WorkflowOutcome Outcome, long Version,
         string SpecificationHash, string SubmittedBy, string? ApprovedBy, TimeRange Period, IReadOnlyList<Guid> ResourceIds,
         IReadOnlyList<Guid> AllocationIds, IReadOnlyCollection<LicenseRequirement> Licenses, bool CancellationRequested,
         DateTimeOffset? DeadlineAt, DateTimeOffset? NextAttemptAt, int StepAttempts, WorkflowState? PausedStep,
-        string? FailureCode, string? LastErrorCode, IReadOnlyList<WorkflowTransition> Transitions)
+        string? FailureCode, string? LastErrorCode, IReadOnlyList<WorkflowTransition> Transitions, PlanningQuoteBinding? Quote)
     {
         public static WorkflowView From(ReservationWorkflow w) => new(w.Id, w.ProjectId, w.State, w.Outcome, w.Version,
             w.SpecificationHash, w.SubmittedBy, w.ApprovedBy, w.Period, w.ResourceIds, w.AllocationIds, w.Licenses,
             w.CancellationRequested, w.DeadlineAt, w.NextAttemptAt, w.StepAttempts, w.PausedStep, w.FailureCode,
-            w.LastErrorCode, w.Transitions.OrderBy(t => t.Version).ToArray());
+            w.LastErrorCode, w.Transitions.OrderBy(t => t.Version).ToArray(), w.Quote);
     }
 }

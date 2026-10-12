@@ -37,6 +37,12 @@ Confirmed workflow participant rejection is retained alongside successful outcom
 
 For a containerized API, configure `Rabbit:Host`, `Rabbit:Username`, `Rabbit:Password` and the two database connection strings through deployment configuration. Development defaults target local services. Readiness includes command receipts, coordinator and participant inbox schemas. Workflow migrations preserve existing license allocations; reservation ownership is nullable for ordinary allocations. Do not roll these migrations back with active workflows or retained recovery evidence.
 
+## Catalog and quote upgrade
+
+The [authoritative planning contract](authoritative-planning.md) replaces arbitrary resource IDs in new workflows with quoteId. Apply SQL AuthoritativePlanningCatalog and PostgreSQL ApprovedQuoteBinding together before enabling traffic. Historical humans/equipment and anonymous allocated IDs become inactive catalog records; review metadata and activate with an ETag update. A legacy human/equipment ID collision aborts and rolls back migration instead of choosing a kind. Existing allocations, receipts and unquoted workflows remain available for recovery. Quotes are immutable commercial evidence with indefinite retention; compensation does not make a quote reusable.
+
+Readiness checks catalog/skills, quotes, coordinator and participant tables. A deployment with only one context upgraded remains unready. A quote rejected for stale metadata, availability or expiry needs a new calculation and review; operator resume cannot override the durable decision.
+
 ## Projection
 
 The projector reads at most 100 source entries per batch and polls continuously. Allocation insertion uses `ON CONFLICT(id) DO NOTHING`. The row and checkpoint commit in one transaction. Inclusive replay is safe; optimistic checkpoint tokens reject stale workers. Invalid recognized events stop checkpoint advancement and log an error. Correct the contract/data through a reviewed operation before resuming; silently skipping an audit event is not the default.

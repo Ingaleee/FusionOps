@@ -21,6 +21,8 @@ public sealed class DatabaseReadinessHealthCheck(
             await sql.OutboxMessages.AsNoTracking().Take(1).ToListAsync(timeout.Token);
             await postgres.OutboxMessages.AsNoTracking().Take(1).ToListAsync(timeout.Token);
             await sql.CommandReceipts.AsNoTracking().Take(1).ToListAsync(timeout.Token);
+            await sql.ResourceCatalog.AsNoTracking().Include(r => r.Skills).Take(1).ToListAsync(timeout.Token);
+            await sql.PlanningQuotes.AsNoTracking().Take(1).ToListAsync(timeout.Token);
             await postgres.Set<ReservationWorkflow>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
             await postgres.Set<WorkflowEffectReceipt>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
             return HealthCheckResult.Healthy("Command stores, outboxes, receipts and workflow schemas are available");
