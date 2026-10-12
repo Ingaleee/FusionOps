@@ -15,7 +15,7 @@ All catalog and quote endpoints require Resource.Manager outside Development.
 
 Skills have case-insensitive unique names, bounded levels 0–5 and up to 20 entries. Rates use one supported currency, at most six decimal places and a ceiling of one million per hour. Every metadata update increments the revision, including restoring an old rate. Kind and resource ID are immutable. Deactivation blocks new reservations and leaves historical allocations available for compensation.
 
-The catalog is the authority for new bookings. The SQL allocation foreign key rejects an unknown resource even if a caller bypasses the application repository. Activity and calendar admission require the locking protocol; direct database edits are outside that protocol. Legacy human/equipment tables remain read-only historical inputs for the old scenario preview, not the commercial quote source.
+The catalog is the authority for new bookings. The SQL allocation foreign key rejects an unknown resource even if a caller bypasses the application repository. Activity and calendar admission require the locking protocol; direct database edits are outside that protocol. Legacy human/equipment tables remain read-only historical inputs for the old scenario preview, not the commercial quote source. Unclassified historical placeholders should remain inactive: if the real resource is equipment, register a correctly classified new ID rather than treating the placeholder's technical Human kind as historical evidence.
 
 ## Quote API
 

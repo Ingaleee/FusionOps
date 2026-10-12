@@ -14,8 +14,8 @@ Updated: 2026-10-13. Local environment: Windows x64, .NET SDK 10.0.303 / runtime
 | API container planning smoke check | Pass: liveness and Swagger 200, complete two-slot USD 60 plan, objective = dual objective = 60 |
 | Full API-container catalog/quote/workflow walkthrough | Pass: readiness 200, persisted catalog/skills, two USD 100 authoritative quotes, success then cancellation, capacity rejection then compensation; 14 PostgreSQL outbox events delivered, 0 dead letters |
 | Git whitespace validation | Pass |
-| Previous-increment independent GitHub Actions verification | Pass for workflow commit `54ca08b`: fast suites on Windows and Ubuntu, Linux reliability suite and API Docker build ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38313824155)); catalog increment tracked separately |
-| Independent Gateway container build | Workflow PR run passed ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38313824148)); Gateway has no code change in the catalog increment |
+| Independent GitHub Actions verification | Pass for catalog implementation commit `8181e3a`: fast suites on Windows and Ubuntu, Linux reliability suite and API Docker build ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38318219468)) |
+| Independent Gateway container build | Pass for the same implementation commit ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38318219382)) |
 
 The original ten reliability scenarios are:
 
@@ -78,4 +78,4 @@ An initial catalog test exposed sub-microsecond period truncation in PostgreSQL.
 
 Test images: SQL Server 2022 CU14, PostgreSQL 16 Alpine, EventStoreDB 23.10.0, RabbitMQ 3 management Alpine. Testcontainers provides ephemeral isolation and random host ports. Recorded runs validate these versions; compatibility with other database versions is not implied.
 
-Commands and generated TRX files are described in the README and CI workflow. The linked earlier GitHub runs independently verified the workflow increment; the catalog increment's CI result must be checked for its own commit. Docker images are local verification artifacts, not published releases. No throughput, tail-latency, availability or security certification is inferred from these tests.
+Commands and generated TRX files are described in the README and CI workflow. The linked GitHub runs independently verified the catalog implementation commit; subsequent documentation changes do not change that code evidence. Docker images are local verification artifacts, not published releases. No throughput, tail-latency, availability or security certification is inferred from these tests.
