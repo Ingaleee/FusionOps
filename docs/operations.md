@@ -29,6 +29,14 @@ The receipt lives in the workforce database and commits alongside state and outb
 
 Audit insertion can succeed before a broker failure. The retry verifies the same audit stream and republishes with the original MessageId. This is why an external consumer must maintain an inbox: there is no atomic commit shared by the broker and the command database. SignalR notifications are transient delivery attempts, not durable client subscriptions.
 
+## Approved reservation recovery
+
+The [workflow runbook](reservation-workflows.md) describes proposals, If-Match approval, worker leases, compensation and operator resume. `examples/workflow-demo.ps1` demonstrates success and recovery against the full Development API. Workflow execution is enabled by default and can be disabled using `Workflows:WorkerEnabled=false` while retaining persisted work.
+
+Confirmed workflow participant rejection is retained alongside successful outcomes. Ordinary HTTP allocation failures still have no cached receipt. Unknown outcomes retry their original step; NeedsAttention requires inspection and a version-checked resume. Do not turn a transport timeout into a business rejection or delete a negative participant receipt to force a new attempt.
+
+For a containerized API, configure `Rabbit:Host`, `Rabbit:Username`, `Rabbit:Password` and the two database connection strings through deployment configuration. Development defaults target local services. Readiness includes command receipts, coordinator and participant inbox schemas. Workflow migrations preserve existing license allocations; reservation ownership is nullable for ordinary allocations. Do not roll these migrations back with active workflows or retained recovery evidence.
+
 ## Projection
 
 The projector reads at most 100 source entries per batch and polls continuously. Allocation insertion uses `ON CONFLICT(id) DO NOTHING`. The row and checkpoint commit in one transaction. Inclusive replay is safe; optimistic checkpoint tokens reject stale workers. Invalid recognized events stop checkpoint advancement and log an error. Correct the contract/data through a reviewed operation before resuming; silently skipping an audit event is not the default.

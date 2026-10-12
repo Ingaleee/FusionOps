@@ -30,7 +30,7 @@ public class LicensePool : IEntity<Guid>, IHasDomainEvents
     public int TotalSeats { get; private set; }
     public int AllocatedSeats { get; private set; }
     public long Version { get; private set; }
-    public IReadOnlyCollection<LicenseAllocationRef> Allocations => _allocations;
+    public IReadOnlyCollection<LicenseAllocationRef> Allocations => _allocations.ToArray();
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
     public void AddDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
@@ -54,8 +54,8 @@ public class LicensePool : IEntity<Guid>, IHasDomainEvents
             throw new DomainException("Not enough licenses available");
         }
 
-        var currentSeats = _allocations.Where(a => a.ProjectId == projectId).Sum(a => a.Seats);
-        _allocations.RemoveWhere(a => a.ProjectId == projectId);
+        var currentSeats = _allocations.Where(a => a.ProjectId == projectId && a.ReservationId is null).Sum(a => a.Seats);
+        _allocations.RemoveWhere(a => a.ProjectId == projectId && a.ReservationId is null);
         _allocations.Add(new LicenseAllocationRef(projectId, currentSeats + seats));
         AllocatedSeats += seats;
         Version++;
@@ -65,42 +65,44 @@ public class LicensePool : IEntity<Guid>, IHasDomainEvents
     public void Release(Guid projectId, int seats)
     {
         if (seats <= 0) throw new DomainException("Seats must be positive");
-
-        var key = new LicenseAllocationRef(projectId, seats);
-        if (!_allocations.Contains(key))
-        {
-            // allow partial release by scanning allocations
-            var released = 0;
-            foreach (var alloc in _allocations)
-            {
-                if (alloc.ProjectId == projectId)
-                {
-                    released += alloc.Seats;
-                }
-            }
-            if (released < seats)
-            {
-                throw new DomainException("Cannot release more seats than allocated for project");
-            }
-
-            // rebuild allocations excluding released seats (simple approach)
-            var remaining = released - seats;
-            _allocations.RemoveWhere(a => a.ProjectId == projectId);
-            if (remaining > 0)
-            {
-                _allocations.Add(new LicenseAllocationRef(projectId, remaining));
-            }
-        }
-        else
-        {
-            _allocations.Remove(key);
-        }
-
+        var ordinary = _allocations.Where(a => a.ProjectId == projectId && a.ReservationId is null).ToArray();
+        var currentSeats = ordinary.Sum(a => a.Seats);
+        if (currentSeats < seats) throw new DomainException("Cannot release more ordinary seats than allocated for project");
+        foreach (var allocation in ordinary) _allocations.Remove(allocation);
+        if (currentSeats > seats) _allocations.Add(new(projectId, currentSeats - seats));
         AllocatedSeats -= seats;
         Version++;
+        AddDomainEvent(new LicenseSeatsReleased(Product, projectId, seats, null));
+    }
+
+    public void Reserve(Guid reservationId, Guid projectId, int seats)
+    {
+        if (reservationId == Guid.Empty || projectId == Guid.Empty || seats <= 0) throw new DomainException("Reservation identity and positive seats are required");
+        var existing = _allocations.SingleOrDefault(a => a.ReservationId == reservationId);
+        if (existing is not null)
+        {
+            if (existing.ProjectId != projectId || existing.Seats != seats) throw new DomainException("The license reservation identity was reused with different data");
+            return;
+        }
+        if (TotalSeats - AllocatedSeats < seats) throw new LicenseCapacityException();
+        _allocations.Add(new(projectId, seats, reservationId));
+        AllocatedSeats += seats;
+        Version++;
+        AddDomainEvent(new LicenseSeatsAllocated(Product, projectId, seats));
+    }
+
+    public void ReleaseReservation(Guid reservationId)
+    {
+        var allocation = _allocations.SingleOrDefault(a => a.ReservationId == reservationId);
+        if (allocation is null) return;
+        _allocations.Remove(allocation);
+        AllocatedSeats -= allocation.Seats;
+        Version++;
+        AddDomainEvent(new LicenseSeatsReleased(Product, allocation.ProjectId, allocation.Seats, reservationId));
     }
 }
 
-public record LicenseAllocationRef(Guid ProjectId, int Seats);
+public record LicenseAllocationRef(Guid ProjectId, int Seats, Guid? ReservationId = null);
+public sealed class LicenseCapacityException() : DomainException("Not enough license seats are available");
 
 

@@ -14,7 +14,8 @@ public static class DomainEventSerializer
     private static readonly IReadOnlyDictionary<string, Type> Contracts = new[]
     {
         typeof(ResourceAllocated), typeof(ResourceAllocationCancelled), typeof(StockReplenished),
-        typeof(ReorderPointReached), typeof(LicenseSeatsAllocated), typeof(LicenseViolationDetected)
+        typeof(ReorderPointReached), typeof(LicenseSeatsAllocated), typeof(LicenseViolationDetected),
+        typeof(LicenseSeatsReleased), typeof(ReservationWorkflowChanged)
     }.ToDictionary(GetName);
 
     public static string GetName(Type type) =>

@@ -16,6 +16,8 @@ using FusionOps.Presentation.Infrastructure;
 using FusionOps.Infrastructure.Costing;
 using Microsoft.Extensions.Options;
 using FusionOps.Infrastructure.Persistence.Postgres.Configurations;
+using FusionOps.Application.Workflows;
+using FusionOps.Infrastructure.Workflows;
 
 namespace FusionOps.Presentation.Extensions;
 
@@ -32,6 +34,11 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IHumanResourceRepository, HumanResourceRepository>();
         services.AddScoped<IEquipmentResourceRepository, EquipmentResourceRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        services.AddScoped<IReservationWorkflowStore, PostgresReservationWorkflowStore>();
+        services.AddScoped<IWorkforceWorkflowParticipant, SqlWorkforceWorkflowParticipant>();
+        services.AddScoped<ILicenseWorkflowParticipant, PostgresLicenseWorkflowParticipant>();
+        services.AddScoped<ReservationWorkflowService>();
+        services.AddScoped<ReservationWorkflowRunner>();
         services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
         services.AddSingleton<IStockForecaster, FusionOps.Infrastructure.Optimizers.MlNetOptimizer>();
 
@@ -42,7 +49,11 @@ public static class ServiceCollectionExtensions
 
             mtCfg.UsingRabbitMq((ctx, busCfg) =>
             {
-                busCfg.Host(cfg.GetSection("Rabbit")?["Host"] ?? "localhost", "/", h => { });
+                busCfg.Host(cfg["Rabbit:Host"] ?? "localhost", "/", h =>
+                {
+                    h.Username(cfg["Rabbit:Username"] ?? "guest");
+                    h.Password(cfg["Rabbit:Password"] ?? "guest");
+                });
                 busCfg.ConfigureEndpoints(ctx);
             });
         });

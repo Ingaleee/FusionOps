@@ -44,6 +44,7 @@ public sealed class AuthorizationTests
     [InlineData("/api/v1/projects/allocations?ids=10000000-0000-0000-0000-000000000001")]
     [InlineData("/api/v1/stock/forecast?days=7")]
     [InlineData("/api/v1/licenses/compiler")]
+    [InlineData("/api/v1/workflows/10000000-0000-0000-0000-000000000001")]
     [InlineData("/api/v1/audit/allocations/10000000-0000-0000-0000-000000000001")]
     public async Task ProductionReadEndpointsRejectAnonymousCallers(string route)
     {
@@ -63,5 +64,24 @@ public sealed class AuthorizationTests
             periodFrom = "2026-10-20T08:00:00Z", periodTo = "2026-10-20T10:00:00Z"
         });
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(true, false, false)]
+    [InlineData(false, true, false)]
+    [InlineData(true, true, true)]
+    public async Task WorkflowManagementRequiresBothResourceAndLicenseAuthority(bool resourceRole, bool licenseRole, bool allowed)
+    {
+        await using var factory = new ProductionFactory();
+        using var scope = factory.Services.CreateScope();
+        var claims = new List<Claim>();
+        if (resourceRole) claims.Add(new(ClaimTypes.Role, "Resource.Manager"));
+        if (licenseRole) claims.Add(new(ClaimTypes.Role, "License.Manager"));
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, "test"));
+        var authorization = scope.ServiceProvider.GetRequiredService<Microsoft.AspNetCore.Authorization.IAuthorizationService>();
+        var result = await authorization.AuthorizeAsync(principal, null, "ManageReservations");
+        Assert.Equal(allowed, result.Succeeded);
+        Assert.True(scope.ServiceProvider.GetRequiredService<FusionOps.Application.Workflows.WorkflowApprovalPolicy>().RequireSeparateApprover);
     }
 }

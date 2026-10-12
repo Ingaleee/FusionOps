@@ -32,8 +32,18 @@ Poison messages enter durable backoff and then dead-letter state. Independent el
 
 Code to discuss: `OutboxProcessor`, `EventStoreAuditWriter` and `AuditProjector`. Run the reliability suite to observe concurrency, rollback, poison events, real RabbitMQ identity and checkpoint replay on disposable infrastructure.
 
-## 4. Show evidence and state limits
+## 4. Demonstrate an approved cross-store workflow
+
+Run `examples/workflow-demo.ps1` against the full Development API. A proposal has no resource side effects until approved with its ETag. The background worker reserves workforce and licenses, then the script cancels the successful workflow. A second workflow demonstrates license-capacity rejection and workforce compensation.
+
+Open the workflow state and ordered transition history. Explain the ambiguous window: a participant can commit while the worker loses its reply. Replaying the stable operation returns its stored outcome. A confirmed rejection is retained too, so a stale worker cannot later create an effect after compensation. Compensation identifies the original resource IDs and workflow-owned license reference.
+
+The worker commits a short claim before participant I/O. Its token, epoch and database-clock lease fence stale completion. Cancellation in flight is durable intent and waits for the participant's recorded outcome. NeedsAttention preserves the unresolved step for operator resume. See ADR 015 and the workflow runbook for the protocol.
+
+Code to discuss: `ReservationWorkflow`, `ReservationWorkflowRunner`, `PostgresReservationWorkflowStore`, `SqlWorkforceWorkflowParticipant`, `PostgresLicenseWorkflowParticipant` and `WorkflowReliabilityTests`. Tests inject lost replies after both reservation and compensation commits, and verify isolation of another workflow's license ownership.
+
+## 5. Show evidence and state limits
 
 Use `docs/verification.md` for the actual checks and `docs/adr` for design decisions. Show the CI workflow and lock files. Start the planning demo from a clean clone rather than relying on a developer database.
 
-Be explicit about the next architectural steps: catalog/tenant ownership, consumer inbox, compensated fulfillment workflow, versioned plan approval and measured SLOs. Direct SQL writes are outside the reservation locking protocol. Disconnected SignalR clients do not have a durable subscription. No performance number or production-readiness claim is supported until measured.
+Be explicit about the next architectural steps: catalog/tenant ownership, general consumer inbox, stock shipment compensation, authoritative planning snapshots and measured SLOs. Direct SQL writes are outside the reservation locking protocol. Disconnected SignalR clients do not have a durable subscription. No performance number or production-readiness claim is supported until measured.

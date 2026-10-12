@@ -24,6 +24,8 @@ public class LicensePoolConfig : IEntityTypeConfiguration<LicensePool>
             b.HasKey("id");
             b.Property(p => p.ProjectId).HasColumnName("project_id");
             b.Property(p => p.Seats).HasColumnName("seats");
+            b.Property(p => p.ReservationId).HasColumnName("reservation_id");
+            b.HasIndex("pool_id", nameof(LicenseAllocationRef.ReservationId)).IsUnique();
         }));
 
         builder.HasIndex(x => x.Product).IsUnique();

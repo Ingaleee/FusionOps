@@ -2,6 +2,8 @@ using FusionOps.Infrastructure.Persistence.Postgres;
 using FusionOps.Infrastructure.Persistence.SqlServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using FusionOps.Domain.Workflows;
+using FusionOps.Infrastructure.Workflows;
 
 namespace FusionOps.Presentation.Infrastructure;
 
@@ -18,7 +20,10 @@ public sealed class DatabaseReadinessHealthCheck(
             await using var postgres = await fulfillment.CreateDbContextAsync(timeout.Token);
             await sql.OutboxMessages.AsNoTracking().Take(1).ToListAsync(timeout.Token);
             await postgres.OutboxMessages.AsNoTracking().Take(1).ToListAsync(timeout.Token);
-            return HealthCheckResult.Healthy("Both command stores and their outbox schemas are available");
+            await sql.CommandReceipts.AsNoTracking().Take(1).ToListAsync(timeout.Token);
+            await postgres.Set<ReservationWorkflow>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
+            await postgres.Set<WorkflowEffectReceipt>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
+            return HealthCheckResult.Healthy("Command stores, outboxes, receipts and workflow schemas are available");
         }
         catch (Exception error) { return HealthCheckResult.Unhealthy("A command store or schema is unavailable", error); }
     }

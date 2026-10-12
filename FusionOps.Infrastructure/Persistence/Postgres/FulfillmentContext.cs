@@ -3,6 +3,7 @@ using FusionOps.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 using FusionOps.Domain.Attributes;
 using FusionOps.Infrastructure.Persistence.Postgres.Models;
+using FusionOps.Infrastructure.Workflows;
 
 namespace FusionOps.Infrastructure.Persistence.Postgres;
 
@@ -21,6 +22,8 @@ public class FulfillmentContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(FulfillmentContext).Assembly,
             type => type.Namespace == "FusionOps.Infrastructure.Persistence.Postgres.Configurations"
                  || type == typeof(OutboxConfig));
+        modelBuilder.ApplyConfiguration(new ReservationWorkflowConfig());
+        modelBuilder.ApplyConfiguration(new WorkflowEffectReceiptConfig());
         modelBuilder.Entity<ProjectionCheckpoint>(checkpoint =>
         {
             checkpoint.ToTable("projection_checkpoints");

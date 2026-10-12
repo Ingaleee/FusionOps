@@ -26,7 +26,7 @@ Architecture quality is demonstrated through explicit guarantees, measured trade
 
 ## Delivery order and acceptance criteria
 
-Current delivered increment: reproducible .NET 10 foundation, transactional reservations/outboxes, explainable assignment, replayable audit and durable reservation retries. The verification record contains 52 fast tests, 17 database/broker/audit scenarios and a running-container planning check. The next milestones below remain separately scoped work.
+Delivered foundation: reproducible .NET 10 builds, transactional reservations/outboxes, explainable assignment, replayable audit and durable reservation retries. The next implemented increment adds approved cross-store reservation, compensation, fenced worker claims, durable participant decisions and operator resume. See the verification record for current results.
 
 ### 1. Reproducible engineering foundation
 
@@ -50,10 +50,20 @@ Provide a dependency-light demo, request examples, architecture diagrams and ADR
 
 1. Tenant isolation enforced at API, persistence and message boundaries; adversarial isolation tests.
 2. Durable idempotency keys tied atomically to reservation responses and command fingerprints: delivered for Workforce allocation; SQL concurrency, batch rollback and HTTP replay/Location scenarios pass in the reliability suite.
-3. A complete reservation-to-fulfillment saga with timeouts, compensation, inbox deduplication and operator replay.
+3. Approved workforce/license reservation saga: delivered with deadline handling, ownership-preserving compensation, participant effect inbox, durable rejection, worker fencing, versioned history and operator resume. Stock shipment and general broker consumer inbox remain future work.
 4. Checkpointed audit projection, deterministic replay, event version migration and lag/readiness metrics.
-5. Versioned planning snapshots, approval/apply flow, overtime and procurement optimization.
+5. Immutable selected-reservation proposals and versioned approval are delivered. Authoritative planning snapshots, quote freshness, overtime and procurement optimization remain future work.
 6. Performance report with dataset, hardware, throughput, p95/p99 and failure-recovery traces; capacity model and SLOs.
 7. Minimal operations UI that makes plan explanations, audit trails and workflow recovery visible.
 
-Each increment must ship with runnable acceptance scenarios. Except for the explicitly marked Workforce idempotency increment, these are future milestones, not current capabilities.
+Each increment must ship with runnable acceptance scenarios. Items marked delivered are current capabilities; the remaining items are separate milestones.
+
+### Flagship delivery path after the workflow increment
+
+1. **Catalog and tenant authority.** Tenant-scoped resource catalogs, database-enforced ownership, claims/message propagation and adversarial isolation tests. Approval must reference an authoritative catalog version and reserve the exact reviewed snapshot.
+2. **Scheduling over time.** Multi-period demand, skill substitution, setup/maintenance windows, overtime and procurement decisions. Compare solver quality/time against exact small-instance search; report objective, feasible gap and rejection explanations.
+3. **Integration recovery.** General typed broker inbox, stock shipment compensation, event schema evolution, controlled outbox replay and full audit reconstruction. Inject reorder/duplicate deliveries and crashes between each commit boundary.
+4. **Measured operation.** Reproducible workload datasets, hardware/limits, p95/p99, lock-wait distributions, recovery time and SLO alerts. Measure claim queries and history growth before introducing sharding, leases for the outbox or alternative transports.
+5. **Operator experience.** Show reviewable plan differences, approvals, current ownership, unresolved outcomes and recovery traces. Every operator action must expose its precondition and resulting audited transition.
+
+These are meaningful sources of complexity: constrained optimization, authorization boundaries, ambiguous distributed outcomes and measurable resource costs. New infrastructure should solve a demonstrated limit and retain executable evidence.

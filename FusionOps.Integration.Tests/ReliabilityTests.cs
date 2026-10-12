@@ -31,6 +31,8 @@ using FusionOps.Infrastructure.Messaging;
 using MassTransit;
 using FusionOps.Infrastructure.Idempotency;
 using FusionOps.Application.Pipelines;
+using FusionOps.Domain.Workflows;
+using FusionOps.Infrastructure.Workflows;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -44,7 +46,7 @@ using System.Net;
 namespace FusionOps.Integration.Tests;
 
 [TestFixture, Category("Database")]
-public sealed class ReliabilityTests
+public sealed partial class ReliabilityTests
 {
     private readonly MsSqlContainer _sql = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04").WithPassword("FusionOps_test-2026!").Build();
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:16-alpine").WithDatabase("fusionops_tests").Build();
@@ -81,6 +83,9 @@ public sealed class ReliabilityTests
         await workforce.Allocations.ExecuteDeleteAsync();
         await workforce.CommandReceipts.ExecuteDeleteAsync();
         await fulfillment.OutboxMessages.ExecuteDeleteAsync();
+        await fulfillment.Set<WorkflowEffectReceipt>().ExecuteDeleteAsync();
+        await fulfillment.Set<ReservationWorkflow>().ExecuteDeleteAsync();
+        await fulfillment.Set<LicensePool>().ExecuteDeleteAsync();
         await fulfillment.AllocationHistory.ExecuteDeleteAsync();
         await fulfillment.Set<ProjectionCheckpoint>().ExecuteDeleteAsync();
     }
@@ -256,7 +261,7 @@ public sealed class ReliabilityTests
     }
 
     private sealed class ReservationFactory(DbContextOptions<WorkforceContext> workforceOptions,
-        DbContextOptions<FulfillmentContext> fulfillmentOptions) : WebApplicationFactory<api::Program>
+        DbContextOptions<FulfillmentContext> fulfillmentOptions, bool runWorkflowWorker = false) : WebApplicationFactory<api::Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder) => builder.UseEnvironment("Development")
             .ConfigureServices(services =>
@@ -266,9 +271,12 @@ public sealed class ReliabilityTests
                 services.RemoveAll<WorkforceContext>();
                 services.RemoveAll<FulfillmentContext>();
                 services.RemoveAll<IDbContextFactory<WorkforceContext>>();
+                services.RemoveAll<IDbContextFactory<FulfillmentContext>>();
                 services.AddScoped(_ => new WorkforceContext(workforceOptions));
                 services.AddScoped(_ => new FulfillmentContext(fulfillmentOptions));
                 services.AddSingleton<IDbContextFactory<WorkforceContext>>(new WorkforceContextFactory(workforceOptions));
+                services.AddSingleton<IDbContextFactory<FulfillmentContext>>(new TestContextFactory(fulfillmentOptions));
+                if (runWorkflowWorker) services.AddHostedService<FusionOps.Presentation.BackgroundServices.ReservationWorkflowWorker>();
             });
         protected override IHost CreateHost(IHostBuilder builder)
         {

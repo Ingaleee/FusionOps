@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using Microsoft.EntityFrameworkCore;
+using FusionOps.Domain.Workflows;
 
 namespace FusionOps.Presentation.Middleware;
 
@@ -25,6 +26,18 @@ public class ExceptionMiddleware
         try
         {
             await _next(context);
+        }
+        catch (WorkflowVersionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.PreconditionFailed, "workflow_version_mismatch", ex.Message);
+        }
+        catch (WorkflowApprovalException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Forbidden, "separate_approver_required", ex.Message);
+        }
+        catch (WorkflowSubmissionConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "workflow_submission_conflict", ex.Message);
         }
         catch (IdempotencyConflictException ex)
         {

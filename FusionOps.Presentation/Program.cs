@@ -19,6 +19,7 @@ using OpenTelemetry.Trace;
 using Serilog;
 using Serilog.Events;
 using Microsoft.AspNetCore.DataProtection;
+using FusionOps.Application.Workflows;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 1_048_576);
@@ -30,6 +31,7 @@ if (demoMode) builder.Services.AddDataProtection().UseEphemeralDataProtectionPro
 builder.Host.UseSerilog((_, log) => log.MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .Enrich.FromLogContext().Enrich.WithEnvironmentName().WriteTo.Console());
 builder.Services.AddSingleton<ResourcePlanner>();
+builder.Services.AddSingleton(new WorkflowApprovalPolicy(!builder.Environment.IsDevelopment()));
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -56,10 +58,11 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AdminStock", p => p.RequireRole("Stock.Admin"));
     options.AddPolicy("License.Manager", p => p.RequireRole("License.Manager"));
     options.AddPolicy("Scenario.Run", p => p.RequireRole("Resource.Manager"));
+    options.AddPolicy("ManageReservations", p => p.RequireRole("Resource.Manager").RequireRole("License.Manager"));
 });
 builder.Services.AddOpenTelemetry().ConfigureResource(r => r.AddService("fusionops-api"))
     .WithTracing(t => t.AddAspNetCoreInstrumentation().AddSource("FusionOps").AddOtlpExporter())
-    .WithMetrics(m => m.AddAspNetCoreInstrumentation().AddMeter(OutboxMetrics.MeterName).AddPrometheusExporter());
+    .WithMetrics(m => m.AddAspNetCoreInstrumentation().AddMeter(OutboxMetrics.MeterName, ReservationWorkflowRunner.MeterName).AddPrometheusExporter());
 
 if (!demoMode)
 {
@@ -70,6 +73,8 @@ if (!demoMode)
     builder.Services.AddValidatorsFromAssembly(typeof(AssemblyReference).Assembly);
     builder.Services.AddSignalR();
     builder.Services.AddHostedService<OutboxDispatcher>();
+    if (builder.Configuration.GetValue("Workflows:WorkerEnabled", true))
+        builder.Services.AddHostedService<ReservationWorkflowWorker>();
     if (builder.Configuration.GetValue<bool>("Cdc:Enabled"))
     {
         builder.Services.AddHttpClient("debezium");
@@ -99,6 +104,7 @@ if (!demoMode)
         await scope.ServiceProvider.GetRequiredService<FulfillmentContext>().Database.MigrateAsync();
     }
     app.MapWorkforceEndpoints();
+    app.MapWorkflowEndpoints();
     app.MapStockEndpoints();
     app.MapLicenseEndpoints();
     app.MapProjectEndpoints();
