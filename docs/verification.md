@@ -13,6 +13,8 @@ Date: 2026-10-12. Local environment: Windows x64, .NET SDK 10.0.303 / runtime 10
 | API and Gateway Docker builds | Pass; both restore locked dependencies and publish without another restore |
 | API container planning smoke check | Pass: liveness and Swagger 200, complete two-slot USD 60 plan, objective = dual objective = 60 |
 | Git whitespace validation | Pass |
+| Independent GitHub Actions verification | Pass for implementation commit `a59effa`: fast suites on Windows and Ubuntu, Linux reliability suite and API Docker build ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38307258830)) |
+| Independent Gateway container build | Pass on the PR ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38307438200)) |
 
 The ten reliability scenarios are:
 
@@ -33,4 +35,4 @@ Earlier runs exposed a Docker Desktop IPC failure, then an owned-value tracking 
 
 Test images: SQL Server 2022 CU14, PostgreSQL 16 Alpine, EventStoreDB 23.10.0, RabbitMQ 3 management Alpine. Testcontainers provides ephemeral isolation and random host ports. Recorded runs validate these versions; compatibility with other database versions is not implied.
 
-Commands and generated TRX files are described in the README and CI workflow. GitHub Actions has been configured but has not yet run for this local branch. Docker images are local verification artifacts, not published releases. No throughput, tail-latency, availability or security certification is inferred from these tests.
+Commands and generated TRX files are described in the README and CI workflow. The linked GitHub runs independently verified the implementation after publication; subsequent documentation commits do not change the tested implementation. Docker images are local verification artifacts, not published releases. No throughput, tail-latency, availability or security certification is inferred from these tests.
