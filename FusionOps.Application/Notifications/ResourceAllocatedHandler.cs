@@ -28,7 +28,7 @@ public class ResourceAllocatedHandler : INotificationHandler<ResourceAllocated>
             notification.ResourceId,
             notification.ProjectId,
             notification.Period
-        });
+        }, cancellationToken);
         await _notify.AllocationUpdateAsync(notification.ProjectId, "RESERVED", cancellationToken);
     }
 }

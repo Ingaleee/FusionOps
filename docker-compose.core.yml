@@ -1,0 +1,42 @@
+name: fusionops-core
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Pass@word1"
+    ports: ["1433:1433"]
+    volumes: ["sql-data:/var/opt/mssql"]
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: fusionops
+      POSTGRES_USER: fusionops
+      POSTGRES_PASSWORD: fusionops
+    ports: ["5433:5432"]
+    volumes: ["pg-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fusionops -d fusionops"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports: ["5672:5672", "15672:15672"]
+    volumes: ["rabbit-data:/var/lib/rabbitmq"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  eventstore:
+    image: eventstore/eventstore:23.10.0-bookworm-slim
+    environment:
+      EVENTSTORE_INSECURE: "true"
+    ports: ["2113:2113"]
+    volumes: ["audit-data:/var/lib/eventstore"]
+volumes:
+  sql-data:
+  pg-data:
+  rabbit-data:
+  audit-data:

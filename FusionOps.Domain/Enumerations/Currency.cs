@@ -13,6 +13,7 @@ public readonly record struct Currency(int Value, string Name) : IEnumeration
     public static readonly Currency RUB = new(3, nameof(RUB));
 
     public static IReadOnlyCollection<Currency> All => new[] { USD, EUR, RUB };
+    public static Currency FromValue(int value) => All.Single(c => c.Value == value);
 
     public override string ToString() => Name;
 }

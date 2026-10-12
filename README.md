@@ -1,243 +1,105 @@
-## FusionOps — Production‑grade ресурсный бэкенд с аудитом, GraphQL‑BFF и GitOps деплоем
+# FusionOps
 
-### Что это за проект и зачем он нужен
-FusionOps — это эталонная промышленная платформа управления операциями (operations) для компаний, которым критичны прослеживаемость, надёжность и скорость изменений. Платформа решает задачи распределения ресурсов (люди/оборудование), учёта складских остатков и аудита бизнес‑событий, предоставляя единый API/GraphQL‑слой для фронтов и автоматизированный продакшен‑деплой.
+**Explainable resource planning and reliable reservation in C# / .NET 10.**
 
-Проект демонстрирует, как собрать «облачный» бэкенд уровня senior: от доменной модели и CQRS до EventStore‑аудита, realtime, GitOps‑деплоя с канареечным анализом и автоскейлом по фактической нагрузке.
+FusionOps answers two operations questions: **which feasible assignment costs least, and how do reservations survive concurrent requests and infrastructure failure?** It combines an optimal assignment solver with transactional command handling, two database boundaries, durable event delivery and replayable audit projections.
 
-### Для кого
-- **Операционные команды (Ops/Logistics/Manufacturing)** — планирование и отслеживание аллокаций ресурсов и запасов в реальном времени.
-- **Продукт/Инженерия** — быстрые фронты на GraphQL, прозрачный аудит изменений, стабильные раскатки.
-- **Безопасность/Compliance** — неизменяемый журнал событий (ESDB), RBAC, политики кластера, сканы образов.
+Проект для демонстрации архитектурной работы на C#: алгоритмы, конкуренция, границы транзакций, восстановление после сбоев и проверяемые гарантии. Заявленные возможности подтверждаются исполняемыми тестами.
 
-### Что платформа умеет
-- **Распределение ресурсов**: бронь/отмена с защитой от пересечений, возврат свободных слотов, алгоритмический подбор (Hungarian/GREEDY).  
-- **Склад и запасы**: учёт остатков, reorder‑события, пополнения, realtime‑уведомления о low‑stock.  
-- **Аудит и регуляторика**: каждый доменный и бизнес‑ивент заворачивается в `AuditEnvelope` и хранится в EventStoreDB; проекции в Postgres для быстрых выборок и отчетов.  
-- **Realtime и интеграции**: SignalR‑хаб (уведомления о событиях), GraphQL‑Gateway (Query/Subscription), CLI‑tool для автоматизации.  
-- **Надёжные релизы**: Argo Rollouts (Blue/Green/Canary) с автоматическим анализом p95 и error‑rate, preview трафик, безопасный promote/abort.  
-- **Масштабируемость**: KEDA автоскейлит consumer‑ы по глубине очередей/лагу (RabbitMQ/Kafka).  
-- **Наблюдаемость**: OpenTelemetry метрики/трейсы → Prometheus/Grafana; health/liveness; алерты на деградацию.  
-- **Безопасность**: JWT (Keycloak), CSP/HSTS, Gatekeeper политики (no‑privileged), Trivy сканы, опционально cosign/SBOM.  
+## What to inspect first
 
-### Ключевые пользовательские сценарии (E2E)
-- Менеджер ставит задачу: «Забронировать станок и бригаду на окно завтра 10:00‑14:00» → API валидирует пересечения, создаёт аллокации, шлёт событие; фронт видит обновление по SignalR; аудит фиксирует «кто/что/когда».
-- Склад оповещает о падении остатка ниже порога → realtime `lowStock` событие в фронт, возможен автозаказ; аудиторская запись готова для отчёта.  
-- Выпуск новой версии API/Gateway: раскатка в preview, 10% трафика и автоматический анализ p95; при норме — promote; при регрессе — автоматический abort/rollback.
+| Capability | Engineering evidence |
+| --- | --- |
+| Optimal, explainable assignment | Rectangular Hungarian solver; forbidden edges; skill/calendar/type constraints; primal/dual objective; 300 seeded cases checked against exhaustive search |
+| Concurrent reservation | Transaction starts before the decision; empty-calendar range locks; sorted lock acquisition; conflict response 409 |
+| Safe HTTP retries | Durable actor/operation-scoped idempotency receipts; canonical command fingerprint; original response replay; state/outbox/receipt share a commit |
+| Atomic integration events | State + original event identity persisted in the owning database transaction; no early event clearing |
+| Failure recovery | Concurrent outbox workers, bounded attempts, durable exponential backoff, poison-message isolation and dead-letter state |
+| Durable audit and replay | Idempotent EventStore append; PostgreSQL projection and source checkpoint commit together |
+| Explicit architecture | Commands declare their database boundary; reads do not commit; cross-database writes fail explicitly |
+| Reproducible verification | Public NuGet configuration, locked dependencies, full service solution, fast tests and real database integration tests |
 
-### Чем отличается от «обычных» шаблонов
-- Не просто CRUD: демонстрирует событийность (EventStoreDB), проекции, realtime и strong DevOps практики.  
-- Продакшен‑готовые механики: Rollouts с метриками, KEDA, Gatekeeper, security headers, CI‑сканы, Chaos‑эксперименты.  
-- Чистая архитектура: Application не зависит от Infrastructure, быстрые проекции через LINQ/CompiledQuery, разделение write/read concerns.
+## Run the planning demo — no Docker required
 
----
+Install .NET 10 SDK, then from the repository root:
 
-### Содержание
-- [TL;DR: как запустить локально](#tldr-как-запустить-локально)
-- [Архитектура](#архитектура)
-- [Слои и ключевые компоненты](#слои-и-ключевые-компоненты)
-- [API и контракты](#api-и-контракты)
-- [GraphQL Gateway](#graphql-gateway)
-- [Аудит и проекции](#аудит-и-проекции)
-- [Наблюдаемость (Observability)](#наблюдаемость-observability)
-- [Деплой и GitOps](#деплой-и-gitops)
-- [Автоскейл по очередям (KEDA)](#автоскейл-по-очередям-keda)
-- [Безопасность](#безопасность)
-- [Хаос-инжиниринг и пен‑тест](#хаос-инжиниринг-и-пен-тест)
-- [Тестирование](#тестирование)
-- [Структура репозитория](#структура-репозитория)
-
----
-
-### TL;DR: как запустить локально
-1) Зависимости: Docker, .NET SDK 9, kubectl/helm (для k8s), Node не требуется.
-
-2) Инфраструктура (EventStoreDB, Postgres, RabbitMQ, Keycloak при необходимости):
-```bash
-# из корня
-docker compose up -d
+```powershell
+dotnet restore FusionOps.sln --configfile NuGet.Config
+dotnet run --project FusionOps.Presentation -- --DemoMode=true
 ```
 
-3) Запуск API и Gateway локально:
-```bash
-# API
-dotnet run --project FusionOps.Presentation
-# Gateway
-dotnet run --project FusionOps.Gateway
+Open `http://localhost:5121/swagger`. The demo exposes planning, health and metrics endpoints; it requires Development and starts no databases or brokers.
+
+```powershell
+$plan = Get-Content examples/specialist-plan.json -Raw
+Invoke-RestMethod http://localhost:5121/api/v1/planning/preview -Method Post -ContentType application/json -Body $plan
 ```
 
-4) Проверка:
-- REST: http://localhost:5000/swagger (в Dev) / http://localhost:5000/health
-- GraphQL: http://localhost:8080/graphql (schema‑first)
-- SignalR: ws://localhost:5000/hubs/notify
-- Метрики API: http://localhost:5000/metrics
+The example has a general slot and a C# specialist slot. The cheapest expert is already booked. The solver assigns the available specialist to the specialist slot and the general operator to the general slot. Expected total: **USD 60 for two hours**, complete plan, matching primal and dual objective. Rejections explain the excluded candidates.
 
-5) Быстрый e2e:
-- POST /api/v1/allocate → событие уходит в ES → Projector вносит запись в Postgres → GET /api/v1/audit/allocations/{projectId}
+Planning previews use a caller-supplied snapshot and have no persistence side effects. [HTTP examples](examples/fusionops.http) also cover reservation and repeat-conflict behavior.
 
----
+## Run reservations and audit locally
 
-### Архитектура
+```powershell
+docker compose -f docker-compose.core.yml up -d
+dotnet run --project FusionOps.Presentation -- --Database:Initialize=true
+# In another terminal, after migrations have completed:
+dotnet run --project FusionOps.Infrastructure/Projector -- --urls=http://localhost:5122
+```
+
+The development stack contains SQL Server, PostgreSQL, RabbitMQ and EventStoreDB. Database initialization is explicitly opt-in in Development and applies migrations. Credentials in this stack are local development values. For existing databases, read [operations and migration notes](docs/operations.md) before applying scripts.
+
+REST: `http://localhost:5121`; process liveness: `/health/live`; dependency readiness: `/health/ready`; metrics: `/metrics`. The outbox works even while HTTP requests are idle. Kafka diagnostics and CDC are optional (`Telemetry:KafkaEnabled` and `Cdc:Enabled`); the core reservation demo does not need them.
+
+Full-mode write endpoints use role policies outside Development. Audit reads require AuditViewer or Admin. Configure the identity provider and production connection strings explicitly for a deployment.
+
+## Architecture
+
 ```mermaid
-graph LR
-  subgraph Client
-    UI[SPA/Apps]
-    CLI[dotnet-fusion]
-    GQL[GraphQL Client]
-  end
-  subgraph Gateway
-    GW[HotChocolate GraphQL]
-  end
-  subgraph API
-    API[ASP.NET Core Minimal API]
-    HUB[SignalR Hub]
-  end
-  subgraph Data
-    ESDB[EventStoreDB]
-    PG[(PostgreSQL)]
-    SQL[(SQL Server)]
-    RBQ[(RabbitMQ)]
-  end
-
-  UI -->|HTTP/WS| GW
-  GQL -->|GraphQL| GW
-  CLI -->|REST/WS| API
-  GW -->|REST + JWT| API
-  API --> HUB
-  API --> SQL
-  API --> RBQ
-  API --> ESDB
-  ESDB -->|Subscription| Projector
-  Projector --> PG
-
-  classDef box fill:#0b5cff,stroke:#333,stroke-width:1,color:#fff;
-  class GW,API,HUB,Projector box;
+flowchart LR
+    Client[REST client] --> Plan[Pure resource planner]
+    Plan --> Solver[Hungarian solver + dual certificate]
+    Client --> Pipeline[Validation / command transaction]
+    Pipeline --> SQL[(SQL Server: workforce + outbox)]
+    Pipeline --> PG[(PostgreSQL: fulfillment + outbox)]
+    SQL --> Dispatch[Concurrent outbox dispatchers]
+    PG --> Dispatch
+    Dispatch --> Audit[(EventStoreDB audit)]
+    Dispatch --> Rabbit[RabbitMQ typed events]
+    Dispatch --> Realtime[SignalR notifications]
+    Audit --> Projector[Checkpointed projector]
+    Projector --> History[(PostgreSQL history + checkpoint)]
 ```
 
----
+Each command writes one database. The graph does not imply a distributed transaction. Delivery is at-least-once; downstream consumers need deduplication. See [transaction and delivery ADR](docs/adr/012-transactional-boundaries-and-delivery.md) and [assignment ADR](docs/adr/013-explainable-assignment.md) for the guarantees and tradeoffs.
 
-### Слои и ключевые компоненты
-- `FusionOps.Domain`: сущности, ValueObjects, Domain Events (`[EventType]` для версионирования)
-- `FusionOps.Application`: MediatR UseCases/Queries, валидация, pipeline (`Validation → Logging → Transaction → Audit`)
-- `FusionOps.Infrastructure`: EF Core (SQL/PG), Outbox, репозитории, Projector (ES→PG)
-- `FusionOps.Presentation`: Minimal API, SignalR, middleware (CSP/HSTS, Correlation, Exception)
-- `FusionOps.Gateway`: HotChocolate GraphQL, DataLoader, SignalR bridge; прокидывает JWT к API
+Domain contains invariants and algorithms. Application defines commands, queries and transaction behavior. Infrastructure owns repositories, serialization and delivery. Presentation owns transport, identity, health and observability. Gateway is a separate GraphQL adapter; the Projector is a separately runnable process. Both are included in the solution build.
 
----
+For an interview or portfolio review, follow the [ten-minute engineering walkthrough](docs/demo-walkthrough.md): optimization, safe retries, failure windows and executable evidence.
 
-### API и контракты
-- Аллокации (батч для Gateway):
-  - `GET /api/v1/projects/allocations?ids={id1,id2,...}` → `Dictionary<Guid, AllocationDto[]>`
-- Аудит (read side):
-  - `GET /api/v1/audit/allocations/{projectId}` → `PagedResult<AllocationHistoryDto>` + фильтры `from/to/page/pageSize`
-- Realtime:
-  - SignalR Hub: `/hubs/notify` (события `allocationUpdate`, `lowStock`, `ResourceAllocated`, `StockReplenished`)
+## Verify
 
-DTO примеры:
-```json
-// AllocationDto
-{ "allocationId": "...", "resourceId": "...", "from": "2025-08-08T12:00:00Z", "to": "2025-08-08T16:00:00Z" }
-
-// AllocationHistoryDto
-{ "allocationId":"...","resourceId":"...","from":"...","to":"...","recorded":"..." }
+```powershell
+dotnet build FusionOps.sln -c Release --no-restore
+dotnet test FusionOps.Domain.Tests -c Release --no-build --no-restore
+dotnet test FusionOps.Application.Tests -c Release --no-build --no-restore
+# Docker is required for this suite; containers are disposable and use random host ports:
+dotnet test FusionOps.Integration.Tests -c Release --no-build --no-restore
 ```
 
----
+The database suite applies real migrations and tests simultaneous empty-calendar reservations, atomic rollback, cross-boundary rejection, concurrent dispatch, poison events, audit retries, projection replay and actual RabbitMQ delivery with the original message ID. Fast tests cover optimality, business constraints, interval invariants, command pipeline behavior, HTTP planning and production authorization. CI runs the suites separately, without placeholder successes or disabled core tests.
 
-### GraphQL Gateway
-- Schema‑first (`FusionOps.Gateway/Schema.graphql`), HotChocolate сервер
-- DataLoader батчит REST вызовы к API (`/api/v1/projects/allocations`)
-- Подписки: lowStock через SignalR, прокидка JWT в REST вызовы
+On Windows, if Docker's current context works but Testcontainers cannot find the default pipe, select its endpoint for the current shell before running the database suite:
 
-Пример запроса:
-```graphql
-query GetAllocations($project: UUID!) {
-  allocation(projectId: $project) { allocationId resourceId from to }
-}
+```powershell
+$env:DOCKER_HOST = docker context inspect --format '{{.Endpoints.docker.Host}}'
 ```
 
----
+## Scope and next milestones
 
-### Аудит и проекции
-- Все Domain Events оборачиваются в `AuditEnvelope<T>` и пишутся в EventStoreDB
-- Projector (BackgroundService) читает ES и вставляет в `allocation_history` (Postgres), idempotency `ON CONFLICT DO NOTHING`
-- Таблица партиционируется по `recorded_at`; индексы `(project_id, recorded_at)`
+Implemented: single-horizon assignment, reservation conflict control, durable reservation idempotency keys, transactional outboxes, original typed contracts, durable audit, checkpointed allocation history and license concurrency protection.
 
----
+Planned: tenant isolation, inbox deduplication, a complete fulfillment saga with compensation, operator replay APIs, versioned plan snapshots, multi-period scheduling, SLOs and reproducible performance reports. The existing saga contracts, ML model experiment, legacy performance runner and deployment/chaos manifests are exploratory material; they are not evidence that those milestones are complete. The legacy `FusionOps.EventStore.IntegrationTests` directory is superseded by the active reliability suite. SignalR cannot deliver to disconnected clients, and API reservation locks do not govern direct SQL writers.
 
-### Наблюдаемость (Observability)
-- Traces: OpenTelemetry + Jaeger (Dev)
-- Metrics: OpenTelemetry Prometheus Exporter, endpoint `/metrics`
-- PromQL в Argo Rollouts использует OTel гистограммы p95
-
-Быстрый просмотр локально:
-```bash
-kubectl -n monitoring port-forward svc/prometheus-server 9090:9090 &
-kubectl -n monitoring port-forward svc/grafana 3000:3000 &
-```
-
----
-
-### Деплой и GitOps
-- Helm charts: `charts/fusionops-api`, `charts/fusion-gateway`
-- Argo Rollouts (Blue/Green/Canary) с analysis (p95 / error‑rate), preview service
-
-Установка:
-```bash
-helm upgrade --install fusion-api charts/fusionops-api \
-  --set image.repository=ghcr.io/yourorg/fusionops-api \
-  --set image.tag=$(git rev-parse --short HEAD)
-
-helm upgrade --install fusion-gateway charts/fusion-gateway \
-  --set image.repository=ghcr.io/yourorg/fusion-gateway \
-  --set image.tag=$(git rev-parse --short HEAD)
-```
-
-Промоут в Rollouts UI или CLI:
-```bash
-kubectl argo rollouts get rollout fusionops-api
-kubectl argo rollouts promote fusionops-api
-```
-
----
-
-### Автоскейл по очередям (KEDA)
-- Пример `ScaledObject` по длине RabbitMQ очереди `outbox`
-- Включение: `values.yaml` → `enableKeda: true`, `Rabbit__ConnectionString`
-
----
-
-### Безопасность
-- JWT Keycloak (RBAC: `Audit.Read`, роли `AuditViewer`, `Admin`)
-- Security headers: HSTS, CSP (строгие источники, WS/SignalR учтён)
-- Gatekeeper: запрет привилегированных контейнеров, расширяемые политики
-- Trivy image scan в CI (фейл на CRITICAL)
-
----
-
-### Хаос-инжиниринг и пен‑тест
-- Litmus `pod-delete` RabbitMQ (staging, nightly)
-- ZAP full‑scan (staging), фейл на High severity
-
----
-
-### Тестирование
-- Unit/Integration в `FusionOps.*.Tests`
-- E2E: allocate → projector → audit endpoint
-- Testcontainers для ES/PG — изоляция и реалистичность
-
----
-
-### Структура репозитория
-- `FusionOps.Domain/` — модель домена, события, ValueObjects
-- `FusionOps.Application/` — UseCases/Queries, пайплайны, валидаторы, DTO
-- `FusionOps.Infrastructure/` — EF, репозитории, Projector, Outbox, Messaging
-- `FusionOps.Presentation/` — Minimal API, SignalR, middleware, Program
-- `FusionOps.Gateway/` — GraphQL BFF, DataLoader, SignalR bridge
-- `charts/` — Helm charts для API и Gateway (Rollouts, AnalysisTemplates)
-- `docker/` — инициализация БД и служб для локалки
-- `.github/workflows/` — CI/CD, security scans, chaos, ZAP
-
----
-
-Если нужна быстрая демонстрация/видео — см. `docs/rollout.md` и `docs/gateway.md` (пример запросов/подписок, Rollouts promote/abort). Вопросы/идеи/улучшения приветствуются — проект задуман как эталонный «скелет» для прод‑платформы. 
+Resource IDs are caller-managed in this increment; catalog existence and tenant ownership are not enforced. No throughput or production readiness claim is made without a measured report. [Source audit and delivery roadmap](docs/engineering-roadmap.md) records the gaps and acceptance criteria for the next increments.

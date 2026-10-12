@@ -24,7 +24,7 @@ public class EquipmentResource : IEntity<EquipmentResourceId>, IHasDomainEvents
     }
 
     public EquipmentResourceId Id { get; private set; }
-    public string Model { get; private set; }
+    public string Model { get; private set; } = string.Empty;
     public EquipmentType Type { get; private set; }
     public Money HourRate { get; private set; }
 

@@ -13,6 +13,7 @@ public readonly record struct EquipmentType(int Value, string Name) : IEnumerati
     public static readonly EquipmentType GPU = new(3, nameof(GPU));
 
     public static IReadOnlyCollection<EquipmentType> All => new[] { CNC, Printer, GPU };
+    public static EquipmentType FromValue(int value) => All.Single(c => c.Value == value);
 
     public override string ToString() => Name;
 }

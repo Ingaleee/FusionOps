@@ -17,9 +17,11 @@ public class AllocationConfig : IEntityTypeConfiguration<Allocation>
                .ValueGeneratedNever();
 
         builder.Ignore(a => a.DomainEvents);
-        // Map owned value object TimeRange
-        builder.OwnsOne(a => a.Period, period =>
+        // A period is an immutable value, shared by allocations in the same request.
+        // Owned entities carry identity and cannot safely share that instance.
+        builder.ComplexProperty(a => a.Period, period =>
         {
+            period.IsRequired();
             period.Property(p => p.Start)
                   .HasColumnName("PeriodStart")
                   .IsRequired();

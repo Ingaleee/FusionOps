@@ -1,163 +1,111 @@
-﻿using FusionOps.Application;
+using System.Text.Json.Serialization;
+using FluentValidation;
+using FusionOps.Application;
+using FusionOps.Domain.Services.Planning;
+using FusionOps.Infrastructure.Persistence.Postgres;
+using FusionOps.Infrastructure.Persistence.SqlServer;
 using FusionOps.Presentation.BackgroundServices;
 using FusionOps.Presentation.Extensions;
-using FusionOps.Presentation.Modules;
-using FusionOps.Infrastructure.Persistence.SqlServer;
-using MediatR;
-using Serilog;
-using Serilog.Events;
 using FusionOps.Presentation.Middleware;
+using FusionOps.Presentation.Modules;
+using FusionOps.Presentation.Realtime;
+using FusionOps.Infrastructure.Outbox;
+using FusionOps.Presentation.Infrastructure;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using FusionOps.Presentation.Realtime;
-using Microsoft.EntityFrameworkCore;
+using Serilog;
+using Serilog.Events;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 1_048_576);
+var demoMode = builder.Configuration.GetValue<bool>("DemoMode");
+if (demoMode && !builder.Environment.IsDevelopment())
+    throw new InvalidOperationException("DemoMode is available only in Development");
+if (demoMode) builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
 
-// Infrastructure
-builder.Services.AddInfrastructure(builder.Configuration);
-
-// MediatR / AutoMapper
-builder.Services.AddMediatR(typeof(AssemblyReference).Assembly);
-builder.Services.AddAutoMapper(typeof(AssemblyReference).Assembly);
-
-// top after builder creation
-builder.Host.UseSerilog((ctx, cfg) =>
-{
-    cfg.MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-       .Enrich.FromLogContext()
-       .Enrich.WithEnvironmentName()
-       .WriteTo.Console();
-});
-
-builder.Services.AddOpenTelemetry()
-    .WithTracing(tracer =>
-    {
-        tracer.SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("fusionops-api"))
-              .AddAspNetCoreInstrumentation()
-              .AddEntityFrameworkCoreInstrumentation()
-              .AddJaegerExporter();
-    });
-
-// AuthN/Z
-builder.Services.AddAuthentication("Bearer")
-       .AddJwtBearer("Bearer", o =>
-       {
-           o.Authority = builder.Configuration["Keycloak:Authority"] ?? "https://localhost:8443/realms/fusion";
-           o.Audience = "fusion-api";
-           o.RequireHttpsMetadata = false;
-       });
-
-builder.Services.AddAuthorization(opts =>
-{
-    opts.AddPolicy("ManageResources", p => p.RequireRole("Resource.Manager"));
-    opts.AddPolicy("AdminStock", p => p.RequireRole("Stock.Admin"));
-});
-
-// Add middleware
-builder.Services.AddTransient<CorrelationMiddleware>();
-builder.Services.AddTransient<ExceptionMiddleware>();
-builder.Services.AddTransient<UserContextEnricher>();
-
-// Swagger & endpoints
+builder.Host.UseSerilog((_, log) => log.MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .Enrich.FromLogContext().Enrich.WithEnvironmentName().WriteTo.Console());
+builder.Services.AddSingleton<ResourcePlanner>();
+builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme."
-    });
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
-        {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" }
-            }, new string[] {}
-        }
-    });
-});
-
-// HealthChecks
+builder.Services.AddSwaggerGen();
 builder.Services.AddHealthChecks();
-
-// Hosted services
-builder.Services.AddHostedService<OutboxDispatcher>();
-builder.Services.AddHostedService<CdcConnectorRegistrationService>();
-builder.Services.AddHostedService<CdcKafkaListener>();
-
-builder.Services.AddHttpClient("debezium");
-
-// MediatR pipeline behaviors
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.ValidationBehavior<,>));
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.LoggingBehavior<,>));
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.TransactionBehavior<,>));
-
-// SignalR
-builder.Services.AddSignalR();
-// (╨╛╨┐╤Ж╨╕╨╛╨╜╨░╨╗╤М╨╜╨╛) Serilog Sink
-// builder.Host.UseSerilog((ctx, cfg) =>
-//     cfg.WriteTo.SignalR(builder.Services, "/hubs/notify", restrictedToMinimumLevel: LogEventLevel.Information));
-
-var app = builder.Build();
-
-app.UseSwagger();
-app.UseSwaggerUI();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapWorkforceEndpoints();
-app.MapStockEndpoints();
-app.MapHealthChecks("/health");
-app.MapHub<NotificationHub>("/hubs/notify");
-
-app.UseMiddleware<CorrelationMiddleware>();
-app.UseMiddleware<UserContextEnricher>();
-app.UseMiddleware<ExceptionMiddleware>();
-
-// Ensure database constraints are applied on startup
-using (var scope = app.Services.CreateScope())
+builder.Services.AddAuthentication("Bearer").AddJwtBearer("Bearer", options =>
 {
-    var workforce = scope.ServiceProvider.GetRequiredService<WorkforceContext>();
-    try
+    options.Authority = builder.Configuration["Keycloak:Authority"]
+        ?? (builder.Environment.IsDevelopment() ? "http://localhost:8443/realms/fusion" : "https://localhost:8443/realms/fusion");
+    options.Audience = "fusion-api";
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+    options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
     {
-        // Apply overlap prevention trigger if not exists
-        var sql = @"
-            IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'fn_CheckAllocationOverlap' AND type = 'FN')
-            BEGIN
-                EXEC('CREATE FUNCTION fn_CheckAllocationOverlap(@ResourceId UNIQUEIDENTIFIER, @PeriodStart DATETIMEOFFSET, @PeriodEnd DATETIMEOFFSET, @ExcludeAllocationId UNIQUEIDENTIFIER = NULL)
-                RETURNS BIT AS BEGIN
-                    DECLARE @HasOverlap BIT = 0;
-                    IF EXISTS (SELECT 1 FROM Allocations WHERE ResourceId = @ResourceId AND Id != ISNULL(@ExcludeAllocationId, ''00000000-0000-0000-0000-000000000000'') AND @PeriodStart < PeriodEnd AND PeriodStart < @PeriodEnd)
-                        SET @HasOverlap = 1;
-                    RETURN @HasOverlap;
-                END');
-            END
-            
-            IF NOT EXISTS (SELECT 1 FROM sys.objects WHERE name = 'trg_PreventAllocationOverlap' AND type = 'TR')
-            BEGIN
-                EXEC('CREATE TRIGGER trg_PreventAllocationOverlap ON Allocations AFTER INSERT, UPDATE AS BEGIN
-                    SET NOCOUNT ON;
-                    IF EXISTS (SELECT 1 FROM inserted i CROSS APPLY (SELECT fn_CheckAllocationOverlap(i.ResourceId, i.PeriodStart, i.PeriodEnd, i.Id) AS HasOverlap) check_overlap WHERE check_overlap.HasOverlap = 1)
-                    BEGIN
-                        RAISERROR(''Allocation overlap detected'', 16, 1);
-                        ROLLBACK TRANSACTION;
-                        RETURN;
-                    END
-                END');
-            END";
-        workforce.Database.ExecuteSqlRaw(sql);
-    }
-    catch
+        OnTokenValidated = context =>
+        {
+            if (context.Principal is not null)
+                FusionOps.Presentation.Authorization.KeycloakRoleClaims.Apply(context.Principal, "fusion-api");
+            return Task.CompletedTask;
+        }
+    };
+});
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("ManageResources", p => p.RequireRole("Resource.Manager"));
+    options.AddPolicy("AdminStock", p => p.RequireRole("Stock.Admin"));
+    options.AddPolicy("License.Manager", p => p.RequireRole("License.Manager"));
+    options.AddPolicy("Scenario.Run", p => p.RequireRole("Resource.Manager"));
+});
+builder.Services.AddOpenTelemetry().ConfigureResource(r => r.AddService("fusionops-api"))
+    .WithTracing(t => t.AddAspNetCoreInstrumentation().AddSource("FusionOps").AddOtlpExporter())
+    .WithMetrics(m => m.AddAspNetCoreInstrumentation().AddMeter(OutboxMetrics.MeterName).AddPrometheusExporter());
+
+if (!demoMode)
+{
+    builder.Services.AddInfrastructure(builder.Configuration);
+    builder.Services.AddHealthChecks().AddCheck<DatabaseReadinessHealthCheck>("command-stores");
+    builder.Services.AddPresentationServices(builder.Configuration);
+    builder.Services.AddMediatR(typeof(AssemblyReference).Assembly, typeof(WorkforceContext).Assembly);
+    builder.Services.AddValidatorsFromAssembly(typeof(AssemblyReference).Assembly);
+    builder.Services.AddSignalR();
+    builder.Services.AddHostedService<OutboxDispatcher>();
+    if (builder.Configuration.GetValue<bool>("Cdc:Enabled"))
     {
-        // Ignore if already exists or database not ready
+        builder.Services.AddHttpClient("debezium");
+        builder.Services.AddHostedService<CdcConnectorRegistrationService>();
+        builder.Services.AddHostedService<CdcKafkaListener>();
     }
 }
 
+var app = builder.Build();
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseAuthentication();
+app.UseMiddleware<CorrelationMiddleware>();
+app.UseAuthorization();
+if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
+app.MapPlanningEndpoints();
+app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions { Predicate = _ => false });
+app.MapHealthChecks("/health/ready");
+app.MapPrometheusScrapingEndpoint();
+app.MapGet("/", () => Results.Ok(new { service = "FusionOps", mode = demoMode ? "planning-demo" : "full", planning = "/api/v1/planning/preview" }));
+
+if (!demoMode)
+{
+    if (app.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("Database:Initialize"))
+    {
+        using var scope = app.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<WorkforceContext>().Database.MigrateAsync();
+        await scope.ServiceProvider.GetRequiredService<FulfillmentContext>().Database.MigrateAsync();
+    }
+    app.MapWorkforceEndpoints();
+    app.MapStockEndpoints();
+    app.MapLicenseEndpoints();
+    app.MapProjectEndpoints();
+    app.MapAuditEndpoints();
+    app.MapScenarioEndpoints();
+    app.MapHub<NotificationHub>("/hubs/notify");
+}
 app.Run();
+
+public partial class Program { }

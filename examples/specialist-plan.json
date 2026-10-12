@@ -1,0 +1,16 @@
+{
+  "projectId": "10000000-0000-0000-0000-000000000001",
+  "from": "2026-10-20T08:00:00Z",
+  "to": "2026-10-20T10:00:00Z",
+  "currency": "USD",
+  "slots": [
+    { "id": "20000000-0000-0000-0000-000000000001", "name": "General operations", "kind": "Human", "requiredSkills": {} },
+    { "id": "20000000-0000-0000-0000-000000000002", "name": "C# production specialist", "kind": "Human", "requiredSkills": { "csharp": 3 } }
+  ],
+  "candidates": [
+    { "id": "30000000-0000-0000-0000-000000000001", "name": "Specialist", "kind": "Human", "hourlyRate": 10, "skills": { "csharp": 4 } },
+    { "id": "30000000-0000-0000-0000-000000000002", "name": "General operator", "kind": "Human", "hourlyRate": 20, "skills": {} },
+    { "id": "30000000-0000-0000-0000-000000000003", "name": "Booked expert", "kind": "Human", "hourlyRate": 5, "skills": { "csharp": 5 },
+      "busyPeriods": [{ "start": "2026-10-20T07:00:00Z", "end": "2026-10-20T12:00:00Z" }] }
+  ]
+}

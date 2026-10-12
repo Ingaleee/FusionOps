@@ -23,7 +23,7 @@ public class StockItem : IEntity<StockItemId>
     }
 
     public StockItemId Id { get; private set; }
-    public string Sku { get; private set; }
+    public string Sku { get; private set; } = string.Empty;
     public int Quantity { get; private set; }
     public int ReorderPoint { get; private set; }
     public Money UnitCost { get; private set; }

@@ -7,12 +7,12 @@ using FusionOps.Domain.Events.Attributes;
 namespace FusionOps.Domain.Events;
 
 [EventType("v1.ResourceAllocated")]
-public readonly record struct ResourceAllocated(
+public sealed record ResourceAllocated(
     AllocationId AllocationId,
     Guid ResourceId,
     Guid ProjectId,
     TimeRange Period) : IDomainEvent
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
+    public Guid Id { get; init; } = Guid.NewGuid();
+    public DateTimeOffset OccurredOn { get; init; } = DateTimeOffset.UtcNow;
 }

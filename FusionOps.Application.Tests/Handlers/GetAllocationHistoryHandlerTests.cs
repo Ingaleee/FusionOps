@@ -35,7 +35,7 @@ public class GetAllocationHistoryHandlerTests
     {
         // Arrange
         var projectId = Guid.NewGuid();
-        var query = new GetAllocationHistoryQuery(projectId, page: 1, pageSize: 10);
+        var query = new GetAllocationHistoryQuery(projectId, Page: 1, PageSize: 10);
         
         var options = new DbContextOptionsBuilder<FulfillmentContext>()
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())

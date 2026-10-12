@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Logging;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 
 namespace FusionOps.Presentation.Middleware;
 
@@ -24,6 +25,28 @@ public class ExceptionMiddleware
         try
         {
             await _next(context);
+        }
+        catch (IdempotencyConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "idempotency_conflict", ex.Message);
+        }
+        catch (IdempotencyInProgressException ex)
+        {
+            context.Response.Headers.RetryAfter = "2";
+            await WriteProblem(context, HttpStatusCode.Conflict, "idempotency_in_progress", ex.Message);
+        }
+        catch (AllocationConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "allocation_conflict", ex.Message);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "concurrency_conflict", "The resource changed; reload and retry");
+        }
+        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested) { }
+        catch (ArgumentException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.BadRequest, "invalid_argument", ex.Message);
         }
         catch (DomainException ex)
         {
@@ -56,7 +79,7 @@ public class ExceptionMiddleware
             pb.Extensions["violations"] = details;
 
         ctx.Response.StatusCode = pb.Status ?? (int)code;
-        ctx.Response.ContentType = "application/json";
-        return ctx.Response.WriteAsJsonAsync(pb);
+        pb.Extensions["correlationId"] = ctx.TraceIdentifier;
+        return ctx.Response.WriteAsJsonAsync(pb, options: null, contentType: "application/problem+json");
     }
 }

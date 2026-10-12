@@ -9,10 +9,10 @@ namespace FusionOps.Domain.Events;
 /// Emitted when an existing resource allocation is cancelled.
 /// </summary>
 [EventType("v1.ResourceAllocationCancelled")]
-public readonly record struct ResourceAllocationCancelled(AllocationId AllocationId,
+public sealed record ResourceAllocationCancelled(AllocationId AllocationId,
                                                           Guid ResourceId,
                                                           Guid ProjectId) : IDomainEvent
 {
-    public Guid Id { get; } = Guid.NewGuid();
-    public DateTimeOffset OccurredOn { get; } = DateTimeOffset.UtcNow;
+    public Guid Id { get; init; } = Guid.NewGuid();
+    public DateTimeOffset OccurredOn { get; init; } = DateTimeOffset.UtcNow;
 }

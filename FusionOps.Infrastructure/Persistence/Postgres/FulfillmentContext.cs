@@ -18,7 +18,17 @@ public class FulfillmentContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(FulfillmentContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(FulfillmentContext).Assembly,
+            type => type.Namespace == "FusionOps.Infrastructure.Persistence.Postgres.Configurations"
+                 || type == typeof(OutboxConfig));
+        modelBuilder.Entity<ProjectionCheckpoint>(checkpoint =>
+        {
+            checkpoint.ToTable("projection_checkpoints");
+            checkpoint.HasKey(c => c.Name);
+            checkpoint.Property(c => c.Name).HasMaxLength(100);
+            checkpoint.Property(c => c.CommitPosition).IsConcurrencyToken();
+            checkpoint.Property(c => c.PreparePosition).IsConcurrencyToken();
+        });
 
         // apply PartitionedTable attribute annotation
         foreach (var entity in modelBuilder.Model.GetEntityTypes())

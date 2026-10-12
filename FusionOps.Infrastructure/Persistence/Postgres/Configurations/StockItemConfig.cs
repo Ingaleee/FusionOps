@@ -26,7 +26,7 @@ public class StockItemConfig : IEntityTypeConfiguration<StockItem>
                 .HasColumnName("UnitCostAmount")
                 .IsRequired();
             rate.Property(m => m.Currency)
-                .HasConversion(c => c.Value, v => new FusionOps.Domain.Enumerations.Currency(v, string.Empty))
+                .HasConversion(c => c.Value, v => FusionOps.Domain.Enumerations.Currency.FromValue(v))
                 .HasColumnName("UnitCostCurrency")
                 .IsRequired();
         });

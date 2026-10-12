@@ -29,6 +29,7 @@ public class LicensePool : IEntity<Guid>, IHasDomainEvents
     public string Product { get; private set; } = string.Empty;
     public int TotalSeats { get; private set; }
     public int AllocatedSeats { get; private set; }
+    public long Version { get; private set; }
     public IReadOnlyCollection<LicenseAllocationRef> Allocations => _allocations;
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
@@ -39,6 +40,7 @@ public class LicensePool : IEntity<Guid>, IHasDomainEvents
     {
         if (seats <= 0) throw new DomainException("Seats must be positive");
         TotalSeats += seats;
+        Version++;
     }
 
     public void Allocate(Guid projectId, int seats)
@@ -52,8 +54,11 @@ public class LicensePool : IEntity<Guid>, IHasDomainEvents
             throw new DomainException("Not enough licenses available");
         }
 
-        _allocations.Add(new LicenseAllocationRef(projectId, seats));
+        var currentSeats = _allocations.Where(a => a.ProjectId == projectId).Sum(a => a.Seats);
+        _allocations.RemoveWhere(a => a.ProjectId == projectId);
+        _allocations.Add(new LicenseAllocationRef(projectId, currentSeats + seats));
         AllocatedSeats += seats;
+        Version++;
         AddDomainEvent(new LicenseSeatsAllocated(Product, projectId, seats));
     }
 
@@ -92,7 +97,7 @@ public class LicensePool : IEntity<Guid>, IHasDomainEvents
         }
 
         AllocatedSeats -= seats;
-        if (AllocatedSeats < 0) AllocatedSeats = 0;
+        Version++;
     }
 }
 

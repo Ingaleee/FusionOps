@@ -13,6 +13,8 @@ public class LicensePoolConfig : IEntityTypeConfiguration<LicensePool>
         builder.Property(x => x.Product).IsRequired().HasMaxLength(128);
         builder.Property(x => x.TotalSeats).IsRequired();
         builder.Property(x => x.AllocatedSeats).IsRequired();
+        builder.Ignore(x => x.DomainEvents);
+        builder.Property(x => x.Version).IsConcurrencyToken();
 
         builder.OwnsMany(x => x.Allocations, (Action<OwnedNavigationBuilder<LicensePool, LicenseAllocationRef>>)(b =>
         {

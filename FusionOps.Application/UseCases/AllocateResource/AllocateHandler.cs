@@ -9,12 +9,10 @@ namespace FusionOps.Application.UseCases.AllocateResource;
 public class AllocateHandler : IRequestHandler<AllocateCommand, IReadOnlyCollection<Guid>>
 {
     private readonly IAllocationRepository _allocationRepo;
-    private readonly IUnitOfWork _uow;
 
-    public AllocateHandler(IAllocationRepository allocationRepo, IUnitOfWork uow)
+    public AllocateHandler(IAllocationRepository allocationRepo)
     {
         _allocationRepo = allocationRepo;
-        _uow = uow;
     }
 
     public async Task<IReadOnlyCollection<Guid>> Handle(AllocateCommand request, CancellationToken cancellationToken)
@@ -23,10 +21,11 @@ public class AllocateHandler : IRequestHandler<AllocateCommand, IReadOnlyCollect
         if (request.ResourceIds == null || request.ResourceIds.Count == 0)
             throw new ArgumentException("ResourceIds cannot be null or empty", nameof(request));
 
-        var period = new TimeRange(new DateTimeOffset(request.PeriodFrom, TimeSpan.Zero), new DateTimeOffset(request.PeriodTo, TimeSpan.Zero));
+        var period = new TimeRange(request.PeriodFrom, request.PeriodTo);
         var resultIds = new List<Guid>();
 
-        foreach (var resourceId in request.ResourceIds)
+        // Consistent lock ordering prevents two multi-resource requests acquiring opposite locks.
+        foreach (var resourceId in request.ResourceIds.Order())
         {
             var existing = await _allocationRepo.FindForResourceWithLockAsync(resourceId, cancellationToken);
             var allocation = Allocation.Reserve(resourceId, request.ProjectId, period, existing);
@@ -34,7 +33,6 @@ public class AllocateHandler : IRequestHandler<AllocateCommand, IReadOnlyCollect
             resultIds.Add(allocation.Id);
         }
 
-        await _uow.CommitAsync();
         return resultIds;
     }
 }

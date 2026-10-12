@@ -35,13 +35,17 @@ public class AllocationRepository : IAllocationRepository
 
     public async Task<IReadOnlyCollection<Allocation>> FindForResourceWithLockAsync(Guid resourceId, CancellationToken cancellationToken)
     {
-        // Use UPDLOCK, ROWLOCK to prevent race conditions when checking for overlaps
+        if (_ctx.Database.CurrentTransaction is null)
+            throw new InvalidOperationException("Reservation checks require an active transaction");
+
+        // HOLDLOCK protects the index key range even when this resource has no bookings yet.
         var sql = @"
-            SELECT * FROM Allocations WITH (UPDLOCK, ROWLOCK)
+            SELECT Id AS Value FROM Allocations WITH (UPDLOCK, HOLDLOCK)
             WHERE ResourceId = {0}";
-        return await _ctx.Allocations
-            .FromSqlRaw(sql, resourceId)
-            .ToListAsync(cancellationToken);
+        // Acquire the transaction's calendar locks independently of entity materialization.
+        // LINQ then projects complex values using the configured physical column names.
+        await _ctx.Database.SqlQueryRaw<Guid>(sql, resourceId).ToListAsync(cancellationToken);
+        return await _ctx.Allocations.Where(a => a.ResourceId == resourceId).ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyCollection<Allocation>> FindFreeAsync(TimeRange period)

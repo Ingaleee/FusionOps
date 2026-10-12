@@ -2,6 +2,7 @@ using FusionOps.Domain.Entities;
 using FusionOps.Infrastructure.Outbox;
 using Microsoft.EntityFrameworkCore;
 using FusionOps.Infrastructure.Persistence.SqlServer.Configurations;
+using FusionOps.Infrastructure.Idempotency;
 
 namespace FusionOps.Infrastructure.Persistence.SqlServer;
 
@@ -13,6 +14,7 @@ public class WorkforceContext : DbContext
     public DbSet<EquipmentResource> EquipmentResources => Set<EquipmentResource>();
     public DbSet<Allocation> Allocations => Set<Allocation>();
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    public DbSet<CommandReceipt> CommandReceipts => Set<CommandReceipt>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -20,6 +22,8 @@ public class WorkforceContext : DbContext
         modelBuilder.ApplyConfiguration(new HumanResourceConfig());
         modelBuilder.ApplyConfiguration(new EquipmentResourceConfig());
         modelBuilder.ApplyConfiguration(new AllocationConfig());
+        modelBuilder.ApplyConfiguration(new OutboxConfig());
+        modelBuilder.ApplyConfiguration(new CommandReceiptConfig());
 
         base.OnModelCreating(modelBuilder);
     }

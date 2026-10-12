@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Authorization;
 
 namespace FusionOps.Presentation.Realtime;
 
+[Authorize]
 public class NotificationHub : Hub
 {
     public override async Task OnConnectedAsync()
@@ -14,9 +16,11 @@ public class NotificationHub : Hub
         await base.OnConnectedAsync();
     }
 
+    [Authorize(Roles = "Stock.Admin")]
     public async Task SendLowStockAlert(string sku, DateTime expectedDate, int qtyLeft)
         => await Clients.Group("StockAdmins").SendAsync("lowStock", new { sku, expectedDate, qtyLeft });
 
+    [Authorize(Roles = "Resource.Manager")]
     public async Task SendAllocationUpdate(Guid projectId, string status)
         => await Clients.Group("Managers").SendAsync("allocationUpdate", new { projectId, status });
-} 
+}

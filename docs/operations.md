@@ -1,0 +1,45 @@
+# Local operation, migration and failure demonstration
+
+## Initialization
+
+The planning-only demo needs no infrastructure. The full local demo uses `docker-compose.core.yml`, whose database volumes preserve data across restarts. Ports are 1433, 5433, 5672 and 2113; change connection strings when these are already occupied. Never use the development credentials or insecure EventStore mode in a public deployment.
+
+`Database:Initialize=true` applies migrations only in Development. Production deployments should generate and review SQL scripts, apply them through the release process, then start the application without initialization. The design-time factories generate scripts without starting the API, broker or databases:
+
+```powershell
+dotnet ef migrations script --idempotent --project FusionOps.Infrastructure --context WorkforceContext --output workforce.sql
+dotnet ef migrations script --idempotent --project FusionOps.Infrastructure --context FulfillmentContext --output fulfillment.sql
+```
+
+Use EF CLI 10 with the repository's pinned runtime. Take a backup and exercise upgrades on a disposable copy before changing an existing database. `EnsureCreated` databases have no migration history and require a reviewed baseline; do not automatically run migrations against them.
+
+The old fulfillment migration accidentally included workforce tables. The corrective migration removes their ownership from the EF model but deliberately preserves their physical data. These legacy tables require an explicit data migration/archival decision. They are never used as the workforce command store.
+
+## Retrying a reservation after a network failure
+
+Send `Idempotency-Key` on the first reservation request and reuse that key with the same command data for all retries. A successful retry returns 201 and the original allocation IDs. Resource order and UTC-equivalent timezone representations are canonicalized. Different command data under a completed key returns `409 idempotency_conflict`. While the original transaction is still running, a lock timeout returns `409 idempotency_in_progress` with `Retry-After: 2`.
+
+The receipt lives in the workforce database and commits alongside state and outbox. A failed command or failed commit leaves no receipt and can be retried. Receipt keys are actor/operation scoped and currently retained indefinitely. Do not purge these records without first defining the client retry horizon and tombstone policy; deletion can permit a historical command to execute again. See [ADR 014](adr/014-durable-reservation-idempotency.md).
+
+## Delivery state
+
+`Outbox` has stable Id, event Type, Payload, actor/correlation metadata and delivery state. A successful attempt sets ProcessedAt. Failures increment Attempts and record LastError; NextAttemptAt follows 2, 4, 8, 16 seconds before the fifth failure sets DeadLetteredAt. Valid messages continue while a poison record waits. SQL Server and PostgreSQL workers use separate scoped contexts and skip locked rows.
+
+`/metrics` exports delivered, retried, dead-lettered and delivery-lag instruments from the `FusionOps.Outbox` meter. Labels contain the database store only; event IDs and user IDs are not metric dimensions. These counters do not replace querying persisted backlog/dead-letter records.
+
+Audit insertion can succeed before a broker failure. The retry verifies the same audit stream and republishes with the original MessageId. This is why an external consumer must maintain an inbox: there is no atomic commit shared by the broker and the command database. SignalR notifications are transient delivery attempts, not durable client subscriptions.
+
+## Projection
+
+The projector reads at most 100 source entries per batch and polls continuously. Allocation insertion uses `ON CONFLICT(id) DO NOTHING`. The row and checkpoint commit in one transaction. Inclusive replay is safe; optimistic checkpoint tokens reject stale workers. Invalid recognized events stop checkpoint advancement and log an error. Correct the contract/data through a reviewed operation before resuming; silently skipping an audit event is not the default.
+
+## Failure demonstrations
+
+1. Submit `examples/specialist-plan.json`; inspect the specialist assignment, rejected booked candidate and primal/dual equality.
+2. In full mode reserve the same resource/period twice; the second response is 409. The integration suite exercises the harder simultaneous-empty-calendar case.
+3. Stop only the local stack's eventstore service, commit a reservation, then inspect pending outbox state. Restart EventStore before attempts are exhausted to observe recovery. After dead-lettering, replay requires an operator operation; it is not automatic.
+4. Run the reliability tests to observe injected commit failure, poison-event isolation and competing dispatchers on disposable databases.
+
+`/health/live` tests process responsiveness. `/health/ready` includes database outbox schema checks and broker health in full mode. Audit delivery can lag independently of command acceptance; monitor persisted backlog and errors.
+
+The legacy Docker/Helm/chaos examples require their own environment and credentials. They are not part of the verified local core startup.
