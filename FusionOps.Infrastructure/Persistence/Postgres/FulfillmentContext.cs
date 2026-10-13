@@ -26,6 +26,7 @@ public class FulfillmentContext : FusionOps.Infrastructure.Tenancy.TenantDbConte
         modelBuilder.ApplyConfiguration(new WorkflowEffectReceiptConfig());
         modelBuilder.ApplyConfiguration(new FusionOps.Infrastructure.Projects.ProjectConfig());
         modelBuilder.ApplyConfiguration(new FusionOps.Infrastructure.Projects.ProjectRevisionConfig());
+        modelBuilder.ApplyConfiguration(new FusionOps.Infrastructure.Scheduling.TemporalScenarioConfig());
         modelBuilder.Entity<ProjectionCheckpoint>(checkpoint =>
         {
             checkpoint.ToTable("projection_checkpoints");

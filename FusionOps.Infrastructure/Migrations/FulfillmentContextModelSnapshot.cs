@@ -205,9 +205,72 @@ namespace FusionOps.Infrastructure.Migrations
 
                     b.HasKey("ProjectId", "DefinitionVersion");
 
-                    b.HasIndex("TenantId", "ProjectId");
-
                     b.ToTable("ops_project_revisions", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Scheduling.TemporalScenario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("DefinitionVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Digest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("EvidenceJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("FinishAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsComplete")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsHypothetical")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProjectVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("SearchComplete")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.Property<decimal>("TotalCost")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ProjectId", "DefinitionVersion");
+
+                    b.HasIndex("TenantId", "ProjectId", "Id");
+
+                    b.ToTable("ops_temporal_scenarios", (string)null);
                 });
 
             modelBuilder.Entity("FusionOps.Domain.Workflows.ReservationWorkflow", b =>
@@ -572,6 +635,16 @@ namespace FusionOps.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("TenantId", "ProjectId")
                         .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Scheduling.TemporalScenario", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Projects.ProjectDefinitionRevision", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProjectId", "DefinitionVersion")
+                        .HasPrincipalKey("TenantId", "ProjectId", "DefinitionVersion")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

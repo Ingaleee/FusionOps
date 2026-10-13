@@ -94,7 +94,7 @@ The demonstration is scripted and reproducible, with fixed business fixtures and
 | G6: Tenant operating model | Provisioning, project policies, quotas and fair admission with bounded work | Adversarial ownership/approval tests; overload and noisy-neighbor experiments |
 | G7: Operational proof | Operator workflows, reproducible benchmarks, failure lab and backup/rebuild runbook | Published datasets/hardware/limits, latency/throughput, recovery traces and exercised restore |
 
-G1 is the next implementation boundary. Build the project/task model before extending the optimizer; otherwise a more complex solver has no authoritative project lifecycle to serve.
+G1 provides the authoritative project/task model. G2 extends it with retained temporal scenario evidence and bounded validated scheduling. G3 is the next execution boundary: review/approval, participant acceptance and durable task lifecycle. [Delivery status](flagship-delivery.md) records completed checks and remaining responsibilities.
 
 Introduce service/process separation where ownership, resource isolation or measured scaling requires it. The initial implementation can retain coherent modules and the existing stores. Partitioning/cells or additional transports require a demonstrated limit, a routing/ownership protocol and a recovery test.
 
@@ -102,6 +102,6 @@ Introduce service/process separation where ownership, resource isolation or meas
 
 The reference lifecycle runs from a clean clone and through the documented fault points. Every advertised invariant has executable evidence. The architecture records its trust boundaries, consistency model, irreversible effects and upgrade/restore behavior. Performance targets are set against a published workload and environment, then measured; no unexplained scale claim substitutes for that report.
 
-Current delivered foundation: explainable single-horizon assignment, authoritative catalog quotes, durable allocation retries, approved workforce/license saga, fenced recovery, transactional delivery, tenant row security and audit projection. Current local verification records 149 passing tests. The project lifecycle, temporal optimization, inventory/procurement execution, adaptive planning, cost ledger, tenant capacity controls and operational proof above remain future milestones.
+Current foundation includes explainable assignment, authoritative catalog quotes, durable allocation retries, approved workforce/license saga, fenced recovery, transactional delivery, tenant row security, audit projection and versioned project authority. G2 adds bounded temporal scenarios and replay with independent validation. See [verification](verification.md) for current counts and published evidence. Approved temporal execution, inventory/procurement, adaptive planning, cost ledger, tenant capacity controls and operational proof remain later milestones.
 
 See the [engineering roadmap](engineering-roadmap.md), [workflow protocol](reservation-workflows.md), [tenant authority](tenant-isolation.md) and [ADRs](adr).

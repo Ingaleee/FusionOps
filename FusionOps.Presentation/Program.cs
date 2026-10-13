@@ -31,6 +31,7 @@ if (demoMode) builder.Services.AddDataProtection().UseEphemeralDataProtectionPro
 builder.Host.UseSerilog((_, log) => log.MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .Enrich.FromLogContext().Enrich.WithEnvironmentName().WriteTo.Console());
 builder.Services.AddSingleton<ResourcePlanner>();
+builder.Services.AddSingleton<FusionOps.Domain.Scheduling.TemporalPlanner>();
 builder.Services.AddSingleton(new WorkflowApprovalPolicy(!builder.Environment.IsDevelopment()));
 builder.Services.AddSingleton(new FusionOps.Application.Projects.ProjectAccessPolicy(builder.Environment.IsDevelopment()));
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
@@ -114,6 +115,7 @@ if (!demoMode)
     app.MapLicenseEndpoints();
     app.MapProjectEndpoints();
     app.MapOperationalProjectEndpoints();
+    app.MapTemporalScenarioEndpoints();
     app.MapAuditEndpoints();
     app.MapScenarioEndpoints();
     app.MapHub<NotificationHub>("/hubs/notify");

@@ -50,6 +50,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPlanningQuoteStore, SqlPlanningQuoteStore>();
         services.AddScoped<FusionOps.Application.Projects.IProjectStore, FusionOps.Infrastructure.Projects.PostgresProjectStore>();
         services.AddScoped<FusionOps.Application.Projects.IProjectAccess>(sp => sp.GetRequiredService<FusionOps.Application.Projects.IProjectStore>());
+        services.AddScoped<FusionOps.Infrastructure.Scheduling.TemporalSnapshotCapture>();
+        services.AddScoped<FusionOps.Application.Scheduling.ITemporalScenarioStore, FusionOps.Infrastructure.Scheduling.PostgresTemporalScenarioStore>();
         services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
         services.AddSingleton<IStockForecaster, FusionOps.Infrastructure.Optimizers.MlNetOptimizer>();
 

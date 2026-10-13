@@ -41,6 +41,7 @@ public sealed class OutboxProcessor(
                     ReservationWorkflowChanged e => e.WorkflowId,
                     CatalogResourceChanged e => e.ResourceId,
                     ProjectChanged e => e.ProjectId,
+                    TemporalScenarioCalculated e => e.ScenarioId,
                     StockReplenished e => e.WarehouseId.Value,
                     ReorderPointReached e => e.WarehouseId.Value,
                     _ => Guid.Empty

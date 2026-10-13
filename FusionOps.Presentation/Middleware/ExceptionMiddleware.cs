@@ -37,6 +37,14 @@ public class ExceptionMiddleware
         {
             await WriteProblem(context, HttpStatusCode.NotFound, "project_unavailable", "The project is unavailable");
         }
+        catch (FusionOps.Domain.Scheduling.TemporalModelException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.UnprocessableEntity, ex.Code, ex.Message);
+        }
+        catch (FusionOps.Domain.Scheduling.ScenarioSubmissionConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "scenario_submission_conflict", ex.Message);
+        }
         catch (FusionOps.Domain.Projects.ProjectVersionException ex)
         {
             await WriteProblem(context, HttpStatusCode.PreconditionFailed, "project_version_mismatch", ex.Message);
