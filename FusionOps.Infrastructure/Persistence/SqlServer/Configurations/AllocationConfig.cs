@@ -1,6 +1,7 @@
 using FusionOps.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using FusionOps.Domain.Catalog;
 
 namespace FusionOps.Infrastructure.Persistence.SqlServer.Configurations;
 
@@ -17,9 +18,11 @@ public class AllocationConfig : IEntityTypeConfiguration<Allocation>
                .ValueGeneratedNever();
 
         builder.Ignore(a => a.DomainEvents);
-        // Map owned value object TimeRange
-        builder.OwnsOne(a => a.Period, period =>
+        // A period is an immutable value, shared by allocations in the same request.
+        // Owned entities carry identity and cannot safely share that instance.
+        builder.ComplexProperty(a => a.Period, period =>
         {
+            period.IsRequired();
             period.Property(p => p.Start)
                   .HasColumnName("PeriodStart")
                   .IsRequired();
@@ -31,7 +34,8 @@ public class AllocationConfig : IEntityTypeConfiguration<Allocation>
         builder.Property(a => a.ResourceId).IsRequired();
         builder.Property(a => a.ProjectId).IsRequired();
 
-        builder.HasIndex(a => a.ResourceId);
+        builder.HasIndex(a => new { a.TenantId, a.ResourceId });
+        builder.HasOne<CatalogResource>().WithMany().HasForeignKey(a => new { a.TenantId, a.ResourceId }).HasPrincipalKey(r => new { r.TenantId, r.Id }).OnDelete(DeleteBehavior.Restrict);
         // Additional indexes can be configured in a migration later.
     }
 }

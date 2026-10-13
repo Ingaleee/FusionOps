@@ -20,7 +20,7 @@ public class HumanResourceRepository : IHumanResourceRepository
 
     public async Task<HumanResource?> GetByIdAsync(HumanResourceId id, CancellationToken cancellationToken = default)
     {
-        return await _ctx.HumanResources.FindAsync(new object[] { id }, cancellationToken);
+        return await _ctx.HumanResources.SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
     public async Task AddAsync(HumanResource resource, CancellationToken cancellationToken = default)

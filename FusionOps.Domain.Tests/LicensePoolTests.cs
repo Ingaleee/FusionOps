@@ -17,7 +17,7 @@ public class LicensePoolTests
     public void Allocate_OverCapacity_Throws()
     {
         var pool = new LicensePool("ProductB", 2);
-        Assert.Throws<Exception>(() => pool.Allocate(Guid.NewGuid(), 3));
+        Assert.Throws<FusionOps.Domain.Shared.DomainException>(() => pool.Allocate(Guid.NewGuid(), 3));
     }
 
     [Test]

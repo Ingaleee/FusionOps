@@ -10,7 +10,7 @@ namespace FusionOps.Domain.Entities;
 /// <summary>
 /// Aggregate root that captures reservation of a resource for a time period.
 /// </summary>
-public class Allocation : IEntity<AllocationId>, IHasDomainEvents
+public class Allocation : FusionOps.Domain.Tenancy.TenantOwnedEntity, IEntity<AllocationId>, IHasDomainEvents
 {
     private readonly List<IDomainEvent> _domainEvents = new();
 
@@ -28,7 +28,8 @@ public class Allocation : IEntity<AllocationId>, IHasDomainEvents
     public AllocationId Id { get; private set; }
     public Guid ResourceId { get; private set; }
     public Guid ProjectId { get; private set; }
-    public TimeRange Period { get; private set; }
+    public TimeRange Period { get; private set; } = null!;
+    public bool IsCancelled { get; private set; }
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
     public void AddDomainEvent(IDomainEvent domainEvent) => _domainEvents.Add(domainEvent);
@@ -39,8 +40,8 @@ public class Allocation : IEntity<AllocationId>, IHasDomainEvents
     {
         foreach (var alloc in existing)
         {
-            if (alloc.ResourceId == resourceId && alloc.Period.Overlaps(period))
-                throw new InvalidOperationException("Resource already allocated for given period");
+            if (!alloc.IsCancelled && alloc.ResourceId == resourceId && alloc.Period.Overlaps(period))
+                throw new FusionOps.Domain.Shared.AllocationConflictException(resourceId);
         }
 
         var allocation = new Allocation(AllocationId.New(), resourceId, projectId, period);
@@ -50,6 +51,8 @@ public class Allocation : IEntity<AllocationId>, IHasDomainEvents
 
     public Allocation Cancel()
     {
+        if (IsCancelled) return this;
+        IsCancelled = true;
         AddDomainEvent(new ResourceAllocationCancelled(Id, ResourceId, ProjectId));
         return this;
     }

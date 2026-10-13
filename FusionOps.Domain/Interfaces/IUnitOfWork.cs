@@ -6,11 +6,10 @@ namespace FusionOps.Domain.Interfaces;
 
 public interface IUnitOfWork
 {
-    Task CommitAsync();
-    Task RollbackAsync();
+    Task BeginAsync(PersistenceBoundary boundary, CancellationToken cancellationToken = default);
+    Task CommitAsync(CancellationToken cancellationToken = default);
+    Task RollbackAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Collects all pending domain events from tracked entities and clears them on the entities.
-    /// </summary>
-    IReadOnlyCollection<IDomainEvent> GetDomainEventsAndClear();
 }
+
+public enum PersistenceBoundary { Workforce, Fulfillment }

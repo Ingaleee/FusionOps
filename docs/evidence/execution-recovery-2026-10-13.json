@@ -1,0 +1,50 @@
+{
+  "script": "scripts/verify-execution-recovery.ps1",
+  "apiImageId": "sha256:5d047f67dcd6e9ed76af72d9731ae0279570eb95864ed5046e8c5e3f8fc36f27",
+  "environment": "Windows x64 host, Linux Development API container, .NET SDK 10.0.303/runtime 10.0.12, SQL Server 2022 CU14, PostgreSQL 16, RabbitMQ 3, EventStoreDB 23.10",
+  "runs": [
+    {
+      "apiKilled": true,
+      "boundary": "ReservingResources",
+      "scope": "Local Development API process killed after actual owning-store commit; original lease/receipts retained; activation and compensation verified. No region/provider/financial recovery claim.",
+      "after": {
+        "Id": "7597c40b-a8c4-4119-a5d1-e08ab10b3144",
+        "State": "Compensated",
+        "LeaseEpoch": 5,
+        "Version": 6,
+        "Digest": "0BF789FB41EDF432D60C79B82962516BFF8C9AF9BFAF6B1BC2F4D318E0272167",
+        "ResourceOwnershipJson": "[{\"TaskId\":\"7faa0857-9e33-4d66-880b-b8f67b9c21bd\",\"ResourceId\":\"cbe08f83-b73a-4882-b750-f43598e54637\",\"AllocationId\":\"b8872a40-b9be-46dd-9142-994e2b978d21\"},{\"TaskId\":\"e8eaf15b-22c0-43a7-8497-3c86eea35815\",\"ResourceId\":\"c4ab7348-3d54-48b6-afac-efdd7402cd50\",\"AllocationId\":\"961c9714-ee19-4a0c-8961-c9c1cfca8256\"},{\"TaskId\":\"e8eaf15b-22c0-43a7-8497-3c86eea35815\",\"ResourceId\":\"cbe08f83-b73a-4882-b750-f43598e54637\",\"AllocationId\":\"ebda622b-5c68-4a5a-9e4f-c2f879963bd0\"}]"
+      },
+      "planId": "7597c40b-a8c4-4119-a5d1-e08ab10b3144",
+      "before": {
+        "Id": "7597c40b-a8c4-4119-a5d1-e08ab10b3144",
+        "State": "ReservingResources",
+        "LeaseEpoch": 1,
+        "Version": 1,
+        "ResourceOwnershipJson": "[]"
+      }
+    },
+    {
+      "apiKilled": true,
+      "boundary": "ReservingLicenses",
+      "scope": "Local Development API process killed after actual owning-store commit; original lease/receipts retained; activation and compensation verified. No region/provider/financial recovery claim.",
+      "after": {
+        "Id": "e73529b9-b5d5-4647-be29-ae83d3297cda",
+        "State": "Compensated",
+        "LeaseEpoch": 5,
+        "Version": 6,
+        "Digest": "9630F7170822C60A3ED68EBEDD4AF604A955200CA44140D2FD69A4A4BC063F1D",
+        "ResourceOwnershipJson": "[{\"TaskId\":\"1b6c1840-dc1d-4ab6-bb83-06f3dc965786\",\"ResourceId\":\"02a36267-8936-4024-8c96-287c25b35e71\",\"AllocationId\":\"6c2bc378-dbc9-44bc-b4a3-a891f1b28def\"},{\"TaskId\":\"1b6c1840-dc1d-4ab6-bb83-06f3dc965786\",\"ResourceId\":\"2e6406d1-5d70-4669-a77e-6ca28765502b\",\"AllocationId\":\"440bd2e5-9bb6-4f09-9319-0a9dd703aa8a\"},{\"TaskId\":\"40cf8081-e3f8-46dc-9771-ae4550649c10\",\"ResourceId\":\"02a36267-8936-4024-8c96-287c25b35e71\",\"AllocationId\":\"bd858fdc-4172-42f7-9207-526d22e4578e\"}]"
+      },
+      "planId": "e73529b9-b5d5-4647-be29-ae83d3297cda",
+      "before": {
+        "Id": "e73529b9-b5d5-4647-be29-ae83d3297cda",
+        "State": "ReservingLicenses",
+        "LeaseEpoch": 2,
+        "Version": 2,
+        "ResourceOwnershipJson": "[{\"TaskId\":\"1b6c1840-dc1d-4ab6-bb83-06f3dc965786\",\"ResourceId\":\"02a36267-8936-4024-8c96-287c25b35e71\",\"AllocationId\":\"6c2bc378-dbc9-44bc-b4a3-a891f1b28def\"},{\"TaskId\":\"1b6c1840-dc1d-4ab6-bb83-06f3dc965786\",\"ResourceId\":\"2e6406d1-5d70-4669-a77e-6ca28765502b\",\"AllocationId\":\"440bd2e5-9bb6-4f09-9319-0a9dd703aa8a\"},{\"TaskId\":\"40cf8081-e3f8-46dc-9771-ae4550649c10\",\"ResourceId\":\"02a36267-8936-4024-8c96-287c25b35e71\",\"AllocationId\":\"bd858fdc-4172-42f7-9207-526d22e4578e\"}]"
+      }
+    }
+  ],
+  "date": "2026-10-13"
+}

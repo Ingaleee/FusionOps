@@ -5,6 +5,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.Extensions.Logging;
 using System.Net;
+using Microsoft.EntityFrameworkCore;
+using FusionOps.Domain.Workflows;
+using FusionOps.Domain.Catalog;
+using FusionOps.Domain.Services.Planning;
 
 namespace FusionOps.Presentation.Middleware;
 
@@ -24,6 +28,108 @@ public class ExceptionMiddleware
         try
         {
             await _next(context);
+        }
+        catch (WorkflowVersionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.PreconditionFailed, "workflow_version_mismatch", ex.Message);
+        }
+        catch (FusionOps.Domain.Projects.ProjectAccessException)
+        {
+            await WriteProblem(context, HttpStatusCode.NotFound, "project_unavailable", "The project is unavailable");
+        }
+        catch (FusionOps.Domain.Scheduling.TemporalModelException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.UnprocessableEntity, ex.Code, ex.Message);
+        }
+        catch (FusionOps.Domain.Execution.ExecutionPlanRuleException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.UnprocessableEntity, ex.Code, ex.Message);
+        }
+        catch (FusionOps.Domain.Execution.ExecutionPlanVersionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.PreconditionFailed, "execution_plan_version_mismatch", ex.Message);
+        }
+        catch (FusionOps.Domain.Execution.ExecutionActivationConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "execution_activation_conflict", ex.Message);
+        }
+        catch (FusionOps.Domain.Execution.ExecutionPlanSubmissionConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "execution_plan_submission_conflict", ex.Message);
+        }
+        catch (FusionOps.Presentation.Modules.ExecutionPlanPreconditionRequiredException)
+        {
+            await WriteProblem(context, (HttpStatusCode)428, "precondition_required", "Supply the current execution plan ETag in If-Match");
+        }
+        catch (FusionOps.Domain.Scheduling.ScenarioSubmissionConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "scenario_submission_conflict", ex.Message);
+        }
+        catch (FusionOps.Domain.Projects.ProjectVersionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.PreconditionFailed, "project_version_mismatch", ex.Message);
+        }
+        catch (FusionOps.Presentation.Modules.ProjectPreconditionRequiredException)
+        {
+            await WriteProblem(context, (HttpStatusCode)428, "precondition_required", "Supply the current project ETag in If-Match");
+        }
+        catch (FusionOps.Domain.Projects.ProjectSubmissionConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "project_submission_conflict", ex.Message);
+        }
+        catch (FusionOps.Domain.Projects.ProjectRuleException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.UnprocessableEntity, ex.Code, ex.Message);
+        }
+        catch (FusionOps.Domain.Tenancy.TenantBoundaryException)
+        {
+            await WriteProblem(context, HttpStatusCode.Forbidden, "tenant_boundary", "The operation is outside the verified tenant");
+        }
+        catch (FusionOps.Domain.Tenancy.TenantRequiredException)
+        {
+            await WriteProblem(context, HttpStatusCode.Forbidden, "tenant_required", "A verified tenant context is required");
+        }
+        catch (CatalogVersionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.PreconditionFailed, "catalog_version_mismatch", ex.Message);
+        }
+        catch (ResourceAdmissionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, ex.Code, ex.Message);
+        }
+        catch (QuoteAdmissionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, ex.Code, ex.Message);
+        }
+        catch (WorkflowApprovalException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Forbidden, "separate_approver_required", ex.Message);
+        }
+        catch (WorkflowSubmissionConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "workflow_submission_conflict", ex.Message);
+        }
+        catch (IdempotencyConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "idempotency_conflict", ex.Message);
+        }
+        catch (IdempotencyInProgressException ex)
+        {
+            context.Response.Headers.RetryAfter = "2";
+            await WriteProblem(context, HttpStatusCode.Conflict, "idempotency_in_progress", ex.Message);
+        }
+        catch (AllocationConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "allocation_conflict", ex.Message);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "concurrency_conflict", "The resource changed; reload and retry");
+        }
+        catch (OperationCanceledException) when (context.RequestAborted.IsCancellationRequested) { }
+        catch (ArgumentException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.BadRequest, "invalid_argument", ex.Message);
         }
         catch (DomainException ex)
         {
@@ -56,7 +162,7 @@ public class ExceptionMiddleware
             pb.Extensions["violations"] = details;
 
         ctx.Response.StatusCode = pb.Status ?? (int)code;
-        ctx.Response.ContentType = "application/json";
-        return ctx.Response.WriteAsJsonAsync(pb);
+        pb.Extensions["correlationId"] = ctx.TraceIdentifier;
+        return ctx.Response.WriteAsJsonAsync(pb, options: null, contentType: "application/problem+json");
     }
 }

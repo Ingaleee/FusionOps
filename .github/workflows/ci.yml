@@ -1,17 +1,44 @@
-# name: FusionOps CI
-# on: [push, pull_request]
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v4
-#       - name: Setup .NET
-#         uses: actions/setup-dotnet@v4
-#         with:
-#           dotnet-version: '9.0.x'
-#       - name: Restore
-#         run: dotnet restore
-#       - name: Build
-#         run: dotnet build --no-restore
-#       - name: Test
-#         run: dotnet test --no-build --verbosity normal
+name: FusionOps verification
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  fast:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet restore FusionOps.sln --configfile NuGet.Config --locked-mode
+      - run: dotnet build FusionOps.sln -c Release --no-restore --warnaserror
+      - run: dotnet test FusionOps.Domain.Tests -c Release --no-build --no-restore --logger trx
+      - run: dotnet test FusionOps.Application.Tests -c Release --no-build --no-restore --logger trx
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fast-tests-${{ matrix.os }}
+          path: '**/TestResults/*.trx'
+  reliability:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: dotnet restore FusionOps.sln --configfile NuGet.Config --locked-mode
+      - run: dotnet build FusionOps.sln -c Release --no-restore --warnaserror
+      - run: dotnet test FusionOps.Integration.Tests -c Release --no-build --no-restore --logger trx
+      - run: docker build -f FusionOps.Presentation/Dockerfile -t fusionops-api:verify .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reliability-tests
+          path: '**/TestResults/*.trx'

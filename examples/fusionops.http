@@ -1,0 +1,62 @@
+@base = http://localhost:5121
+
+### Process liveness; available even without dependencies
+GET {{base}}/health/live
+
+### Dependency readiness in full mode
+GET {{base}}/health/ready
+
+### Explainable plan: specialist must be preserved for the specialist slot
+POST {{base}}/api/v1/planning/preview
+Content-Type: application/json
+X-Correlation-Id: portfolio-specialist-plan
+
+< ./specialist-plan.json
+
+### Full mode requires registered resources; preview IDs alone carry no authority
+POST {{base}}/api/v1/catalog/resources
+Content-Type: application/json
+
+{"id":"30000000-0000-0000-0000-000000000001","name":"Specialist","kind":"Human","hourlyRate":20,"currency":"USD","skills":{"csharp":5}}
+
+### Register the second candidate
+POST {{base}}/api/v1/catalog/resources
+Content-Type: application/json
+
+{"id":"30000000-0000-0000-0000-000000000002","name":"General engineer","kind":"Human","hourlyRate":10,"currency":"USD","skills":{}}
+
+### Reserve catalog resources in full mode; use workflows.http for a price-reviewed quote
+POST {{base}}/api/v1/allocate
+Content-Type: application/json
+X-Correlation-Id: portfolio-reservation
+Idempotency-Key: portfolio-reservation-001
+
+{
+  "projectId": "10000000-0000-0000-0000-000000000001",
+  "resourceIds": ["30000000-0000-0000-0000-000000000001", "30000000-0000-0000-0000-000000000002"],
+  "periodFrom": "2026-10-20T08:00:00Z",
+  "periodTo": "2026-10-20T10:00:00Z"
+}
+
+### Without a key, repeating the reservation returns 409 Conflict
+POST {{base}}/api/v1/allocate
+Content-Type: application/json
+
+{
+  "projectId": "10000000-0000-0000-0000-000000000001",
+  "resourceIds": ["30000000-0000-0000-0000-000000000001"],
+  "periodFrom": "2026-10-20T08:00:00Z",
+  "periodTo": "2026-10-20T10:00:00Z"
+}
+
+### Repeating the first request with its original key returns the original IDs and 201
+POST {{base}}/api/v1/allocate
+Content-Type: application/json
+Idempotency-Key: portfolio-reservation-001
+
+{
+  "projectId": "10000000-0000-0000-0000-000000000001",
+  "resourceIds": ["30000000-0000-0000-0000-000000000002", "30000000-0000-0000-0000-000000000001"],
+  "periodFrom": "2026-10-20T11:00:00+03:00",
+  "periodTo": "2026-10-20T13:00:00+03:00"
+}

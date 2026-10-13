@@ -11,6 +11,7 @@ obj/
 .vscode/
 TestResults/
 *.log
+build.out
 *.tmp
 *.db
 *.DS_Store
@@ -24,10 +25,13 @@ Thumbs.db
 .DS_Store
 # npm/yarn/pnpm
 node_modules/
+.packages/
+.dotnet/
+artifacts/
 # Python venv
 venv/
 __pycache__/
 # Docker
 *.pid
 # Ignore local settings
-appsettings.Development.json 
+appsettings.Development.json

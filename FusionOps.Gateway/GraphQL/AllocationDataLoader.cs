@@ -26,9 +26,10 @@ public class AllocationDataLoader : BatchDataLoader<Guid, IEnumerable<Allocation
                            $"/api/v1/projects/allocations?ids={ids}", cts.Token);
             return resp ?? keys.ToDictionary(k => k, _ => Enumerable.Empty<Allocation>() as IEnumerable<Allocation>);
         }
-        catch
+        catch (Exception error) when (error is not OperationCanceledException || !ct.IsCancellationRequested)
         {
-            return keys.ToDictionary(k => k, _ => Enumerable.Empty<Allocation>() as IEnumerable<Allocation>);
+            throw new HotChocolate.GraphQLException(HotChocolate.ErrorBuilder.New()
+                .SetMessage("The allocation service is unavailable").SetCode("UPSTREAM_UNAVAILABLE").Build());
         }
     }
 }

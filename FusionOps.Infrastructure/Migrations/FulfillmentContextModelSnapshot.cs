@@ -18,83 +18,10 @@ namespace FusionOps.Infrastructure.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.3")
+                .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("FusionOps.Domain.Entities.Allocation", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ResourceId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ResourceId");
-
-                    b.ToTable("Allocations", (string)null);
-                });
-
-            modelBuilder.Entity("FusionOps.Domain.Entities.EquipmentResource", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Model")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.ComplexProperty<Dictionary<string, object>>("HourRate", "FusionOps.Domain.Entities.EquipmentResource.HourRate#Money", b1 =>
-                        {
-                            b1.Property<decimal>("Amount")
-                                .HasColumnType("numeric")
-                                .HasColumnName("HourRateAmount");
-
-                            b1.Property<int>("Currency")
-                                .HasColumnType("integer")
-                                .HasColumnName("HourRateCurrency");
-                        });
-
-                    b.HasKey("Id");
-
-                    b.ToTable("EquipmentResources", (string)null);
-                });
-
-            modelBuilder.Entity("FusionOps.Domain.Entities.HumanResource", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.ComplexProperty<Dictionary<string, object>>("HourRate", "FusionOps.Domain.Entities.HumanResource.HourRate#Money", b1 =>
-                        {
-                            b1.Property<decimal>("Amount")
-                                .HasColumnType("numeric")
-                                .HasColumnName("HourRateAmount");
-
-                            b1.Property<int>("Currency")
-                                .HasColumnType("integer")
-                                .HasColumnName("HourRateCurrency");
-                        });
-
-                    b.HasKey("Id");
-
-                    b.ToTable("HumanResources", (string)null);
-                });
 
             modelBuilder.Entity("FusionOps.Domain.Entities.LicensePool", b =>
                 {
@@ -110,12 +37,21 @@ namespace FusionOps.Infrastructure.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.Property<int>("TotalSeats")
                         .HasColumnType("integer");
 
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("Product")
+                    b.HasIndex("TenantId", "Product")
                         .IsUnique();
 
                     b.ToTable("license_pools", (string)null);
@@ -137,8 +73,15 @@ namespace FusionOps.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.ComplexProperty<Dictionary<string, object>>("UnitCost", "FusionOps.Domain.Entities.StockItem.UnitCost#Money", b1 =>
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "UnitCost", "FusionOps.Domain.Entities.StockItem.UnitCost#Money", b1 =>
                         {
+                            b1.IsRequired();
+
                             b1.Property<decimal>("Amount")
                                 .HasColumnType("numeric")
                                 .HasColumnName("UnitCostAmount");
@@ -150,7 +93,7 @@ namespace FusionOps.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Sku")
+                    b.HasIndex("TenantId", "Sku")
                         .IsUnique();
 
                     b.ToTable("StockItems", (string)null);
@@ -163,15 +106,772 @@ namespace FusionOps.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.HasKey("Id");
 
                     b.ToTable("Warehouses", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionActivation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ApprovedPlanVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("CancellationRequested")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Digest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("LastErrorCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<long>("LeaseEpoch")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("LeaseExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LeaseToken")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PausedStep")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ResourceOwnershipJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("StepAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("WorkCompletionRequested")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ProjectId")
+                        .IsUnique()
+                        .HasFilter("\"State\" IN ('ReservingResources','ReservingLicenses','Active','ReleasingLicenses','ReleasingResources','NeedsAttention')");
+
+                    b.HasIndex("State", "NextAttemptAt", "LeaseExpiresAt");
+
+                    b.HasIndex("TenantId", "ProjectId", "Id");
+
+                    b.ToTable("ops_execution_activations", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionActivationDecision", b =>
+                {
+                    b.Property<Guid>("ActivationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("Version")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("CancellationRequested")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ErrorCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<long>("LeaseEpoch")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("PausedStep")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.HasKey("ActivationId", "Version");
+
+                    b.HasIndex("TenantId", "ActivationId");
+
+                    b.ToTable("ops_execution_activation_decisions", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionBaseline", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("DefinitionDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<long>("DefinitionVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Digest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("EvidenceJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("PreviousPlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProjectVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTimeOffset>("ReviewExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ScenarioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.Property<decimal>("TotalCost")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ProjectId", "DefinitionVersion");
+
+                    b.HasIndex("TenantId", "ProjectId", "PreviousPlanId");
+
+                    b.HasIndex("TenantId", "ProjectId", "ScenarioId");
+
+                    b.ToTable("ops_execution_baselines", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionPlan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ApprovalExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ProjectId", "Id")
+                        .IsUnique();
+
+                    b.ToTable("ops_execution_plans", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionPlanDecision", b =>
+                {
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("Version")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("ApprovalExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PolicyVersion")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("ReviewedDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.HasKey("PlanId", "Version");
+
+                    b.HasIndex("TenantId", "PlanId");
+
+                    b.ToTable("ops_execution_plan_decisions", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionTask", b =>
+                {
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("CompletedOutsideReservation")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("PlanId", "TaskId");
+
+                    b.HasIndex("TenantId", "ProjectId", "PlanId");
+
+                    b.ToTable("ops_execution_tasks", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionTaskFact", b =>
+                {
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CommandId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Accepted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("EffectiveAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Mutation")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<bool>("OutsideReservation")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectionCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<long>("TaskVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.HasKey("PlanId", "TaskId", "CommandId");
+
+                    b.HasIndex("TenantId", "PlanId", "TaskId");
+
+                    b.ToTable("ops_execution_task_facts", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.TemporalLicenseEffectReceipt", b =>
+                {
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Step")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Digest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RejectionCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("Succeeded")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.HasKey("PlanId", "Step");
+
+                    b.HasIndex("TenantId", "ProjectId", "PlanId");
+
+                    b.ToTable("execution_license_effects", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Projects.OperationalProject", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("DefinitionDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("DefinitionJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("DefinitionVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("InitialDefinitionDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Id");
+
+                    b.ToTable("ops_projects", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Projects.ProjectDefinitionRevision", b =>
+                {
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("DefinitionVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("DefinitionJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Digest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<long>("ProjectVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.HasKey("ProjectId", "DefinitionVersion");
+
+                    b.ToTable("ops_project_revisions", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Scheduling.TemporalScenario", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("DefinitionVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Digest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("EvidenceJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("FinishAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsComplete")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsHypothetical")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ProjectVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("SearchComplete")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.Property<decimal>("TotalCost")
+                        .HasColumnType("numeric");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ProjectId", "DefinitionVersion");
+
+                    b.HasIndex("TenantId", "ProjectId", "Id");
+
+                    b.ToTable("ops_temporal_scenarios", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Workflows.ReservationWorkflow", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("CancellationRequested")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("CompletionTimeoutSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeadlineAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("LastErrorCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<long>("LeaseEpoch")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("LeaseExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LeaseToken")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("PausedStep")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SpecificationHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("StepAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SubmittedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.PrimitiveCollection<Guid[]>("_allocationIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("AllocationIds");
+
+                    b.PrimitiveCollection<Guid[]>("_resourceIds")
+                        .IsRequired()
+                        .HasColumnType("uuid[]")
+                        .HasColumnName("ResourceIds");
+
+                    b.ComplexProperty(typeof(Dictionary<string, object>), "Period", "FusionOps.Domain.Workflows.ReservationWorkflow.Period#TimeRange", b1 =>
+                        {
+                            b1.IsRequired();
+
+                            b1.Property<DateTimeOffset>("End")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("PeriodEnd");
+
+                            b1.Property<DateTimeOffset>("Start")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("PeriodStart");
+                        });
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("State", "NextAttemptAt", "LeaseExpiresAt");
+
+                    b.ToTable("reservation_workflows", (string)null);
                 });
 
             modelBuilder.Entity("FusionOps.Infrastructure.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTime?>("DeadLetteredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("OccurredOn")
                         .HasColumnType("timestamp with time zone");
@@ -183,6 +883,11 @@ namespace FusionOps.Infrastructure.Migrations
                     b.Property<DateTime?>("ProcessedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -190,8 +895,8 @@ namespace FusionOps.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProcessedAt")
-                        .HasDatabaseName("IX_Outbox_ProcessedAt");
+                    b.HasIndex("ProcessedAt", "DeadLetteredAt", "NextAttemptAt", "OccurredOn")
+                        .HasDatabaseName("IX_Outbox_Dispatch");
 
                     b.ToTable("Outbox", (string)null);
                 });
@@ -231,47 +936,149 @@ namespace FusionOps.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("sku");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.Property<DateTime>("ToTs")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("to_ts");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProjectId", "Recorded")
+                    b.HasIndex("TenantId", "ProjectId", "Recorded")
                         .HasDatabaseName("ix_history_project_rec");
 
                     b.ToTable("allocation_history", (string)null);
                 });
 
-            modelBuilder.Entity("FusionOps.Domain.Entities.Allocation", b =>
+            modelBuilder.Entity("FusionOps.Infrastructure.Persistence.Postgres.Models.ProjectionCheckpoint", b =>
                 {
-                    b.OwnsOne("FusionOps.Domain.ValueObjects.TimeRange", "Period", b1 =>
-                        {
-                            b1.Property<Guid>("AllocationId")
-                                .HasColumnType("uuid");
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                            b1.Property<DateTimeOffset>("End")
-                                .HasColumnType("timestamp with time zone")
-                                .HasColumnName("PeriodEnd");
+                    b.Property<long>("CommitPosition")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
 
-                            b1.Property<DateTimeOffset>("Start")
-                                .HasColumnType("timestamp with time zone")
-                                .HasColumnName("PeriodStart");
+                    b.Property<long>("PreparePosition")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
 
-                            b1.HasKey("AllocationId");
+                    b.HasKey("Name");
 
-                            b1.ToTable("Allocations");
+                    b.ToTable("projection_checkpoints", (string)null);
+                });
 
-                            b1.WithOwner()
-                                .HasForeignKey("AllocationId");
-                        });
+            modelBuilder.Entity("FusionOps.Infrastructure.Workflows.WorkflowEffectReceipt", b =>
+                {
+                    b.Property<Guid>("WorkflowId")
+                        .HasColumnType("uuid");
 
-                    b.Navigation("Period")
-                        .IsRequired();
+                    b.Property<string>("Step")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RejectionCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("SpecificationHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<bool>("Succeeded")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.HasKey("WorkflowId", "Step");
+
+                    b.ToTable("workflow_effect_inbox", (string)null);
                 });
 
             modelBuilder.Entity("FusionOps.Domain.Entities.LicensePool", b =>
                 {
+                    b.OwnsMany("FusionOps.Domain.Entities.TemporalLicenseReservation", "TemporalReservations", b1 =>
+                        {
+                            b1.Property<Guid>("PoolId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("PlanId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("TaskId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("ProjectId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Seats")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("uuid")
+                                .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                            b1.HasKey("PoolId", "PlanId", "TaskId");
+
+                            b1.HasIndex("TenantId", "PoolId");
+
+                            b1.HasIndex("TenantId", "ProjectId", "PlanId");
+
+                            b1.ToTable("license_temporal_reservations", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("TenantId", "PoolId")
+                                .HasPrincipalKey("TenantId", "Id");
+
+                            b1.HasOne("FusionOps.Domain.Execution.ExecutionBaseline", null)
+                                .WithMany()
+                                .HasForeignKey("TenantId", "ProjectId", "PlanId")
+                                .HasPrincipalKey("TenantId", "ProjectId", "Id")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired();
+
+                            b1.OwnsOne("FusionOps.Domain.ValueObjects.TimeRange", "Period", b2 =>
+                                {
+                                    b2.Property<Guid>("TemporalLicenseReservationPoolId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<Guid>("TemporalLicenseReservationPlanId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<Guid>("TemporalLicenseReservationTaskId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<DateTimeOffset>("End")
+                                        .HasColumnType("timestamp with time zone")
+                                        .HasColumnName("PeriodEnd");
+
+                                    b2.Property<DateTimeOffset>("Start")
+                                        .HasColumnType("timestamp with time zone")
+                                        .HasColumnName("PeriodStart");
+
+                                    b2.HasKey("TemporalLicenseReservationPoolId", "TemporalLicenseReservationPlanId", "TemporalLicenseReservationTaskId");
+
+                                    b2.ToTable("license_temporal_reservations");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("TemporalLicenseReservationPoolId", "TemporalLicenseReservationPlanId", "TemporalLicenseReservationTaskId");
+                                });
+
+                            b1.Navigation("Period")
+                                .IsRequired();
+                        });
+
                     b.OwnsMany("FusionOps.Domain.Entities.LicenseAllocationRef", "Allocations", b1 =>
                         {
                             b1.Property<Guid>("id")
@@ -282,24 +1089,314 @@ namespace FusionOps.Infrastructure.Migrations
                                 .HasColumnType("uuid")
                                 .HasColumnName("project_id");
 
+                            b1.Property<Guid?>("ReservationId")
+                                .HasColumnType("uuid")
+                                .HasColumnName("reservation_id");
+
                             b1.Property<int>("Seats")
                                 .HasColumnType("integer")
                                 .HasColumnName("seats");
+
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("uuid")
+                                .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
 
                             b1.Property<Guid>("pool_id")
                                 .HasColumnType("uuid");
 
                             b1.HasKey("id");
 
-                            b1.HasIndex("pool_id");
+                            b1.HasIndex("TenantId", "pool_id");
+
+                            b1.HasIndex("pool_id", "ReservationId")
+                                .IsUnique();
 
                             b1.ToTable("license_allocations", (string)null);
 
                             b1.WithOwner()
-                                .HasForeignKey("pool_id");
+                                .HasForeignKey("TenantId", "pool_id")
+                                .HasPrincipalKey("TenantId", "Id");
                         });
 
                     b.Navigation("Allocations");
+
+                    b.Navigation("TemporalReservations");
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionActivation", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Execution.ExecutionBaseline", "Baseline")
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProjectId", "Id")
+                        .HasPrincipalKey("TenantId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Baseline");
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionActivationDecision", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Execution.ExecutionActivation", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ActivationId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionBaseline", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Projects.ProjectDefinitionRevision", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProjectId", "DefinitionVersion")
+                        .HasPrincipalKey("TenantId", "ProjectId", "DefinitionVersion")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FusionOps.Domain.Execution.ExecutionBaseline", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProjectId", "PreviousPlanId")
+                        .HasPrincipalKey("TenantId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("FusionOps.Domain.Scheduling.TemporalScenario", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProjectId", "ScenarioId")
+                        .HasPrincipalKey("TenantId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionPlan", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Execution.ExecutionBaseline", "Baseline")
+                        .WithOne()
+                        .HasForeignKey("FusionOps.Domain.Execution.ExecutionPlan", "TenantId", "ProjectId", "Id")
+                        .HasPrincipalKey("FusionOps.Domain.Execution.ExecutionBaseline", "TenantId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Baseline");
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionPlanDecision", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Execution.ExecutionPlan", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PlanId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionTask", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Execution.ExecutionActivation", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PlanId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FusionOps.Domain.Execution.ExecutionBaseline", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProjectId", "PlanId")
+                        .HasPrincipalKey("TenantId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionTaskFact", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Execution.ExecutionTask", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "PlanId", "TaskId")
+                        .HasPrincipalKey("TenantId", "PlanId", "TaskId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.TemporalLicenseEffectReceipt", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Execution.ExecutionBaseline", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProjectId", "PlanId")
+                        .HasPrincipalKey("TenantId", "ProjectId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Projects.OperationalProject", b =>
+                {
+                    b.OwnsMany("FusionOps.Domain.Projects.ProjectMember", "Members", b1 =>
+                        {
+                            b1.Property<Guid>("ProjectId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Subject")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<string>("Role")
+                                .IsRequired()
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)");
+
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("uuid")
+                                .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                            b1.HasKey("ProjectId", "Subject");
+
+                            b1.HasIndex("TenantId", "ProjectId");
+
+                            b1.HasIndex("TenantId", "Subject", "ProjectId");
+
+                            b1.ToTable("ops_project_members", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("TenantId", "ProjectId")
+                                .HasPrincipalKey("TenantId", "Id");
+                        });
+
+                    b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Projects.ProjectDefinitionRevision", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Projects.OperationalProject", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProjectId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Scheduling.TemporalScenario", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Projects.ProjectDefinitionRevision", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProjectId", "DefinitionVersion")
+                        .HasPrincipalKey("TenantId", "ProjectId", "DefinitionVersion")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Workflows.ReservationWorkflow", b =>
+                {
+                    b.OwnsOne("FusionOps.Domain.Services.Planning.PlanningQuoteBinding", "Quote", b1 =>
+                        {
+                            b1.Property<Guid>("ReservationWorkflowId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<decimal>("Amount")
+                                .HasColumnType("numeric")
+                                .HasColumnName("QuoteAmount");
+
+                            b1.Property<int>("Currency")
+                                .HasColumnType("integer")
+                                .HasColumnName("QuoteCurrency");
+
+                            b1.Property<string>("Digest")
+                                .IsRequired()
+                                .HasMaxLength(64)
+                                .HasColumnType("character varying(64)")
+                                .HasColumnName("QuoteDigest");
+
+                            b1.Property<DateTimeOffset>("ExpiresAt")
+                                .HasColumnType("timestamp with time zone")
+                                .HasColumnName("QuoteExpiresAt");
+
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("QuoteId");
+
+                            b1.HasKey("ReservationWorkflowId");
+
+                            b1.ToTable("reservation_workflows");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ReservationWorkflowId");
+                        });
+
+                    b.OwnsMany("FusionOps.Domain.Workflows.LicenseRequirement", "Licenses", b1 =>
+                        {
+                            b1.Property<Guid>("WorkflowId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Product")
+                                .HasMaxLength(128)
+                                .HasColumnType("character varying(128)");
+
+                            b1.Property<int>("Seats")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("uuid")
+                                .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                            b1.HasKey("WorkflowId", "Product");
+
+                            b1.HasIndex("TenantId", "WorkflowId");
+
+                            b1.ToTable("workflow_license_requirements", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("TenantId", "WorkflowId")
+                                .HasPrincipalKey("TenantId", "Id");
+                        });
+
+                    b.OwnsMany("FusionOps.Domain.Workflows.WorkflowTransition", "Transitions", b1 =>
+                        {
+                            b1.Property<Guid>("WorkflowId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<long>("Version")
+                                .HasColumnType("bigint");
+
+                            b1.Property<string>("Actor")
+                                .IsRequired()
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<DateTimeOffset>("At")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<string>("From")
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)");
+
+                            b1.Property<string>("Reason")
+                                .IsRequired()
+                                .HasMaxLength(100)
+                                .HasColumnType("character varying(100)");
+
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("uuid")
+                                .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                            b1.Property<string>("To")
+                                .IsRequired()
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)");
+
+                            b1.HasKey("WorkflowId", "Version");
+
+                            b1.HasIndex("TenantId", "WorkflowId");
+
+                            b1.ToTable("workflow_transitions", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("TenantId", "WorkflowId")
+                                .HasPrincipalKey("TenantId", "Id");
+                        });
+
+                    b.Navigation("Licenses");
+
+                    b.Navigation("Quote");
+
+                    b.Navigation("Transitions");
                 });
 #pragma warning restore 612, 618
         }

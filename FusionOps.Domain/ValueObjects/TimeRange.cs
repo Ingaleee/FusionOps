@@ -12,28 +12,28 @@ public sealed record TimeRange
 
     public TimeRange(DateTimeOffset start, DateTimeOffset end)
     {
-        if (end < start)
+        if (end <= start)
             throw new ArgumentException("End must be after start", nameof(end));
 
-        Start = start;
-        End = end;
+        Start = start.ToUniversalTime();
+        End = end.ToUniversalTime();
     }
 
     public bool Overlaps(TimeRange other) => Start < other.End && other.Start < End;
 
-    public bool Contains(DateTimeOffset moment) => moment >= Start && moment <= End;
+    public bool Contains(DateTimeOffset moment) => moment >= Start && moment < End;
 
     public TimeRange[] SplitByDay()
     {
         var list = new System.Collections.Generic.List<TimeRange>();
         var currentStart = Start;
-        while (currentStart.Date < End.Date)
+        while (currentStart < End)
         {
-            var dayEnd = currentStart.Date.AddDays(1).AddTicks(-1);
-            list.Add(new TimeRange(currentStart, dayEnd));
-            currentStart = dayEnd.AddTicks(1);
+            var nextMidnight = new DateTimeOffset(currentStart.UtcDateTime.Date.AddDays(1), TimeSpan.Zero);
+            var segmentEnd = nextMidnight < End ? nextMidnight : End;
+            list.Add(new TimeRange(currentStart, segmentEnd));
+            currentStart = segmentEnd;
         }
-        list.Add(new TimeRange(currentStart, End));
         return list.ToArray();
     }
 

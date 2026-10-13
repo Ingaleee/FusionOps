@@ -136,6 +136,32 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = context =>
+            {
+                if (context.Principal?.Identity is System.Security.Claims.ClaimsIdentity identity)
+                {
+                    void AddRoles(System.Text.Json.JsonElement container)
+                    {
+                        if (!container.TryGetProperty("roles", out var roles) || roles.ValueKind != System.Text.Json.JsonValueKind.Array) return;
+                        foreach (var role in roles.EnumerateArray())
+                            if (role.ValueKind == System.Text.Json.JsonValueKind.String && role.GetString() is { Length: > 0 and <= 128 } name && !identity.HasClaim(identity.RoleClaimType, name))
+                                identity.AddClaim(new System.Security.Claims.Claim(identity.RoleClaimType, name));
+                    }
+                    if (context.Principal.FindFirst("realm_access") is { } realm)
+                    {
+                        using var json = System.Text.Json.JsonDocument.Parse(realm.Value); AddRoles(json.RootElement);
+                    }
+                    if (context.Principal.FindFirst("resource_access") is { } access)
+                    {
+                        using var json = System.Text.Json.JsonDocument.Parse(access.Value);
+                        if (json.RootElement.TryGetProperty(options.Audience ?? "fusion-api", out var client)) AddRoles(client);
+                    }
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 var app = builder.Build();
@@ -159,7 +185,8 @@ app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapGraphQL().RequireRateLimiting("default");
+var graphql = app.MapGraphQL().RequireRateLimiting("default");
+if (!app.Environment.IsDevelopment()) graphql.RequireAuthorization();
 app.MapHealthChecks("/live").RequireRateLimiting("default");
 app.MapHealthChecks("/ready").RequireRateLimiting("default");
 app.MapGet("/healthz", () => "OK").RequireRateLimiting("default");

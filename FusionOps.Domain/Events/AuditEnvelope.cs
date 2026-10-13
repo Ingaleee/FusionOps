@@ -9,5 +9,7 @@ public record AuditEnvelope<T>(
     string Actor,
     string CorrelationId,
     T Payload,
-    DateTime OccurredOn
+    DateTime OccurredOn,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    Guid? TenantId = null
 );

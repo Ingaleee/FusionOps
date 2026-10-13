@@ -30,7 +30,7 @@ public class HumanResourceConfig : IEntityTypeConfiguration<HumanResource>
                 .HasColumnName("HourRateAmount")
                 .IsRequired();
             rate.Property(m => m.Currency)
-                .HasConversion(c => c.Value, v => new FusionOps.Domain.Enumerations.Currency(v, string.Empty))
+                .HasConversion(c => c.Value, v => FusionOps.Domain.Enumerations.Currency.FromValue(v))
                 .HasColumnName("HourRateCurrency")
                 .IsRequired();
         });

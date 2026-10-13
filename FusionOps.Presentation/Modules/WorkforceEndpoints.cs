@@ -9,18 +9,14 @@ public static class WorkforceEndpoints
 {
     public static IEndpointRouteBuilder MapWorkforceEndpoints(this IEndpointRouteBuilder endpoints)
     {
-        var allocate = endpoints.MapPost("/api/v1/allocate", async (AllocateCommandDTO dto, ISender sender) =>
+        var allocate = endpoints.MapPost("/api/v1/allocate", async (AllocateCommandDTO dto, HttpRequest request, ISender sender,
+            FusionOps.Application.Projects.IProjectAccess access, CancellationToken ct) =>
         {
-            var cmd = new AllocateCommand(dto.ProjectId, dto.ResourceIds, dto.PeriodFrom, dto.PeriodTo);
-            try
-            {
-                var ids = await sender.Send(cmd);
-                return Results.Created("/api/v1/allocations", ids);
-            }
-            catch (DomainException ex)
-            {
-                return Results.UnprocessableEntity(new { error = ex.Message });
-            }
+            await access.RequireAsync(dto.ProjectId, FusionOps.Domain.Projects.ProjectPermission.Execute, ct);
+            var key = request.Headers.TryGetValue("Idempotency-Key", out var keys) ? keys.ToString() : null;
+            var cmd = new AllocateCommand(dto.ProjectId, dto.ResourceIds, dto.PeriodFrom, dto.PeriodTo, key);
+            var ids = await sender.Send(cmd, ct);
+            return Results.Created($"/api/v1/projects/allocations?ids={dto.ProjectId:D}", ids);
         });
 
         // В dev-окружении разрешаем сидинг без авторизации
@@ -33,5 +29,5 @@ public static class WorkforceEndpoints
         return endpoints;
     }
 
-    public record AllocateCommandDTO(Guid ProjectId, IReadOnlyCollection<Guid> ResourceIds, DateTime PeriodFrom, DateTime PeriodTo);
+    public record AllocateCommandDTO(Guid ProjectId, IReadOnlyCollection<Guid> ResourceIds, DateTimeOffset PeriodFrom, DateTimeOffset PeriodTo);
 }

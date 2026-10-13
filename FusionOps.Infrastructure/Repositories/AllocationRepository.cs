@@ -4,6 +4,7 @@ using FusionOps.Domain.Shared.Ids;
 using FusionOps.Domain.ValueObjects;
 using FusionOps.Infrastructure.Persistence.SqlServer;
 using Microsoft.EntityFrameworkCore;
+using FusionOps.Infrastructure.Planning;
 
 namespace FusionOps.Infrastructure.Repositories;
 
@@ -23,24 +24,28 @@ public class AllocationRepository : IAllocationRepository
 
     public async Task<Allocation?> GetAsync(AllocationId id)
     {
-        return await _ctx.Allocations.FindAsync(id);
+        return await _ctx.Allocations.SingleOrDefaultAsync(a => a.Id == id);
     }
 
     public async Task<IReadOnlyCollection<Allocation>> FindForResourceAsync(Guid resourceId)
     {
         return await _ctx.Allocations
-            .Where(a => a.ResourceId == resourceId)
+            .Where(a => a.TenantId == _ctx.TenantId && a.ResourceId == resourceId)
             .ToListAsync();
     }
 
-    public async Task<IReadOnlyCollection<Allocation>> FindForResourceWithLockAsync(Guid resourceId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyCollection<Allocation>> FindForResourceWithLockAsync(Guid resourceId, CancellationToken cancellationToken, bool requireActive = true)
     {
-        // Use UPDLOCK, ROWLOCK to prevent race conditions when checking for overlaps
-        var sql = @"
-            SELECT * FROM Allocations WITH (UPDLOCK, ROWLOCK)
-            WHERE ResourceId = {0}";
-        return await _ctx.Allocations
-            .FromSqlRaw(sql, resourceId)
+        if (_ctx.Database.CurrentTransaction is null)
+            throw new InvalidOperationException("Reservation checks require an active transaction");
+
+        await CatalogLocks.RequireAsync(_ctx, resourceId, requireActive, cancellationToken);
+
+        // An empty/sparse table can otherwise use a clustered scan and share broad PK ranges.
+        // Both lock acquisition and entity materialization must seek the same tenant/resource index.
+        // HOLDLOCK protects first use; the composite ownership migration installs this index.
+        // EF's FromSql complex-value projection needs conventional aliases as well as retained columns.
+        return await _ctx.Allocations.FromSqlInterpolated($"SELECT *, PeriodStart AS Period_Start, PeriodEnd AS Period_End FROM Allocations WITH (UPDLOCK, HOLDLOCK, INDEX(IX_Allocations_TenantId_ResourceId), FORCESEEK) WHERE TenantId = {_ctx.TenantId} AND ResourceId = {resourceId}")
             .ToListAsync(cancellationToken);
     }
 

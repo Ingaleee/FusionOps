@@ -12,14 +12,14 @@ public sealed class DefaultCostEngine : ICostEngine
 
     public CostBreakdown ForAllocation(HumanResource resource, TimeRange period)
     {
-        var hours = (decimal)(period.End - period.Start).TotalHours;
+        var hours = (period.End - period.Start).Ticks / (decimal)TimeSpan.TicksPerHour;
         var amount = resource.HourRate * hours;
         return new CostBreakdown(new[] { new CostComponent("Labor", amount) });
     }
 
     public CostBreakdown ForEquipment(EquipmentResource equipment, TimeRange period)
     {
-        var hours = (decimal)(period.End - period.Start).TotalHours;
+        var hours = (period.End - period.Start).Ticks / (decimal)TimeSpan.TicksPerHour;
         var amount = _options.Value.EquipmentHourlyRate * hours;
         return new CostBreakdown(new[] { new CostComponent("Equipment", amount) });
     }

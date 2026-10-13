@@ -20,7 +20,7 @@ public class EquipmentResourceRepository : IEquipmentResourceRepository
 
     public async Task<EquipmentResource?> GetByIdAsync(EquipmentResourceId id, CancellationToken cancellationToken = default)
     {
-        return await _ctx.EquipmentResources.FindAsync(new object[] { id }, cancellationToken);
+        return await _ctx.EquipmentResources.SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
     public async Task AddAsync(EquipmentResource resource, CancellationToken cancellationToken = default)

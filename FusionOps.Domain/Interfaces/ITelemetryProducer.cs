@@ -4,5 +4,5 @@ namespace FusionOps.Domain.Interfaces;
 
 public interface ITelemetryProducer
 {
-    Task PublishAsync(string eventType, object payload);
+    Task PublishAsync(string eventType, object payload, CancellationToken cancellationToken = default);
 }

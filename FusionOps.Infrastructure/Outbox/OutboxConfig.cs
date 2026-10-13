@@ -19,7 +19,12 @@ public class OutboxConfig : IEntityTypeConfiguration<OutboxMessage>
                .HasMaxLength(200)
                .IsRequired();
 
-        builder.HasIndex(o => o.ProcessedAt)
-               .HasDatabaseName("IX_Outbox_ProcessedAt");
+        builder.Property(o => o.Payload).IsRequired();
+        builder.Property(o => o.Actor).HasMaxLength(200).IsRequired();
+        builder.Property(o => o.CorrelationId).HasMaxLength(128).IsRequired();
+        builder.Property(o => o.LastError).HasMaxLength(2000);
+
+        builder.HasIndex(o => new { o.ProcessedAt, o.DeadLetteredAt, o.NextAttemptAt, o.OccurredOn })
+               .HasDatabaseName("IX_Outbox_Dispatch");
     }
 }

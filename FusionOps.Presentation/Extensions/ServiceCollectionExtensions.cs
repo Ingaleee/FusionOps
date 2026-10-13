@@ -16,6 +16,11 @@ using FusionOps.Presentation.Infrastructure;
 using FusionOps.Infrastructure.Costing;
 using Microsoft.Extensions.Options;
 using FusionOps.Infrastructure.Persistence.Postgres.Configurations;
+using FusionOps.Application.Workflows;
+using FusionOps.Infrastructure.Workflows;
+using FusionOps.Application.Planning;
+using FusionOps.Infrastructure.Planning;
+using FusionOps.Infrastructure.Tenancy;
 
 namespace FusionOps.Presentation.Extensions;
 
@@ -23,8 +28,12 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration cfg)
     {
-        services.AddDbContext<WorkforceContext>(o => o.UseSqlServer(cfg.GetConnectionString("sql")));
-        services.AddDbContext<FulfillmentContext>(o => o.UseNpgsql(cfg.GetConnectionString("pg")));
+        var sql = cfg.GetConnectionString("sql") ?? throw new InvalidOperationException("SQL connection is required");
+        var pg = cfg.GetConnectionString("pg") ?? throw new InvalidOperationException("PostgreSQL connection is required");
+        services.AddSingleton<IDbContextFactory<WorkforceContext>>(new TenantWorkforceFactory(sql, cfg.GetConnectionString("sqlWorker") ?? sql));
+        services.AddSingleton<IDbContextFactory<FulfillmentContext>>(new TenantFulfillmentFactory(pg, cfg.GetConnectionString("pgWorker") ?? pg));
+        services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<WorkforceContext>>().CreateDbContext());
+        services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<FulfillmentContext>>().CreateDbContext());
 
         services.AddScoped<IAllocationRepository, AllocationRepository>();
         services.AddScoped<IStockRepository, StockRepository>();
@@ -32,33 +41,49 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IHumanResourceRepository, HumanResourceRepository>();
         services.AddScoped<IEquipmentResourceRepository, EquipmentResourceRepository>();
         services.AddScoped<IUnitOfWork, EfUnitOfWork>();
+        services.AddScoped<IReservationWorkflowStore, PostgresReservationWorkflowStore>();
+        services.AddScoped<IWorkforceWorkflowParticipant, SqlWorkforceWorkflowParticipant>();
+        services.AddScoped<ILicenseWorkflowParticipant, PostgresLicenseWorkflowParticipant>();
+        services.AddScoped<ReservationWorkflowService>();
+        services.AddScoped<ReservationWorkflowRunner>();
+        services.AddScoped<IResourceCatalogStore, SqlResourceCatalogStore>();
+        services.AddScoped<IPlanningQuoteStore, SqlPlanningQuoteStore>();
+        services.AddScoped<FusionOps.Application.Projects.IProjectStore, FusionOps.Infrastructure.Projects.PostgresProjectStore>();
+        services.AddScoped<FusionOps.Application.Projects.IProjectAccess>(sp => sp.GetRequiredService<FusionOps.Application.Projects.IProjectStore>());
+        services.AddScoped<FusionOps.Infrastructure.Scheduling.TemporalSnapshotCapture>();
+        services.AddScoped<FusionOps.Application.Scheduling.ITemporalScenarioStore, FusionOps.Infrastructure.Scheduling.PostgresTemporalScenarioStore>();
+        services.AddSingleton(sp => FusionOps.Domain.Execution.ExecutionApprovalPolicy.Standard(!sp.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>().IsDevelopment()));
+        services.AddScoped<FusionOps.Application.Execution.IExecutionPlanStore, FusionOps.Infrastructure.Execution.PostgresExecutionPlanStore>();
+        services.AddScoped<FusionOps.Application.Execution.ITemporalWorkforceParticipant, FusionOps.Infrastructure.Execution.SqlTemporalWorkforceParticipant>();
+        services.AddScoped<FusionOps.Application.Execution.ITemporalLicenseParticipant, FusionOps.Infrastructure.Execution.PostgresTemporalLicenseParticipant>();
+        services.AddScoped<FusionOps.Application.Execution.IExecutionActivationStore, FusionOps.Infrastructure.Execution.PostgresExecutionActivationStore>();
+        services.AddScoped<FusionOps.Application.Execution.ExecutionActivationRunner>();
+        services.AddScoped<FusionOps.Application.Execution.IExecutionTaskStore, FusionOps.Infrastructure.Execution.PostgresExecutionTaskStore>();
+        services.AddScoped<FusionOps.Application.Execution.IExecutionTaskResourceGuard, FusionOps.Infrastructure.Execution.SqlExecutionTaskResourceGuard>();
         services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
         services.AddSingleton<IStockForecaster, FusionOps.Infrastructure.Optimizers.MlNetOptimizer>();
-        services.AddDbContext<FusionOps.Infrastructure.Persistence.SqlServer.AllocationSagaContext>(o =>
-            o.UseSqlServer(cfg.GetConnectionString("sql")));
 
         services.AddMassTransit(mtCfg =>
         {
             mtCfg.SetKebabCaseEndpointNameFormatter();
 
-            mtCfg.AddSagaStateMachine<FusionOps.Infrastructure.Saga.AllocationStateMachine, FusionOps.Infrastructure.Saga.AllocationState>()
-                .EntityFrameworkRepository(r =>
-                {
-                    r.AddDbContext<FusionOps.Infrastructure.Persistence.SqlServer.AllocationSagaContext, FusionOps.Infrastructure.Persistence.SqlServer.AllocationSagaContext>((provider, builder) =>
-                    {
-                        builder.UseSqlServer(cfg.GetConnectionString("sql"), sql => sql.MigrationsAssembly(typeof(FusionOps.Infrastructure.Persistence.SqlServer.AllocationSagaContext).Assembly.FullName));
-                    });
-                });
 
             mtCfg.UsingRabbitMq((ctx, busCfg) =>
             {
-                busCfg.Host(cfg.GetSection("Rabbit")?["Host"] ?? "localhost", "/", h => { });
+                busCfg.Host(cfg["Rabbit:Host"] ?? "localhost", "/", h =>
+                {
+                    h.Username(cfg["Rabbit:Username"] ?? "guest");
+                    h.Password(cfg["Rabbit:Password"] ?? "guest");
+                });
                 busCfg.ConfigureEndpoints(ctx);
             });
         });
 
-        services.AddSingleton<IEventBus, RabbitBus>();
-        services.AddSingleton<ITelemetryProducer, KafkaTelemetryProducer>();
+        services.AddScoped<IEventBus, RabbitBus>();
+        if (cfg.GetValue<bool>("Telemetry:KafkaEnabled"))
+            services.AddSingleton<ITelemetryProducer, KafkaTelemetryProducer>();
+        else
+            services.AddSingleton<ITelemetryProducer, DisabledTelemetryProducer>();
 
         // Costing
         services.AddOptions<CostingOptions>()
@@ -73,14 +98,20 @@ public static class ServiceCollectionExtensions
 
     public static IServiceCollection AddPresentationServices(this IServiceCollection services, IConfiguration cfg)
     {
-        // Pipeline: validation -> logging -> transaction -> audit
+        // Pipeline: validation -> logging -> one database transaction with a durable outbox.
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.ValidationBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.LoggingBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.TransactionBehavior<,>));
-        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.AuditBehavior<,>));
+        services.AddTransient(typeof(IPipelineBehavior<,>), typeof(FusionOps.Application.Pipelines.IdempotencyBehavior<,>));
+        services.AddScoped<ICommandReceiptStore, FusionOps.Infrastructure.Idempotency.SqlCommandReceiptStore>();
 
-        // Audit writer (no-op writer to keep build simple in this environment)
+        services.AddSingleton(sp => new EventStore.Client.EventStoreClient(
+            EventStore.Client.EventStoreClientSettings.Create(cfg["EventStore:ConnectionString"] ?? "esdb://localhost:2113?tls=false")));
         services.AddSingleton<IAuditWriter, EventStoreAuditWriter>();
+        services.AddScoped<IExecutionContext, HttpExecutionContext>();
+        services.AddScoped<FusionOps.Infrastructure.Outbox.OutboxProcessor>();
+        services.AddScoped<IResourceNotification, FusionOps.Presentation.Realtime.SignalRNotificationService>();
+        services.AddSingleton(TimeProvider.System);
 
         services.AddScoped<IAuthorizationHandler, AuditAuthorizationHandler>();
         services.AddAuthorization(options =>

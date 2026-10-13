@@ -24,15 +24,15 @@ public class KafkaTelemetryProducer : ITelemetryProducer, IDisposable
                 () => _logger.LogInformation("Kafka circuit closed"));
     }
 
-    public async Task PublishAsync(string eventType, object payload)
+    public async Task PublishAsync(string eventType, object payload, CancellationToken cancellationToken = default)
     {
         var value = JsonSerializer.Serialize(payload);
         var msg = new Message<string, string> { Key = eventType, Value = value };
-        await _circuitBreaker.ExecuteAsync(async () =>
+        await _circuitBreaker.ExecuteAsync(async ct =>
         {
-            await _producer.ProduceAsync("telemetry", msg);
+            await _producer.ProduceAsync("telemetry", msg, ct);
             _logger.LogInformation("Kafka telemetry produced: {EventType}", eventType);
-        });
+        }, cancellationToken);
     }
 
     public void Dispose() => _producer?.Dispose();

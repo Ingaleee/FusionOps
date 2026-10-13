@@ -8,7 +8,7 @@ namespace FusionOps.Domain.Entities;
 /// <summary>
 /// Aggregate root encapsulating stock operations and events for a physical warehouse.
 /// </summary>
-public class Warehouse : IEntity<WarehouseId>, IHasDomainEvents
+public class Warehouse : FusionOps.Domain.Tenancy.TenantOwnedEntity, IEntity<WarehouseId>, IHasDomainEvents
 {
     private readonly Dictionary<string, StockItem> _items = new();
     private readonly List<IDomainEvent> _domainEvents = new();

@@ -1,108 +1,63 @@
 using FusionOps.Application.UseCases.Scenario;
 using FusionOps.Domain.Entities;
+using FusionOps.Domain.Enumerations;
 using FusionOps.Domain.Interfaces;
-using FusionOps.Domain.Services;
+using FusionOps.Domain.Services.Planning;
+using FusionOps.Domain.Shared;
+using FusionOps.Domain.ValueObjects;
 
 namespace FusionOps.Application.Services.Scenario;
 
-public class ScenarioRunner : IScenarioRunner
+/// <summary>A read-only capacity snapshot. Demand percentages apply to resource counts and existing license demand.</summary>
+public sealed class ScenarioRunner(
+    IAllocationRepository allocations, IStockRepository stock, ILicenseRepository licenses,
+    ICostEngine costEngine, IHumanResourceRepository humans, IEquipmentResourceRepository equipment) : IScenarioRunner
 {
-    private readonly IAllocationRepository _allocationRepository;
-    private readonly IStockRepository _stockRepository;
-    private readonly ILicenseRepository _licenseRepository;
-    private readonly IOptimizerStrategy _optimizerStrategy;
-    private readonly ICostEngine _costEngine;
-    private readonly IHumanResourceRepository _humanResourceRepository;
-    private readonly IEquipmentResourceRepository _equipmentResourceRepository;
-
-    public ScenarioRunner(
-        IAllocationRepository allocationRepository,
-        IStockRepository stockRepository,
-        ILicenseRepository licenseRepository,
-        IOptimizerStrategy optimizerStrategy,
-        ICostEngine costEngine,
-        IHumanResourceRepository humanResourceRepository,
-        IEquipmentResourceRepository equipmentResourceRepository)
-    {
-        _allocationRepository = allocationRepository;
-        _stockRepository = stockRepository;
-        _licenseRepository = licenseRepository;
-        _optimizerStrategy = optimizerStrategy;
-        _costEngine = costEngine;
-        _humanResourceRepository = humanResourceRepository;
-        _equipmentResourceRepository = equipmentResourceRepository;
-    }
-
     public async Task<ScenarioResultDto> RunScenario(RunScenarioCommand command, CancellationToken cancellationToken)
     {
-        // 1. Load data from repositories in parallel (or use in-memory copies)
-        var allocationsTask = _allocationRepository.GetAllAsync(cancellationToken);
-        var stockItemsTask = _stockRepository.GetAllAsync(cancellationToken);
-        var licensePoolsTask = _licenseRepository.GetAllAsync(cancellationToken);
-        var humanResourcesTask = _humanResourceRepository.GetAllAsync(cancellationToken);
-        var equipmentResourcesTask = _equipmentResourceRepository.GetAllAsync(cancellationToken);
+        if (command.ProjectId == Guid.Empty || command.DemandDeltaPercent is < -100 or > 500)
+            throw new DomainException("Provide a project and demand delta between -100 and 500 percent");
+        if (command.AllowOvertime || command.MaxLicenseOveragePercent != 0)
+            throw new DomainException("Overtime and permitted license overage require a policy model and are not supported yet");
+        var period = new TimeRange(new DateTimeOffset(DateTime.SpecifyKind(command.From, DateTimeKind.Utc)),
+            new DateTimeOffset(DateTime.SpecifyKind(command.To, DateTimeKind.Utc)));
 
-        await Task.WhenAll(allocationsTask, stockItemsTask, licensePoolsTask, humanResourcesTask, equipmentResourcesTask);
+        // Repositories share scoped DbContexts: never run their queries concurrently.
+        var calendars = await allocations.GetAllAsync(cancellationToken);
+        var inventory = await stock.GetAllAsync(cancellationToken);
+        var pools = await licenses.GetAllAsync(cancellationToken);
+        var people = await humans.GetAllAsync(cancellationToken);
+        var machines = await equipment.GetAllAsync(cancellationToken);
+        var factor = 1 + command.DemandDeltaPercent / 100m;
+        var humanDemand = (int)Math.Ceiling(people.Count * factor);
+        var equipmentDemand = (int)Math.Ceiling(machines.Count * factor);
+        if (humanDemand + equipmentDemand > 50) throw new DomainException("Scenario preview supports up to 50 demand slots");
 
-        var currentAllocations = allocationsTask.Result.ToList();
-        var currentStockItems = stockItemsTask.Result.ToList();
-        var currentLicensePools = licensePoolsTask.Result.ToList();
-        var currentHumanResources = humanResourcesTask.Result.ToList();
-        var currentEquipmentResources = equipmentResourcesTask.Result.ToList();
-
-        // 2. Create in-memory copies for the "sandbox"
-        var scenarioAllocations = new List<Allocation>(currentAllocations);
-        var scenarioStockItems = new List<StockItem>(currentStockItems);
-        var scenarioLicensePools = new List<LicensePool>(currentLicensePools);
-        var scenarioHumanResources = new List<HumanResource>(currentHumanResources);
-        var scenarioEquipmentResources = new List<EquipmentResource>(currentEquipmentResources);
-
-        // 3. Apply demand delta to relevant data
-        // This is a simplified placeholder. In a real scenario, this would involve complex logic
-        // to simulate increased demand, new projects, changes in resource availability, etc.
-        // For example, if DemandDeltaPercent is 20, we might proportionally increase some metrics.
-        // For now, let's assume it directly impacts the 'required' parameters for a hypothetical optimizer run.
-        int adjustedRequiredHumans = (int)(currentHumanResources.Count * (1 + command.DemandDeltaPercent / 100.0));
-        int adjustedRequiredEquipment = (int)(currentEquipmentResources.Count * (1 + command.DemandDeltaPercent / 100.0));
-
-        // 4. Run optimizer on the modified data in "sandbox"
-        // The current IOptimizerStrategy.AllocateAsync focuses on new allocations, not optimizing existing ones.
-        // For the scenario engine, we might need a different optimization strategy or an adapted one.
-        // For now, we will simulate an optimization pass and simply use the initial allocations for cost calculation.
-        // In a full implementation, this would involve running the optimizer with adjusted demand
-        // and potentially new or modified resource pools.
-        var optimizedAllocationsResult = await _optimizerStrategy.AllocateAsync(
-            scenarioHumanResources,
-            scenarioEquipmentResources,
-            adjustedRequiredHumans,
-            adjustedRequiredEquipment);
-        
-        var optimizedAllocations = optimizedAllocationsResult.ToList(); // Convert to list if needed
-
-        // 5. Calculate costs using CostEngine
-        // This will require iterating over optimizedAllocations and potentially other scenario data.
-        // For now, we'll just sum up some conceptual costs.
-        var period = new FusionOps.Domain.ValueObjects.TimeRange(command.From, command.To);
-        var laborCost = _costEngine.ForAllocation(scenarioHumanResources.FirstOrDefault()!, period); // Simplified, assuming not null
-        var equipmentCost = _costEngine.ForEquipment(scenarioEquipmentResources.FirstOrDefault()!, period); // Simplified, assuming not null
-        var backorderQuantity = 0; // Placeholder for actual calculation after optimization
-        var backorderPenalty = _costEngine.ForBackorder("sample_sku", backorderQuantity, 5); // Placeholder
-        var licenseViolations = 0; // Placeholder for actual calculation after optimization
-        var licensePenalty = _costEngine.ForLicensePenalty("sample_product", licenseViolations, 10); // Placeholder
-
-        var totalCost = _costEngine.Sum(laborCost, equipmentCost, backorderPenalty, licensePenalty);
-
-        // 6. Determine KPI deltas
-        // These calculations will be based on the simulated scenario and optimized results.
-        var utilizationPercentage = (decimal)optimizedAllocations.Count / (scenarioHumanResources.Count + scenarioEquipmentResources.Count) * 100;
-        // BackorderQuantity and LicenseViolations are currently placeholders, will be calculated based on optimization results.
-        var suggestedProcurements = Enumerable.Empty<SuggestedProcurementDto>(); // Placeholder
-
-        return new ScenarioResultDto(
-            TotalCost: totalCost,
-            UtilizationPercentage: utilizationPercentage,
-            BackorderQuantity: backorderQuantity,
-            LicenseViolations: licenseViolations,
-            SuggestedProcurements: suggestedProcurements);
+        IReadOnlyList<TimeRange> Busy(Guid resourceId) => calendars.Where(a => !a.IsCancelled && a.ResourceId == resourceId).Select(a => a.Period).ToArray();
+        var candidates = people.Select(p => new ResourceCandidate(p.Id.Value, p.FullName, ResourceKind.Human, p.HourRate,
+            p.Skills.GroupBy(s => s.Name).ToDictionary(g => g.Key, g => g.Max(s => s.Level.Value)), Busy(p.Id.Value)))
+            .Concat(machines.Select(m => new ResourceCandidate(m.Id.Value, m.Model, ResourceKind.Equipment, m.HourRate,
+                new Dictionary<string, int>(), Busy(m.Id.Value), m.Type.Name))).ToArray();
+        var slots = Enumerable.Range(0, humanDemand).Select(i => new DemandSlot(Guid.NewGuid(), $"Human {i}", ResourceKind.Human, new Dictionary<string, int>()))
+            .Concat(Enumerable.Range(0, equipmentDemand).Select(i => new DemandSlot(Guid.NewGuid(), $"Equipment {i}", ResourceKind.Equipment, new Dictionary<string, int>()))).ToArray();
+        var plan = new ResourcePlanner().Plan(new(command.ProjectId, period, Currency.USD, slots, candidates), cancellationToken);
+        var parts = new List<CostBreakdown> { new([new CostComponent("AssignedResources", plan.TotalCost)]) };
+        var days = Math.Max(1, (int)Math.Ceiling((period.End - period.Start).TotalDays));
+        foreach (var item in inventory)
+        {
+            if (item.UnitCost.Currency != Currency.USD) throw new DomainException("Scenario inventory costs require USD; no FX conversion is configured");
+            parts.Add(costEngine.ForInventoryHolding(item, days));
+        }
+        var violations = 0;
+        foreach (var pool in pools)
+        {
+            var shortage = Math.Max(0, (int)Math.Ceiling(pool.AllocatedSeats * factor) - pool.TotalSeats);
+            violations += shortage;
+            parts.Add(costEngine.ForLicensePenalty(pool.Product, shortage, days));
+        }
+        var procurements = inventory.Where(i => i.NeedsReorder())
+            .Select(i => new SuggestedProcurementDto(i.Sku, i.ReorderPoint + 1 - i.Quantity)).ToArray();
+        return new(costEngine.Sum(parts.ToArray()), candidates.Length == 0 ? 0 : plan.Assignments.Count * 100m / candidates.Length,
+            BackorderQuantity: 0, LicenseViolations: violations, SuggestedProcurements: procurements);
     }
 }

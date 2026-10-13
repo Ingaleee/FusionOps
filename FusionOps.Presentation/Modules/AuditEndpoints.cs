@@ -17,11 +17,12 @@ public static class AuditEndpoints
                    int? pageSize,
                    DateTime? from,
                    DateTime? to,
-                   ISender sender) =>
+                   ISender sender, FusionOps.Application.Projects.IProjectAccess access, CancellationToken ct) =>
             {
+                await access.RequireAsync(projectId, FusionOps.Domain.Projects.ProjectPermission.Read, ct);
                 var query = new GetAllocationHistoryQuery(projectId, from, to,
                               page ?? 1, pageSize ?? 100);
-                var result = await sender.Send(query);
+                var result = await sender.Send(query, ct);
                 return Results.Ok(result);
             })
             .WithName("GetAllocationHistory")

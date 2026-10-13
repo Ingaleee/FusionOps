@@ -1,0 +1,65 @@
+@base = http://localhost:5121
+@workflow = 50000000-0000-0000-0000-000000000001
+@quote = replace-with-the-id-returned-by-planning-quotes
+
+### Register authoritative candidate metadata before planning
+POST {{base}}/api/v1/catalog/resources
+Content-Type: application/json
+
+{
+  "id": "30000000-0000-0000-0000-000000000003",
+  "name": "C# architect",
+  "kind": "Human",
+  "hourlyRate": 50,
+  "currency": "USD",
+  "skills": {"csharp": 5}
+}
+
+### Calculate a durable quote from persisted metadata and actual bookings
+POST {{base}}/api/v1/planning/quotes
+Content-Type: application/json
+
+{
+  "projectId": "10000000-0000-0000-0000-000000000002",
+  "from": "2026-10-20T08:00:00Z",
+  "to": "2026-10-20T10:00:00Z",
+  "currency": "USD",
+  "candidateIds": ["30000000-0000-0000-0000-000000000003"],
+  "slots": [{"id": "60000000-0000-0000-0000-000000000001", "name": "Lead", "kind": "Human", "requiredSkills": {"csharp": 5}}],
+  "validitySeconds": 300
+}
+
+### Development: create a license pool
+POST {{base}}/api/v1/licenses/compiler/pool?totalSeats=5
+
+### Immutable proposal; repeat with the same ID/data to recover its current state
+POST {{base}}/api/v1/workflows
+Content-Type: application/json
+
+{
+  "workflowId": "{{workflow}}",
+  "quoteId": "{{quote}}",
+  "licenses": [{"product": "compiler", "seats": 2}],
+  "completionTimeoutSeconds": 300
+}
+
+### A proposal does not reserve anything until approved; ETag initially equals "1"
+GET {{base}}/api/v1/workflows/{{workflow}}
+
+### Approve the exact reviewed version; use the ETag returned by GET
+POST {{base}}/api/v1/workflows/{{workflow}}/approve
+If-Match: "1"
+
+### Poll until Succeeded, Compensated, Failed or NeedsAttention
+GET {{base}}/api/v1/workflows/{{workflow}}
+
+### Cancellation releases workflow-owned effects; replace "4" with the latest ETag
+POST {{base}}/api/v1/workflows/{{workflow}}/cancel
+If-Match: "4"
+
+### Operator queue: unresolved outcomes awaiting investigation
+GET {{base}}/api/v1/workflows?state=NeedsAttention&limit=20
+
+### Resume only NeedsAttention after fixing the cause; supply its current ETag
+POST {{base}}/api/v1/workflows/{{workflow}}/resume
+If-Match: "5"

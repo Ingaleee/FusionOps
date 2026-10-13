@@ -9,7 +9,7 @@ public class ConsoleEventBus : IEventBus
     private readonly ILogger<ConsoleEventBus> _logger;
     public ConsoleEventBus(ILogger<ConsoleEventBus> logger) => _logger = logger;
 
-    public Task PublishAsync(IDomainEvent domainEvent)
+    public Task PublishAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("[CONSOLE BUS] Event published: {Event}", domainEvent.GetType().Name);
         return Task.CompletedTask;

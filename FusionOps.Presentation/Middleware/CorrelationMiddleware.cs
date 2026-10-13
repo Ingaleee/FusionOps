@@ -17,7 +17,10 @@ public class CorrelationMiddleware
             ? cid.ToString()
             : Guid.NewGuid().ToString();
 
+        correlationId = correlationId.Length <= 128 && correlationId.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.')
+            ? correlationId : Guid.NewGuid().ToString("N");
         context.Response.Headers[HeaderName] = correlationId;
+        context.TraceIdentifier = correlationId;
 
         using (LogContext.PushProperty("CorrelationId", correlationId))
         using (LogContext.PushProperty("UserId", context.User.Identity?.Name ?? "anonymous"))

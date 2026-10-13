@@ -2,8 +2,6 @@ using FusionOps.Domain.Entities;
 using FusionOps.Domain.Interfaces;
 using FusionOps.Infrastructure.Persistence.Postgres;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
-using NpgsqlTypes;
 
 namespace FusionOps.Infrastructure.Repositories;
 
@@ -35,36 +33,15 @@ public class StockRepository : IStockRepository
 
     public async Task BulkRestockAsync(IEnumerable<StockItemDelta> deltas)
     {
-        // Используем COPY bulk insert/update через NpgsqlCopy
-        await using var conn = (Npgsql.NpgsqlConnection)_ctx.Database.GetDbConnection();
-        if (conn.State != System.Data.ConnectionState.Open)
-            await conn.OpenAsync();
-
-        // create temp table
-        await using (var create = new Npgsql.NpgsqlCommand("CREATE TEMP TABLE IF NOT EXISTS temp_stock_delta (sku text, delta integer);", conn))
+        if (_ctx.Database.CurrentTransaction is null) throw new InvalidOperationException("Restocking requires the command transaction");
+        var batch = deltas.ToArray();
+        if (batch.Length > 1000 || batch.Any(d => string.IsNullOrWhiteSpace(d.Sku) || d.QuantityDelta <= 0))
+            throw new ArgumentException("Restocking supports up to 1000 positive SKU deltas");
+        foreach (var delta in batch.OrderBy(d => d.Sku, StringComparer.Ordinal))
         {
-            await create.ExecuteNonQueryAsync();
+            var item = await GetBySkuAsync(delta.Sku) ?? throw new FusionOps.Domain.Shared.DomainException("SKU is absent in this tenant");
+            item.Restock(delta.QuantityDelta);
         }
-
-        await using var writer = conn.BeginBinaryImport("COPY temp_stock_delta (sku, delta) FROM STDIN (FORMAT BINARY)");
-
-        foreach (var d in deltas)
-        {
-            writer.StartRow();
-            writer.Write(d.Sku, NpgsqlTypes.NpgsqlDbType.Varchar);
-            writer.Write(d.QuantityDelta, NpgsqlTypes.NpgsqlDbType.Integer);
-        }
-        await writer.CompleteAsync();
-
-        var sql = @"
-            UPDATE stock_items s
-            SET quantity = s.quantity + d.delta
-            FROM temp_stock_delta d
-            WHERE s.sku = d.sku;
-            DROP TABLE temp_stock_delta;";
-
-        await using var cmd = new Npgsql.NpgsqlCommand(sql, conn);
-        await cmd.ExecuteNonQueryAsync();
     }
 
     public async Task<IReadOnlyCollection<StockItem>> GetAllAsync(CancellationToken cancellationToken)

@@ -1,79 +1,73 @@
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Data;
+using FusionOps.Application.Abstractions;
 using FusionOps.Domain.Interfaces;
 using FusionOps.Domain.Shared.Interfaces;
+using FusionOps.Infrastructure.Outbox;
 using FusionOps.Infrastructure.Persistence.Postgres;
 using FusionOps.Infrastructure.Persistence.SqlServer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace FusionOps.Infrastructure.UnitOfWork;
 
-public class EfUnitOfWork : IUnitOfWork
+public sealed class EfUnitOfWork(
+    WorkforceContext workforce, FulfillmentContext fulfillment, IExecutionContext executionContext) : IUnitOfWork
 {
-    private readonly WorkforceContext _workforce;
-    private readonly FulfillmentContext _fulfillment;
-    private IDbContextTransaction? _txn;
+    private IDbContextTransaction? _transaction;
+    private DbContext? _activeContext;
 
-    public EfUnitOfWork(WorkforceContext workforce, FulfillmentContext fulfillment)
+    public async Task BeginAsync(PersistenceBoundary boundary, CancellationToken cancellationToken = default)
     {
-        _workforce = workforce;
-        _fulfillment = fulfillment;
+        if (_transaction is not null)
+            throw new InvalidOperationException("Nested write transactions are not supported");
+        _activeContext = boundary switch
+        {
+            PersistenceBoundary.Workforce => workforce,
+            PersistenceBoundary.Fulfillment => fulfillment,
+            _ => throw new ArgumentOutOfRangeException(nameof(boundary))
+        };
+        _transaction = await _activeContext.Database.BeginTransactionAsync(
+            boundary == PersistenceBoundary.Workforce ? IsolationLevel.Serializable : IsolationLevel.ReadCommitted,
+            cancellationToken);
     }
 
-    public async Task CommitAsync()
+    public async Task CommitAsync(CancellationToken cancellationToken = default)
     {
-        _txn ??= await _workforce.Database.BeginTransactionAsync();
+        var context = _activeContext ?? throw new InvalidOperationException("Begin a transaction before committing");
+        var transaction = _transaction ?? throw new InvalidOperationException("No active transaction");
+        var otherContext = ReferenceEquals(context, workforce) ? (DbContext)fulfillment : workforce;
+        if (otherContext.ChangeTracker.HasChanges())
+            throw new InvalidOperationException("A command cannot write across database boundaries. Use a compensated workflow.");
+
+        var sources = context.ChangeTracker.Entries().Select(e => e.Entity)
+            .OfType<IHasDomainEvents>().Where(e => e.DomainEvents.Count > 0).ToArray();
+        foreach (var domainEvent in sources.SelectMany(e => e.DomainEvents))
+            context.Set<OutboxMessage>().Add(DomainEventSerializer.Serialize(
+                domainEvent, executionContext.Actor, executionContext.CorrelationId, ((FusionOps.Infrastructure.Tenancy.TenantDbContext)context).TenantId));
+
+        await context.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+        foreach (var source in sources) source.ClearDomainEvents();
+        await transaction.DisposeAsync();
+        _transaction = null;
+        _activeContext = null;
+    }
+
+    public async Task RollbackAsync(CancellationToken cancellationToken = default)
+    {
         try
         {
-            await _workforce.SaveChangesAsync();
-            await _fulfillment.SaveChangesAsync();
-            await _txn.CommitAsync();
-        }
-        catch
-        {
-            await _txn.RollbackAsync();
-            throw;
+            if (_transaction is not null)
+                await _transaction.RollbackAsync(cancellationToken);
         }
         finally
         {
-            await _txn.DisposeAsync();
-            _txn = null;
+            if (_transaction is not null) await _transaction.DisposeAsync();
+            _transaction = null;
+            _activeContext = null;
+            workforce.ChangeTracker.Clear();
+            fulfillment.ChangeTracker.Clear();
         }
     }
 
-    public async Task RollbackAsync()
-    {
-        if (_txn != null)
-        {
-            await _txn.RollbackAsync();
-            await _txn.DisposeAsync();
-            _txn = null;
-        }
-    }
-
-    public IReadOnlyCollection<IDomainEvent> GetDomainEventsAndClear()
-    {
-        var events = new List<IDomainEvent>();
-
-        void CollectFrom(ChangeTracker tracker)
-        {
-            var sources = tracker.Entries()
-                .Where(e => e.Entity is IHasDomainEvents)
-                .Select(e => (IHasDomainEvents)e.Entity);
-
-            foreach (var source in sources)
-            {
-                events.AddRange(source.DomainEvents);
-                source.ClearDomainEvents();
-            }
-        }
-
-        CollectFrom(_workforce.ChangeTracker);
-        CollectFrom(_fulfillment.ChangeTracker);
-
-        return events;
-    }
 }

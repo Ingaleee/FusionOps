@@ -19,7 +19,7 @@ public class EquipmentResourceConfig : IEntityTypeConfiguration<EquipmentResourc
                .IsRequired();
 
         builder.Property(e => e.Type)
-               .HasConversion(v => v.Value, v => new FusionOps.Domain.Enumerations.EquipmentType(v, string.Empty))
+               .HasConversion(v => v.Value, v => FusionOps.Domain.Enumerations.EquipmentType.FromValue(v))
                .IsRequired();
 
         builder.Ignore(e => e.DomainEvents);
@@ -31,7 +31,7 @@ public class EquipmentResourceConfig : IEntityTypeConfiguration<EquipmentResourc
                 .HasColumnName("HourRateAmount")
                 .IsRequired();
             rate.Property(m => m.Currency)
-                .HasConversion(c => c.Value, v => new FusionOps.Domain.Enumerations.Currency(v, string.Empty))
+                .HasConversion(c => c.Value, v => FusionOps.Domain.Enumerations.Currency.FromValue(v))
                 .HasColumnName("HourRateCurrency")
                 .IsRequired();
         });

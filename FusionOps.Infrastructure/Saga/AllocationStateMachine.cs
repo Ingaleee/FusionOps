@@ -27,14 +27,14 @@ public class AllocationStateMachine : MassTransitStateMachine<AllocationState>
             When(ReserveResourcesEvent)
                 .Then(context =>
                 {
-                    context.Instance.ProjectId = context.Data.ProjectId;
-                    context.Instance.ReservedAt = DateTime.UtcNow;
+                    context.Saga.ProjectId = context.Message.ProjectId;
+                    context.Saga.ReservedAt = DateTime.UtcNow;
                 })
                 .TransitionTo(Reserved));
 
         During(Reserved,
             When(ShipStockEvent)
-                .Then(ctx => ctx.Instance.ShippedAt = DateTime.UtcNow)
+                .Then(ctx => ctx.Saga.ShippedAt = DateTime.UtcNow)
                 .TransitionTo(Shipped));
 
         During(Shipped,

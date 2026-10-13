@@ -21,6 +21,6 @@ public class AllocationHistoryRowConfig : IEntityTypeConfiguration<AllocationHis
         builder.Property(x => x.Sku).HasColumnName("sku");
         builder.Property(x => x.Qty).HasColumnName("qty");
 
-        builder.HasIndex(x => new { x.ProjectId, x.Recorded }).HasDatabaseName("ix_history_project_rec");
+        builder.HasIndex(x => new { x.TenantId, x.ProjectId, x.Recorded }).HasDatabaseName("ix_history_project_rec");
     }
 }

@@ -2,7 +2,7 @@ using System;
 
 namespace FusionOps.Infrastructure.Persistence.Postgres.Models;
 
-public class AllocationHistoryRow
+public class AllocationHistoryRow : FusionOps.Domain.Tenancy.TenantOwnedEntity
 {
     public Guid Id { get; set; }
     public Guid AllocationId { get; set; }

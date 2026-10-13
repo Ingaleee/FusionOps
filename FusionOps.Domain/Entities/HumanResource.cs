@@ -10,7 +10,7 @@ namespace FusionOps.Domain.Entities;
 /// <summary>
 /// Represents an employee or contractor that can be allocated to projects.
 /// </summary>
-public class HumanResource : IEntity<HumanResourceId>, IHasDomainEvents
+public class HumanResource : FusionOps.Domain.Tenancy.TenantOwnedEntity, IEntity<HumanResourceId>, IHasDomainEvents
 {
     private readonly List<IDomainEvent> _domainEvents = new();
 
@@ -24,7 +24,7 @@ public class HumanResource : IEntity<HumanResourceId>, IHasDomainEvents
     }
 
     public HumanResourceId Id { get; private set; }
-    public string FullName { get; private set; }
+    public string FullName { get; private set; } = string.Empty;
     public HashSet<Skill> Skills { get; } = new();
     public Money HourRate { get; private set; }
 
@@ -41,7 +41,7 @@ public class HumanResource : IEntity<HumanResourceId>, IHasDomainEvents
     {
         foreach (var allocation in calendar)
         {
-            if (allocation.ResourceId.Equals(Id) && allocation.Period.Overlaps(period))
+            if (!allocation.IsCancelled && allocation.ResourceId == Id.Value && allocation.Period.Overlaps(period))
                 return false;
         }
         return true;
