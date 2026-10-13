@@ -1,6 +1,6 @@
 # Authoritative temporal reservation participants
 
-G3 implementation increment. These internal participants implement atomic decisions in each owning store for a reviewed baseline. The activation coordinator and task lifecycle remain unfinished; no public route directly calls a participant. Approval alone still does not reserve capacity or start a task. The coordinator must enforce approval, project version/authority, supported demands and one active baseline before invoking these trusted worker ports.
+G3 implementation increment. These internal participants implement atomic decisions in each owning store for a reviewed baseline. The [activation coordinator](execution-activation.md) enforces approval, current project authority/definition, supported demands and one live baseline before using these trusted worker ports. No public route directly calls a participant. Approval alone does not reserve capacity or start a task; [task commands](execution-tasks.md) have a separate admission contract.
 
 ## Workforce and equipment
 
@@ -28,6 +28,6 @@ The optional `LicenseBookings` input is omitted when null to preserve prior cano
 
 ## Verification and remaining gates
 
-The tests cover original success/rejection/release replay, retained SQL allocation IDs, rollback of a multi-pool rejection, concurrent identical effects, competing resource/seat intervals, adjacent project reservations, actual PostgreSQL policies, scenario capture/replay and 100 seeded capacity calendars against an independent discrete oracle. Commit-result loss is modeled by discarding the returned result and calling a new participant instance; a complete killed-worker/lease recovery experiment still requires the activation coordinator.
+The tests cover original success/rejection/release replay, retained SQL allocation IDs, rollback of a multi-pool rejection, concurrent identical effects, competing resource/seat intervals, adjacent project reservations, actual PostgreSQL policies, scenario capture/replay and 100 seeded capacity calendars against an independent discrete oracle. Deterministic abandoned-claim tests and the separate local process-kill lab exercise coordinator recovery; the [verification record](verification.md) describes the actually executed boundaries.
 
-These participants do not consume materials, procure goods, authorize task starts or supersede a working baseline. The remaining G3 gate is a durable fenced coordinator plus task execution; G4 supplies material/procurement participants and reconciliation of irreversible operations. The whole flagship and G3 are not declared complete by this increment.
+These participants do not consume materials, procure goods, authorize task starts or supersede a working baseline. The coordinator and task store own activation/execution admission. G4 supplies material/procurement participants and reconciliation of irreversible operations; G5 supplies adaptive supersession. The whole flagship is not declared complete by these increments.

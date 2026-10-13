@@ -20,6 +20,7 @@ using Serilog;
 using Serilog.Events;
 using Microsoft.AspNetCore.DataProtection;
 using FusionOps.Application.Workflows;
+using FusionOps.Application.Execution;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = 1_048_576);
@@ -27,6 +28,11 @@ var demoMode = builder.Configuration.GetValue<bool>("DemoMode");
 if (demoMode && !builder.Environment.IsDevelopment())
     throw new InvalidOperationException("DemoMode is available only in Development");
 if (demoMode) builder.Services.AddDataProtection().UseEphemeralDataProtectionProvider();
+if (builder.Configuration.GetValue<bool>("Execution:FailureLab:Enabled"))
+{
+    if (!builder.Environment.IsDevelopment() || demoMode) throw new InvalidOperationException("Execution failure lab requires full Development mode");
+    builder.Services.AddScoped<IExecutionActivationCommitProbe, DevelopmentExecutionCommitProbe>();
+}
 
 builder.Host.UseSerilog((_, log) => log.MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
     .Enrich.FromLogContext().Enrich.WithEnvironmentName().WriteTo.Console());
@@ -64,7 +70,7 @@ builder.Services.AddAuthorization(options =>
 });
 builder.Services.AddOpenTelemetry().ConfigureResource(r => r.AddService("fusionops-api"))
     .WithTracing(t => t.AddAspNetCoreInstrumentation().AddSource("FusionOps").AddOtlpExporter())
-    .WithMetrics(m => m.AddAspNetCoreInstrumentation().AddMeter(OutboxMetrics.MeterName, ReservationWorkflowRunner.MeterName).AddPrometheusExporter());
+    .WithMetrics(m => m.AddAspNetCoreInstrumentation().AddMeter(OutboxMetrics.MeterName, ReservationWorkflowRunner.MeterName, ExecutionActivationRunner.MeterName).AddPrometheusExporter());
 
 if (!demoMode)
 {
@@ -77,6 +83,8 @@ if (!demoMode)
     builder.Services.AddHostedService<OutboxDispatcher>();
     if (builder.Configuration.GetValue("Workflows:WorkerEnabled", true))
         builder.Services.AddHostedService<ReservationWorkflowWorker>();
+    if (builder.Configuration.GetValue("Execution:WorkerEnabled", true))
+        builder.Services.AddHostedService<ExecutionActivationWorker>();
     if (builder.Configuration.GetValue<bool>("Cdc:Enabled"))
     {
         builder.Services.AddHttpClient("debezium");
@@ -117,6 +125,8 @@ if (!demoMode)
     app.MapOperationalProjectEndpoints();
     app.MapTemporalScenarioEndpoints();
     app.MapExecutionPlanEndpoints();
+    app.MapExecutionActivationEndpoints();
+    app.MapExecutionTaskEndpoints();
     app.MapAuditEndpoints();
     app.MapScenarioEndpoints();
     app.MapHub<NotificationHub>("/hubs/notify");

@@ -1,6 +1,6 @@
 # FusionOps: extended architecture programme
 
-Accepted scope extension from the supplied Ultimate Flagship Roadmap, 2026-10-13. This document records requested future work; it does not advertise completed capabilities. The active G1–G7 [foundation](flagship-vision.md), [delivery ledger](flagship-delivery.md) and [next implementation decisions](flagship-next-steps.md) remain intact. G3 is currently being implemented; G8–G30 below are unimplemented extensions. The additional fifteen research directions are retained, not silently discarded.
+Accepted scope extension from the supplied Ultimate Flagship Roadmap, 2026-10-13. This document records requested future work; it does not advertise completed capabilities. The active G1–G7 [foundation](flagship-vision.md), [delivery ledger](flagship-delivery.md) and [next implementation decisions](flagship-next-steps.md) remain intact. G1–G3 have their supported delivery evidence; G4–G7 and G8–G30 below remain future stages. The additional fifteen research directions are retained, not silently discarded.
 
 The extended objective is a C# platform for portfolio-wide planning, resource and supply authority, governed execution, cost evidence, historical reconstruction and bounded autonomous decisions. The [product strategy](product-strategy.md) organizes commercial hypotheses, including the [industrial pilot](commercial-pilot.md) and [vehicle-carrier research](logistics-feasibility.md), using the same core. It does not replace the engineering programme or convert each market idea into a new implementation commitment.
 

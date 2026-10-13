@@ -44,6 +44,8 @@ public sealed class OutboxProcessor(
                     TemporalScenarioCalculated e => e.ScenarioId,
                     ExecutionPlanChanged e => e.PlanId,
                     TemporalLicenseCapacityChanged e => e.PoolId,
+                    ExecutionActivationChanged e => e.PlanId,
+                    ExecutionTaskCommandRecorded e => e.PlanId,
                     StockReplenished e => e.WarehouseId.Value,
                     ReorderPointReached e => e.WarehouseId.Value,
                     _ => Guid.Empty

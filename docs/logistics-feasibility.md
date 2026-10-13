@@ -31,7 +31,7 @@ Operating jurisdictions, certified equipment, routing-provider rights and exact 
 | Project definitions/scenarios | Versioned inputs, calendars, identities, immutable source evidence and comparison | Current task DAG is not a route model; travel and pickup/delivery/configuration contracts are absent |
 | Resource bundles | Concurrent driver/equipment requirement and eligibility vocabulary | Travel-dependent availability, carrier combinations, duty rules and certified loading differ from static resource slots |
 | Independent validation | Validate a decision separately from optimization, retain model/solver limits | Need a route validator and loading witness; current temporal validator cannot certify either |
-| Reviewed baseline / future activation | Exact digest approval, ownership and durable effects | Transport-specific order/dispatch/provider acceptance and irreversibility contracts must be implemented and tested |
+| Reviewed baseline / governed activation | Exact digest approval, supported interval ownership, fenced coordination and durable effects | Transport-specific order/dispatch/provider acceptance and irreversibility contracts must be implemented and tested |
 | G4/G5 supply/facts/cost | Typed inbox, unknown-outcome reconciliation, actual facts and immutable cost postings | They remain incomplete Core stages; cannot be assumed available for a transport pilot |
 | Tenant jobs/policies | Isolation, cancellation, admission and controlled changes | G6 fair admission and tenant-configurable policies still remain future work |
 

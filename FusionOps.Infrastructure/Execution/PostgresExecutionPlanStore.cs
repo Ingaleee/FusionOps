@@ -84,6 +84,8 @@ public sealed class PostgresExecutionPlanStore(IDbContextFactory<FulfillmentCont
         if (rows.Count == 0) return null;
         var plan = await Plans(db).SingleAsync(p => p.Id == id && p.ProjectId == projectId, ct);
         if (plan.Version != expectedVersion) throw new ExecutionPlanVersionException();
+        if (mutation == ExecutionPlanMutation.Withdraw && await db.Set<ExecutionActivation>().AnyAsync(a => a.Id == id && a.State != ActivationState.Rejected && a.State != ActivationState.Compensated && a.State != ActivationState.Completed, ct))
+            throw new ExecutionPlanRuleException("execution_cancel_activation_first");
         project.VerifyEvidence();
         if (mutation != ExecutionPlanMutation.Withdraw && (project.DefinitionVersion != plan.Baseline.DefinitionVersion || project.DefinitionDigest != plan.Baseline.DefinitionDigest))
             throw new ProjectVersionException();

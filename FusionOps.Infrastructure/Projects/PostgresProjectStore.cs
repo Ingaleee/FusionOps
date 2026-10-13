@@ -80,6 +80,9 @@ public sealed class PostgresProjectStore(IDbContextFactory<FulfillmentContext> f
         project.Require(execution.Actor, permission); project.VerifyEvidence();
         if (project.Version != version) throw new ProjectVersionException();
         var definitionVersion = project.DefinitionVersion;
+        if (permission == ProjectPermission.EditDefinition && await db.Set<FusionOps.Domain.Execution.ExecutionTask>().AnyAsync(t => t.ProjectId == id && t.State != FusionOps.Domain.Execution.ExecutionTaskState.Planned
+                && db.Set<FusionOps.Domain.Execution.ExecutionActivation>().Any(a => a.Id == t.PlanId && a.State != FusionOps.Domain.Execution.ActivationState.Completed && a.State != FusionOps.Domain.Execution.ActivationState.Compensated && a.State != FusionOps.Domain.Execution.ActivationState.Rejected), ct))
+            throw new ProjectRuleException("project_started_work_requires_adaptive_revision");
         change(project);
         if (definitionVersion != project.DefinitionVersion) db.Add(ProjectDefinitionRevision.Capture(project, execution.Actor));
         await CommitAsync(db, project, tx, ct); return project;

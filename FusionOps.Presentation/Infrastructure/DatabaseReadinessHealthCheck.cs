@@ -33,6 +33,10 @@ public sealed class DatabaseReadinessHealthCheck(
             await postgres.Set<FusionOps.Domain.Execution.ExecutionPlan>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
             await postgres.Set<FusionOps.Domain.Execution.ExecutionPlanDecision>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
             await postgres.Set<FusionOps.Domain.Execution.TemporalLicenseEffectReceipt>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
+            await postgres.Set<FusionOps.Domain.Execution.ExecutionActivation>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
+            await postgres.Set<FusionOps.Domain.Execution.ExecutionActivationDecision>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
+            await postgres.Set<FusionOps.Domain.Execution.ExecutionTask>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
+            await postgres.Set<FusionOps.Domain.Execution.ExecutionTaskFact>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
             await postgres.Set<FusionOps.Domain.Entities.LicensePool>().SelectMany(p => p.TemporalReservations).Select(r => r.PlanId).Take(1).ToListAsync(timeout.Token);
             if (!environment.IsDevelopment())
             {

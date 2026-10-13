@@ -2,6 +2,8 @@
 
 Status: accepted, 2026-10-13. Scope: internal G3 participants; activation coordination and task execution remain incomplete.
 
+Subsequent [ADR 022](022-governed-activation-and-task-facts.md) supplies the supported coordinator/task lifecycle. The decisions below record this participant boundary and its original proof limits.
+
 ## Context
 
 A reviewed scenario assigns different intervals to individual tasks. The existing reservation workflow owns one shared interval, and permanent license allocations have no end time. Reusing that workflow unchanged would acquire the wrong calendar and miss seat conflicts between concurrent plans. Losing a committed result must not turn a retry into another reservation or a different decision.

@@ -1,6 +1,6 @@
 # Reviewed execution plan authority
 
-G3 increment: persisted immutable baselines, reviewed diffs and approval decisions. Internal [temporal participants](temporal-participants.md) now implement per-store interval reservation/release decisions. Activation orchestration, task execution and baseline supersession remain unfinished. An `Approved` plan is reviewed evidence, not an active execution or proof of owned capacity.
+G3: persisted immutable baselines, reviewed diffs and approval decisions. [Temporal participants](temporal-participants.md), [durable activation](execution-activation.md) and [task facts](execution-tasks.md) supply the supported workforce/equipment/license lifecycle. Adaptive baseline supersession remains G5 work. An `Approved` plan is reviewed evidence; capacity ownership requires its separate activation protocol.
 
 ## Evidence and state
 
@@ -37,8 +37,8 @@ Responses use `Cache-Control: no-store`. Missing ETag returns 428; malformed ETa
 
 Diffs retain changed task intervals, assignments, modeled task cost and task-definition changes, plus finish/cost deltas and previous identity/digest. Currency changes are explicit and do not produce a subtraction across unlike currencies. Diff creation does not supersede an approved baseline, release capacity or reopen completed tasks.
 
-## Remaining G3 gates
+## Execution boundary and remaining work
 
 The Development walkthrough is `pwsh -File examples/execution-plan-demo.ps1 -BaseUri http://localhost:5121`. It includes the temporal fixture, reviewed-version approval and a changed plan requiring fresh review. Production uses signed identities and a separate approver, as exercised in the integration suite.
 
-Connect the verified workforce/equipment and license interval participants through a durable activation coordinator with fenced claims; implement task dependency/start/completion facts and recovery after each participant commit. Reject unsupported material participants until G4 supplies them. Resolve hypothetical additions against real capacity. A project may have multiple proposals, but activation must enforce one authoritative active baseline and controlled later supersession. These gates remain incomplete even when approval and participant tests pass.
+The coordinator now connects verified workforce/equipment/license intervals with fenced claims, dependency/start/completion facts and original participant recovery. Unsupported material activation is rejected until G4 supplies its participants; hypothetical additions must fit real capacity. A project may have multiple proposals but only one live activation. Controlled working-baseline supersession, irreversible work and financial closure remain later gates. The [verification record](verification.md) distinguishes deterministic abandoned claims, actual process-kill experiments and supported operator-reported task execution.

@@ -1,0 +1,54 @@
+name: fusionops-execution-recovery-verify
+services:
+  sql:
+    image: mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "FusionOps_verify-2026!"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' -b"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+  pg:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: fusionops
+      POSTGRES_USER: fusionops
+      POSTGRES_PASSWORD: fusionops
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fusionops -d fusionops"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+  rabbit:
+    image: rabbitmq:3-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: fusionops
+      RABBITMQ_DEFAULT_PASS: fusionops
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+  audit:
+    image: eventstore/eventstore:23.10.0-bookworm-slim
+    environment:
+      EVENTSTORE_INSECURE: "true"
+  api:
+    image: fusionops-api:activation-verification
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Database__Initialize: "true"
+      ConnectionStrings__sql: "Server=sql;Database=FusionOpsWorkforce;User Id=sa;Password=FusionOps_verify-2026!;TrustServerCertificate=true"
+      ConnectionStrings__pg: "Host=pg;Database=fusionops;Username=fusionops;Password=fusionops"
+      Rabbit__Host: rabbit
+      Rabbit__Username: fusionops
+      Rabbit__Password: fusionops
+      EventStore__ConnectionString: "esdb://audit:2113?tls=false"
+    ports: ["127.0.0.1::80"]
+    depends_on:
+      sql: {condition: service_healthy}
+      pg: {condition: service_healthy}
+      rabbit: {condition: service_healthy}
+      audit: {condition: service_started}

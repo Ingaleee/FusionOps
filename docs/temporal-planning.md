@@ -1,6 +1,6 @@
 # Temporal project scenarios
 
-G2 calculates persisted, independently validated schedules from a registered project's current definition and observed catalog/calendars/stock/licenses. Calculation, comparison and replay do not reserve capacity or execute tasks. G3 now retains a [reviewed baseline](execution-plan-authority.md) and has internal [temporal participants](temporal-participants.md); activation orchestration and task execution remain unfinished.
+G2 calculates persisted, independently validated schedules from a registered project's current definition and observed catalog/calendars/stock/licenses. Calculation, comparison and replay do not reserve capacity or execute tasks. G3 separately retains a [reviewed baseline](execution-plan-authority.md), admits [temporal ownership](temporal-participants.md) through [activation](execution-activation.md), and controls [task facts](execution-tasks.md).
 
 ## Model and objective
 

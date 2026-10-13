@@ -49,6 +49,10 @@ public class ExceptionMiddleware
         {
             await WriteProblem(context, HttpStatusCode.PreconditionFailed, "execution_plan_version_mismatch", ex.Message);
         }
+        catch (FusionOps.Domain.Execution.ExecutionActivationConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "execution_activation_conflict", ex.Message);
+        }
         catch (FusionOps.Domain.Execution.ExecutionPlanSubmissionConflictException ex)
         {
             await WriteProblem(context, HttpStatusCode.Conflict, "execution_plan_submission_conflict", ex.Message);

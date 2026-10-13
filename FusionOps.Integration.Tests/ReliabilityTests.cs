@@ -92,6 +92,10 @@ public sealed partial class ReliabilityTests
         await fulfillment.Set<ProjectionCheckpoint>().ExecuteDeleteAsync();
         await fulfillment.StockItems.ExecuteDeleteAsync();
         await fulfillment.Set<FusionOps.Domain.Execution.ExecutionPlanDecision>().ExecuteDeleteAsync();
+        await fulfillment.Set<FusionOps.Domain.Execution.ExecutionActivationDecision>().ExecuteDeleteAsync();
+        await fulfillment.Set<FusionOps.Domain.Execution.ExecutionTaskFact>().ExecuteDeleteAsync();
+        await fulfillment.Set<FusionOps.Domain.Execution.ExecutionTask>().ExecuteDeleteAsync();
+        await fulfillment.Set<FusionOps.Domain.Execution.ExecutionActivation>().ExecuteDeleteAsync();
         await fulfillment.Set<FusionOps.Domain.Execution.TemporalLicenseEffectReceipt>().ExecuteDeleteAsync();
         await fulfillment.Set<FusionOps.Domain.Execution.ExecutionPlan>().ExecuteDeleteAsync();
         await fulfillment.Set<FusionOps.Domain.Execution.ExecutionBaseline>().ExecuteDeleteAsync();
@@ -273,7 +277,7 @@ public sealed partial class ReliabilityTests
     }
 
     private sealed class ReservationFactory(DbContextOptions<WorkforceContext> workforceOptions,
-        DbContextOptions<FulfillmentContext> fulfillmentOptions, bool runWorkflowWorker = false) : WebApplicationFactory<api::Program>
+        DbContextOptions<FulfillmentContext> fulfillmentOptions, bool runWorkflowWorker = false, bool runActivationWorker = false) : WebApplicationFactory<api::Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder) => builder.UseEnvironment("Development")
             .ConfigureServices(services =>
@@ -289,6 +293,7 @@ public sealed partial class ReliabilityTests
                 services.AddSingleton<IDbContextFactory<WorkforceContext>>(new WorkforceContextFactory(workforceOptions));
                 services.AddSingleton<IDbContextFactory<FulfillmentContext>>(new TestContextFactory(fulfillmentOptions));
                 if (runWorkflowWorker) services.AddHostedService<FusionOps.Presentation.BackgroundServices.ReservationWorkflowWorker>();
+                if (runActivationWorker) services.AddHostedService<FusionOps.Presentation.BackgroundServices.ExecutionActivationWorker>();
             });
         protected override IHost CreateHost(IHostBuilder builder)
         {

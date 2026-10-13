@@ -25,7 +25,7 @@ public sealed class ExecutionPlanTests
             new(new(1, version, version, ProjectDefinitionCodec.Digest(Tenant, Project, version, ProjectDefinitionCodec.Canonicalize(definition)),
                 Now, Now, [], [], []), input, assumptions, input, result, new TemporalPlanValidator().Validate(input, result.Tasks)), Now);
     }
-    private static ExecutionBaseline Baseline(TemporalScenario? scenario = null, ExecutionBaseline? previous = null,
+    internal static ExecutionBaseline Baseline(TemporalScenario? scenario = null, ExecutionBaseline? previous = null,
         ExecutionApprovalPolicy? policy = null) => ExecutionBaseline.Capture(Guid.NewGuid(), scenario ?? Scenario(), "planner",
             new string('B', 64), policy ?? ExecutionApprovalPolicy.Standard(), previous, Now);
 

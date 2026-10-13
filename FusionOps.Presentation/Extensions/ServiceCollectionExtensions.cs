@@ -56,6 +56,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<FusionOps.Application.Execution.IExecutionPlanStore, FusionOps.Infrastructure.Execution.PostgresExecutionPlanStore>();
         services.AddScoped<FusionOps.Application.Execution.ITemporalWorkforceParticipant, FusionOps.Infrastructure.Execution.SqlTemporalWorkforceParticipant>();
         services.AddScoped<FusionOps.Application.Execution.ITemporalLicenseParticipant, FusionOps.Infrastructure.Execution.PostgresTemporalLicenseParticipant>();
+        services.AddScoped<FusionOps.Application.Execution.IExecutionActivationStore, FusionOps.Infrastructure.Execution.PostgresExecutionActivationStore>();
+        services.AddScoped<FusionOps.Application.Execution.ExecutionActivationRunner>();
+        services.AddScoped<FusionOps.Application.Execution.IExecutionTaskStore, FusionOps.Infrastructure.Execution.PostgresExecutionTaskStore>();
+        services.AddScoped<FusionOps.Application.Execution.IExecutionTaskResourceGuard, FusionOps.Infrastructure.Execution.SqlExecutionTaskResourceGuard>();
         services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
         services.AddSingleton<IStockForecaster, FusionOps.Infrastructure.Optimizers.MlNetOptimizer>();
 
