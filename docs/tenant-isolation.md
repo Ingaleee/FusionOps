@@ -6,7 +6,7 @@ Production data endpoints require a JWT verified for the configured issuer/audie
 
 Development anonymous requests use tenant 11111111-1111-1111-1111-111111111111. The optional Development-only X-Tenant-Id GUID supports local two-tenant demonstrations. Configure a trusted identity-provider mapper for tenant assignment; never infer it from an unsigned payload or caller-selected project ID.
 
-Resource, quote and workflow GUIDs remain globally unique. Foreign reads/mutations find no owned record; foreign resources/quotes cannot be reserved. Project IDs are scoped through tenant-owned allocations/workflows/history. Project membership ACLs remain future work.
+Resource, quote, project and workflow GUIDs remain globally unique. Foreign reads/mutations find no owned record; foreign resources/quotes cannot be reserved. Registered projects add explicit membership and operation permissions in addition to tenant ownership; see [project authority](project-commitments.md). Production requires reviewed registered projects; Development retains unmanaged IDs for legacy examples.
 
 ## Persistence
 

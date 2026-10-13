@@ -4,6 +4,8 @@ Audit date: 2026-10-12. Baseline: GitHub `main`, before this working change.
 
 ## Product direction
 
+The accepted global flagship objective is the [adaptive operations lifecycle](flagship-vision.md): project commitment, temporal planning, reviewed execution, materials/suppliers, actual progress, incremental replanning and cost reconciliation. That document defines the reference failure scenario, domain responsibilities and G1–G7 delivery gates. [Delivery status](flagship-delivery.md) distinguishes completed increments from future capabilities.
+
 FusionOps plans and reserves scarce people, machines, inventory and licenses. Its flagship demonstration should answer a difficult operational question: **what is the cheapest feasible assignment, why is it feasible, and what happens if infrastructure fails during reservation?**
 
 Architecture quality is demonstrated through explicit guarantees, measured tradeoffs, executable failure scenarios and understandable APIs. Feature count alone is not a quality metric.

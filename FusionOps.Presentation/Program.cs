@@ -32,6 +32,7 @@ builder.Host.UseSerilog((_, log) => log.MinimumLevel.Override("Microsoft", LogEv
     .Enrich.FromLogContext().Enrich.WithEnvironmentName().WriteTo.Console());
 builder.Services.AddSingleton<ResourcePlanner>();
 builder.Services.AddSingleton(new WorkflowApprovalPolicy(!builder.Environment.IsDevelopment()));
+builder.Services.AddSingleton(new FusionOps.Application.Projects.ProjectAccessPolicy(builder.Environment.IsDevelopment()));
 builder.Services.ConfigureHttpJsonOptions(options => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -112,6 +113,7 @@ if (!demoMode)
     app.MapStockEndpoints();
     app.MapLicenseEndpoints();
     app.MapProjectEndpoints();
+    app.MapOperationalProjectEndpoints();
     app.MapAuditEndpoints();
     app.MapScenarioEndpoints();
     app.MapHub<NotificationHub>("/hubs/notify");

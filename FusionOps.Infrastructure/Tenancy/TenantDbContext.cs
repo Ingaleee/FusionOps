@@ -47,6 +47,8 @@ public abstract class TenantDbContext(DbContextOptions options, TenantScope? sco
     private void ValidateWrites()
     {
         if (Scope is null || !SystemAccess && TenantId == Guid.Empty) throw new TenantRequiredException();
+        if (ChangeTracker.Entries<FusionOps.Domain.Projects.ProjectDefinitionRevision>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
+            throw new FusionOps.Domain.Projects.ProjectRuleException("project_revision_immutable");
         foreach (var entry in ChangeTracker.Entries<TenantOwnedEntity>().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
         {
             if (entry.State == EntityState.Added && entry.Entity.TenantId == Guid.Empty)

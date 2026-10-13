@@ -48,6 +48,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ReservationWorkflowRunner>();
         services.AddScoped<IResourceCatalogStore, SqlResourceCatalogStore>();
         services.AddScoped<IPlanningQuoteStore, SqlPlanningQuoteStore>();
+        services.AddScoped<FusionOps.Application.Projects.IProjectStore, FusionOps.Infrastructure.Projects.PostgresProjectStore>();
+        services.AddScoped<FusionOps.Application.Projects.IProjectAccess>(sp => sp.GetRequiredService<FusionOps.Application.Projects.IProjectStore>());
         services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
         services.AddSingleton<IStockForecaster, FusionOps.Infrastructure.Optimizers.MlNetOptimizer>();
 

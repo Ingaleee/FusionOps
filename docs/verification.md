@@ -5,8 +5,8 @@ Updated: 2026-10-13. Local environment: Windows x64, .NET SDK 10.0.303 / runtime
 | Check | Result |
 | --- | --- |
 | Release solution build with warnings as errors | Pass, 0 warnings, 0 errors; 11 projects |
-| Fast tests | 90 pass: 48 domain/algorithm/contract/architecture/workflow/quote tests and 42 application/HTTP/authorization/idempotency/worker/tenant tests |
-| Reliability tests on disposable databases, RabbitMQ and EventStoreDB | 59 pass, 0 skipped; includes tenant/RLS/connection reuse, repeated independent-tenant concurrency, legacy audit upgrade retry, authoritative quotes, upgrades, durable saga decisions, crashes and compensation |
+| Fast tests | 107 pass: 65 domain/algorithm/contract/architecture/workflow/quote/project tests and 42 application/HTTP/authorization/idempotency/worker/tenant tests |
+| Reliability tests on disposable databases, RabbitMQ and EventStoreDB | 67 pass, 0 skipped; includes project DAG/revisions/ACL/JWT/races, tenant/RLS/connection reuse, repeated independent-tenant concurrency, legacy audit upgrade retry, authoritative quotes, upgrades, durable saga decisions, crashes and compensation |
 | Hungarian randomized verification | 300 seeded sparse rectangular matrices agree with exhaustive enumeration; dual feasibility and objective equality checked |
 | EF model / migration consistency | No pending changes for WorkforceContext or FulfillmentContext |
 | Locked NuGet restore | Pass |
@@ -14,6 +14,7 @@ Updated: 2026-10-13. Local environment: Windows x64, .NET SDK 10.0.303 / runtime
 | API container planning smoke check | Pass: liveness and Swagger 200, complete two-slot USD 60 plan, objective = dual objective = 60 |
 | Full API-container catalog/quote/workflow walkthrough | Pass: readiness 200, persisted catalog/skills, two USD 100 authoritative quotes, success then cancellation, capacity rejection then compensation; 14 PostgreSQL outbox events delivered, 0 dead letters |
 | Full API-container tenant walkthrough | Pass on the final image after calendar-lock correction: readiness 200, independent USD 50/USD 198 quotes, scoped capacity under the same product name, denied foreign reads/reservations, both reservations compensated |
+| Full API-container project walkthrough | Pass: readiness 200, original creation replay, distinct aggregate/definition versions, historical budgets retained, stale ETag/cycle/foreign tenant/owner removal rejected |
 | Git whitespace validation | Pass |
 | Independent GitHub Actions verification | Pass for catalog implementation commit `8181e3a`: fast suites on Windows and Ubuntu, Linux reliability suite and API Docker build ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38318219468)) |
 | Independent Gateway container build | Pass for the same implementation commit ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38318219382)) |
@@ -98,5 +99,9 @@ Test images: SQL Server 2022 CU14, PostgreSQL 16 Alpine, EventStoreDB 23.10.0, R
 Final local tenant total: 149 tests, zero failures or skips. Repeated NUnit concurrency attempts are additional executions of one reported test case. Both EF models match the migrations. SQL Server/PostgreSQL policies are exercised through actual restricted principals, not inferred from filtered repository results.
 
 Both shipped PowerShell demonstrations also pass on the final API container. The new tenant run delivers nine PostgreSQL outbox events per tenant, independently of the legacy walkthrough's fourteen events. Four walkthrough pairs completed during verification; the final database inspection found all 128 PostgreSQL outbox messages delivered and zero dead letters across the legacy tenant and eight new tenants. The final check waits for delivery completion rather than assuming workflow completion implies an empty outbox.
+
+G1 adds 17 domain cases and eight database/production-HTTP cases. 120 seeded DAGs agree with independent longest-path enumeration. Signed JWT scenarios prove tenant manager roles do not bypass project membership, read-only members cannot edit, Planner cannot approve, Approver can approve, and existing quote/allocation/license/workflow/audit endpoints enforce project permissions. Project create/edit races retain one accepted state, revision and event. A restricted PostgreSQL principal cannot change/delete definition history or create a foreign-owner child. Local G1 total: 174 tests, no failures or skips; the models match migrations. The shipped `examples/project-demo.ps1` also passes against the full API container.
+
+Final G1 container checks also repeat the existing workflow and two-tenant walkthroughs. All 38 PostgreSQL events from two project demonstrations and the two earlier walkthroughs are delivered with zero dead letters. Project pages return metadata/actor roles rather than serializing every graph; the production HTTP fixture checks that contract.
 
 Commands and generated TRX files are described in the README and CI workflow. The linked GitHub runs independently verified the catalog implementation commit; subsequent documentation changes do not change that code evidence. Docker images are local verification artifacts, not published releases. No throughput, tail-latency, availability or security certification is inferred from these tests.

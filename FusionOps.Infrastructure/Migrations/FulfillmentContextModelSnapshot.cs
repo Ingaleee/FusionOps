@@ -116,6 +116,100 @@ namespace FusionOps.Infrastructure.Migrations
                     b.ToTable("Warehouses", (string)null);
                 });
 
+            modelBuilder.Entity("FusionOps.Domain.Projects.OperationalProject", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("DefinitionDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("DefinitionJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("DefinitionVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("InitialDefinitionDigest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("Version")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "Id");
+
+                    b.ToTable("ops_projects", (string)null);
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Projects.ProjectDefinitionRevision", b =>
+                {
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("DefinitionVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("DefinitionJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Digest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<long>("ProjectVersion")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset>("RecordedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.HasKey("ProjectId", "DefinitionVersion");
+
+                    b.HasIndex("TenantId", "ProjectId");
+
+                    b.ToTable("ops_project_revisions", (string)null);
+                });
+
             modelBuilder.Entity("FusionOps.Domain.Workflows.ReservationWorkflow", b =>
                 {
                     b.Property<Guid>("Id")
@@ -434,6 +528,52 @@ namespace FusionOps.Infrastructure.Migrations
                         });
 
                     b.Navigation("Allocations");
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Projects.OperationalProject", b =>
+                {
+                    b.OwnsMany("FusionOps.Domain.Projects.ProjectMember", "Members", b1 =>
+                        {
+                            b1.Property<Guid>("ProjectId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Subject")
+                                .HasMaxLength(200)
+                                .HasColumnType("character varying(200)");
+
+                            b1.Property<string>("Role")
+                                .IsRequired()
+                                .HasMaxLength(32)
+                                .HasColumnType("character varying(32)");
+
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("uuid")
+                                .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                            b1.HasKey("ProjectId", "Subject");
+
+                            b1.HasIndex("TenantId", "ProjectId");
+
+                            b1.HasIndex("TenantId", "Subject", "ProjectId");
+
+                            b1.ToTable("ops_project_members", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("TenantId", "ProjectId")
+                                .HasPrincipalKey("TenantId", "Id");
+                        });
+
+                    b.Navigation("Members");
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Projects.ProjectDefinitionRevision", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Projects.OperationalProject", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProjectId")
+                        .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("FusionOps.Domain.Workflows.ReservationWorkflow", b =>

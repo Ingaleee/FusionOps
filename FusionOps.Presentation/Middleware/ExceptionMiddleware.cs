@@ -33,6 +33,26 @@ public class ExceptionMiddleware
         {
             await WriteProblem(context, HttpStatusCode.PreconditionFailed, "workflow_version_mismatch", ex.Message);
         }
+        catch (FusionOps.Domain.Projects.ProjectAccessException)
+        {
+            await WriteProblem(context, HttpStatusCode.NotFound, "project_unavailable", "The project is unavailable");
+        }
+        catch (FusionOps.Domain.Projects.ProjectVersionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.PreconditionFailed, "project_version_mismatch", ex.Message);
+        }
+        catch (FusionOps.Presentation.Modules.ProjectPreconditionRequiredException)
+        {
+            await WriteProblem(context, (HttpStatusCode)428, "precondition_required", "Supply the current project ETag in If-Match");
+        }
+        catch (FusionOps.Domain.Projects.ProjectSubmissionConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "project_submission_conflict", ex.Message);
+        }
+        catch (FusionOps.Domain.Projects.ProjectRuleException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.UnprocessableEntity, ex.Code, ex.Message);
+        }
         catch (FusionOps.Domain.Tenancy.TenantBoundaryException)
         {
             await WriteProblem(context, HttpStatusCode.Forbidden, "tenant_boundary", "The operation is outside the verified tenant");

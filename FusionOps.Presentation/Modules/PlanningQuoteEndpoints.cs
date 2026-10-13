@@ -10,17 +10,19 @@ public static class PlanningQuoteEndpoints
     {
         var routes = endpoints.MapGroup("/api/v1/planning/quotes").WithTags("Authoritative planning");
         if (!endpoints.ServiceProvider.GetRequiredService<IHostEnvironment>().IsDevelopment()) routes.RequireAuthorization("ManageResources");
-        routes.MapPost("/", async (QuoteDto dto, IPlanningQuoteStore store, HttpResponse response, CancellationToken ct) =>
+        routes.MapPost("/", async (QuoteDto dto, IPlanningQuoteStore store, FusionOps.Application.Projects.IProjectAccess access, HttpResponse response, CancellationToken ct) =>
         {
+            await access.RequireAsync(dto.ProjectId, FusionOps.Domain.Projects.ProjectPermission.Plan, ct);
             var quote = await store.CreateAsync(new(dto.ProjectId, new TimeRange(dto.From, dto.To), CatalogEndpoints.ParseCurrency(dto.Currency),
                 dto.Slots, dto.CandidateIds, dto.ValiditySeconds), ct);
             response.Headers.CacheControl = "no-store";
             return Results.Created($"/api/v1/planning/quotes/{quote.Id:D}", View(quote));
         });
-        routes.MapGet("/{id:guid}", async (Guid id, IPlanningQuoteStore store, HttpResponse response, CancellationToken ct) =>
+        routes.MapGet("/{id:guid}", async (Guid id, IPlanningQuoteStore store, FusionOps.Application.Projects.IProjectAccess access, HttpResponse response, CancellationToken ct) =>
         {
             var quote = await store.GetAsync(id, ct);
             if (quote is null) return Results.NotFound();
+            await access.RequireAsync(quote.Evidence.Request.ProjectId, FusionOps.Domain.Projects.ProjectPermission.Read, ct);
             response.Headers.CacheControl = "no-store";
             return Results.Ok(View(quote));
         });

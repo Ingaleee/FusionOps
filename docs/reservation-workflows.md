@@ -12,7 +12,7 @@ pwsh -File examples/workflow-demo.ps1
 
 The script creates unique project/resource/workflow IDs and development license pools. It demonstrates successful reservation, cancellation with release, and insufficient-license compensation. Records remain available for inspection. The API worker runs by default; `Workflows:WorkerEnabled=false` disables execution while preserving proposal and operator endpoints.
 
-The [HTTP requests](../examples/workflows.http) expose each operation separately. In production all workflow routes require both Resource.Manager and License.Manager, a verified tenant claim and an authenticated actor. Approval requires an actor different from the proposer. Development permits one anonymous actor for the local walkthrough. Tenant ownership is enforced independently of manager roles; project membership authorization remains future work. See [tenant contract](tenant-isolation.md).
+The [HTTP requests](../examples/workflows.http) expose each operation separately. In production all workflow routes require both Resource.Manager and License.Manager, a verified tenant claim and an authenticated actor. Approval requires an actor different from the proposer. Registered project permissions distinguish planning, approval and execution independently of tenant manager roles. Development permits one anonymous actor and unmanaged project IDs for the local walkthrough. See [tenant contract](tenant-isolation.md) and [project authority](project-commitments.md).
 
 ## Contract
 
@@ -87,4 +87,4 @@ Read `workflow_transitions` for the cause and actor, `workflow_effect_inbox` for
 
 The additive fulfillment migrations introduce coordinator, history and inbox tables plus nullable license reservation ownership. The decision migration marks earlier inbox rows as successful before enabling negative decisions. Readiness checks include workflow and receipt schemas. Review upgrades and take backups; rollback of these migrations discards recovery evidence and is unsuitable for active sagas.
 
-The [workflow ADR](adr/015-durable-reservation-workflow.md) records the original protocol; [ADR 017](adr/017-tenant-boundaries-and-row-security.md) adds tenant ownership. Stock shipment, project membership authorization, general RabbitMQ consumer deduplication, bounded retention and measured capacity remain future increments.
+The [workflow ADR](adr/015-durable-reservation-workflow.md) records the original protocol; [ADR 017](adr/017-tenant-boundaries-and-row-security.md) adds tenant ownership and [ADR 018](adr/018-versioned-project-commitments.md) adds project authority. Temporal execution baselines, stock shipment, general RabbitMQ consumer deduplication, bounded retention and measured capacity remain future increments.

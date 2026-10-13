@@ -18,8 +18,10 @@ public static class ScenarioEndpoints
         var runScenario = endpoints.MapPost("/api/v1/scenario/run", async (
             RunScenarioCommand command,
             IScenarioRunner scenarioRunner,
+            FusionOps.Application.Projects.IProjectAccess access,
             CancellationToken cancellationToken) =>
         {
+            await access.RequireAsync(command.ProjectId, FusionOps.Domain.Projects.ProjectPermission.Plan, cancellationToken);
             var result = await scenarioRunner.RunScenario(command, cancellationToken);
             return Results.Ok(result);
         });

@@ -24,6 +24,8 @@ public class FulfillmentContext : FusionOps.Infrastructure.Tenancy.TenantDbConte
                  || type == typeof(OutboxConfig));
         modelBuilder.ApplyConfiguration(new ReservationWorkflowConfig());
         modelBuilder.ApplyConfiguration(new WorkflowEffectReceiptConfig());
+        modelBuilder.ApplyConfiguration(new FusionOps.Infrastructure.Projects.ProjectConfig());
+        modelBuilder.ApplyConfiguration(new FusionOps.Infrastructure.Projects.ProjectRevisionConfig());
         modelBuilder.Entity<ProjectionCheckpoint>(checkpoint =>
         {
             checkpoint.ToTable("projection_checkpoints");
