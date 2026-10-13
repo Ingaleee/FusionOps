@@ -41,6 +41,22 @@ public class ExceptionMiddleware
         {
             await WriteProblem(context, HttpStatusCode.UnprocessableEntity, ex.Code, ex.Message);
         }
+        catch (FusionOps.Domain.Execution.ExecutionPlanRuleException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.UnprocessableEntity, ex.Code, ex.Message);
+        }
+        catch (FusionOps.Domain.Execution.ExecutionPlanVersionException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.PreconditionFailed, "execution_plan_version_mismatch", ex.Message);
+        }
+        catch (FusionOps.Domain.Execution.ExecutionPlanSubmissionConflictException ex)
+        {
+            await WriteProblem(context, HttpStatusCode.Conflict, "execution_plan_submission_conflict", ex.Message);
+        }
+        catch (FusionOps.Presentation.Modules.ExecutionPlanPreconditionRequiredException)
+        {
+            await WriteProblem(context, (HttpStatusCode)428, "precondition_required", "Supply the current execution plan ETag in If-Match");
+        }
         catch (FusionOps.Domain.Scheduling.ScenarioSubmissionConflictException ex)
         {
             await WriteProblem(context, HttpStatusCode.Conflict, "scenario_submission_conflict", ex.Message);

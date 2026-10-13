@@ -15,6 +15,7 @@ FusionOps answers two operations questions: **which feasible assignment costs le
 | Tenant authority | Verified JWT tenant/subject, immutable context scope, EF filters/write guards, SQL Server/PostgreSQL row policies, composite ownership, scoped receipts/audit/notifications and separate worker roles |
 | Project commitments | Tenant-owned versioned task DAGs, explicit calendars/budget, membership roles, ETag mutation, immutable canonical revisions and project authorization across existing APIs |
 | Temporal scenarios | Bounded multi-period start/bundle search; dependencies, calendars, stock/license capacity and material cost; independent feasibility validator, retained source evidence, hypothetical alternatives and replay |
+| Reviewed execution plans | Immutable scenario proof and change diff; pinned approval policy; exact reviewed digest/ETag; append-only tenant-owned decisions; approval remains separate from capacity acceptance |
 | Concurrent reservation | Transaction starts before the decision; empty-calendar range locks; sorted lock acquisition; conflict response 409 |
 | Safe HTTP retries | Durable tenant/actor/operation-scoped idempotency receipts; canonical command fingerprint; original response replay; state/outbox/receipt share a commit |
 | Approved cross-store reservation | Immutable proposals, ETag/If-Match approval, separate production approver, resource + license saga and ownership-preserving compensation |
@@ -136,6 +137,8 @@ $env:DOCKER_HOST = $taskDockerEndpoint -replace '^npipe:////', 'npipe://'
 ## Scope and next milestones
 
 The accepted [flagship objective](docs/flagship-vision.md) extends FusionOps through the complete project lifecycle: commitments and task dependencies, temporal planning, approved execution, materials/suppliers, adaptive replanning and cost reconciliation. [Delivery status](docs/flagship-delivery.md) tracks G1–G7; the [project contract](docs/project-commitments.md) documents the first implementation and production migration/access behavior.
+
+The requested [extended architecture programme](docs/ultimate-architecture-vision.md) adds G8–G30 and retained research directions. The [commercial pilot analysis](docs/commercial-pilot.md) describes unvalidated customer hypotheses. G3 is in progress: [reviewed execution baselines](docs/execution-plan-authority.md) separate approval from future capacity acceptance and task execution.
 
 Implemented: single-horizon assignment, persisted resource catalog/skills, immutable authoritative quotes, atomic one-time acceptance with freshness checks, reservation conflict control, durable reservation idempotency keys, approved workforce/license saga with compensation, participant effect inbox, fenced worker claims, versioned transition history, operator resume, transactional outboxes, original typed contracts, durable audit and checkpointed allocation history.
 

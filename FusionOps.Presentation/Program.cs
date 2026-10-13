@@ -116,6 +116,7 @@ if (!demoMode)
     app.MapProjectEndpoints();
     app.MapOperationalProjectEndpoints();
     app.MapTemporalScenarioEndpoints();
+    app.MapExecutionPlanEndpoints();
     app.MapAuditEndpoints();
     app.MapScenarioEndpoints();
     app.MapHub<NotificationHub>("/hubs/notify");

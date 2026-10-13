@@ -29,6 +29,9 @@ public sealed class DatabaseReadinessHealthCheck(
             await postgres.Set<FusionOps.Domain.Projects.OperationalProject>().AsNoTracking().Include(p => p.Members).Take(1).ToListAsync(timeout.Token);
             await postgres.Set<FusionOps.Domain.Projects.ProjectDefinitionRevision>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
             await postgres.Set<FusionOps.Domain.Scheduling.TemporalScenario>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
+            await postgres.Set<FusionOps.Domain.Execution.ExecutionBaseline>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
+            await postgres.Set<FusionOps.Domain.Execution.ExecutionPlan>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
+            await postgres.Set<FusionOps.Domain.Execution.ExecutionPlanDecision>().AsNoTracking().Take(1).ToListAsync(timeout.Token);
             if (!environment.IsDevelopment())
             {
                 var workerSqlAllowed = await sql.Database.SqlQuery<int>($"SELECT CASE WHEN IS_MEMBER(N'fusionops_system') = 1 AND IS_MEMBER(N'db_owner') = 0 AND IS_SRVROLEMEMBER(N'sysadmin') = 0 THEN 1 ELSE 0 END AS Value").SingleAsync(timeout.Token);

@@ -5,8 +5,8 @@ Updated: 2026-10-13. Local environment: Windows x64, .NET SDK 10.0.303 / runtime
 | Check | Result |
 | --- | --- |
 | Release solution build with warnings as errors | Pass, 0 warnings, 0 errors; 11 projects |
-| Fast tests | 116 pass: 74 domain/algorithm/contract/architecture/workflow/quote/project/temporal tests and 42 application/HTTP/authorization/idempotency/worker/tenant tests |
-| Reliability tests on disposable databases, RabbitMQ and EventStoreDB | 75 pass, 0 skipped; includes temporal snapshots/replay/hypothetical alternatives/HTTP/immutability/capture races, project authority, tenant/RLS, quotes, durable saga decisions, crashes and compensation |
+| Fast tests | 122 pass: 80 domain/algorithm/contract/architecture/workflow/quote/project/temporal/execution-review tests and 42 application/HTTP/authorization/idempotency/worker/tenant tests |
+| Reliability tests on disposable databases, RabbitMQ and EventStoreDB | 82 pass, 0 skipped; includes reviewed execution proof/diffs/approvals/races/production HTTP/history RLS, temporal scenarios, project/tenant authority, quotes, durable saga decisions, crashes and compensation |
 | Hungarian randomized verification | 300 seeded sparse rectangular matrices agree with exhaustive enumeration; dual feasibility and objective equality checked |
 | EF model / migration consistency | No pending changes for WorkforceContext or FulfillmentContext |
 | Locked NuGet restore | Pass |
@@ -16,6 +16,7 @@ Updated: 2026-10-13. Local environment: Windows x64, .NET SDK 10.0.303 / runtime
 | Full API-container tenant walkthrough | Pass on the final image after calendar-lock correction: readiness 200, independent USD 50/USD 198 quotes, scoped capacity under the same product name, denied foreign reads/reservations, both reservations compensated |
 | Full API-container project walkthrough | Pass: readiness 200, original creation replay, distinct aggregate/definition versions, historical budgets retained, stale ETag/cycle/foreign tenant/owner removal rejected |
 | Full API-container temporal walkthrough | Pass: readiness 200, USD 60/two-hour schedule, hypothetical machine delay adds one hour, historical replay after project revision, foreign/stale access rejected, no reservations |
+| Full API-container execution-review walkthrough | Pass: readiness 200, original scenario proof/digest, ETag approval, immutable decisions, original proposal replay and +60-minute alternative awaiting fresh review; no capacity effects |
 | Git whitespace validation | Pass |
 | Independent GitHub Actions verification | Pass for catalog implementation commit `8181e3a`: fast suites on Windows and Ubuntu, Linux reliability suite and API Docker build ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38318219468)) |
 | Independent Gateway container build | Pass for the same implementation commit ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38318219382)) |
@@ -110,3 +111,7 @@ G2 adds nine domain cases and eight database/HTTP cases. The exact Cartesian ora
 The G2 container also passes the project, workflow and two-tenant walkthroughs after applying the new migration. All 39 PostgreSQL outbox messages are delivered with zero dead letters, including two scenario events. The temporal replay retains its original decision after revising the project and does not create another event or reserve capacity.
 
 Commands and generated TRX files are described in the README and CI workflow. The linked GitHub runs independently verified the catalog implementation commit; subsequent documentation changes do not change that code evidence. Docker images are local verification artifacts, not published releases. No throughput, tail-latency, availability or security certification is inferred from these tests.
+
+The G3 review increment adds six domain cases and seven integration cases: detached/tampered baseline evidence; digest/policy/separate-approver/expiry/state rules; versioned task/currency diffs; retained original proposals; competing approval/rejection; definition changes and fresh proposals; partial-plan rejection; actual restricted-role PostgreSQL history policies; signed production HTTP contracts; and concurrent original proposal deduplication. The first integration run found a test helper attempting JSON parsing of an expected empty 404 response; the corrected test asserts the status. The final run passes all 82 reliability cases; combined local total is 204, no failures or skips. Both EF models match migrations.
+
+The final `fusionops-api:execution-verification` image passes the new execution-review walkthrough (including the temporal demo), and the project, workflow and two-tenant walkthroughs. All 45 PostgreSQL outbox events are delivered with zero dead letters: three `v1.ExecutionPlanChanged`, four temporal scenario events and the existing project/workflow/license events. The temporary compose stack is scoped to `fusionops-execution-verify`; its RabbitMQ cookie ownership issue was corrected only in that stack before verification. Approval is not yet temporal execution: authoritative interval acceptance, task lifecycle and corresponding participant-crash recovery remain G3 work.

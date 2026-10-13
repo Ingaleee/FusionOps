@@ -51,6 +51,9 @@ public abstract class TenantDbContext(DbContextOptions options, TenantScope? sco
             throw new FusionOps.Domain.Projects.ProjectRuleException("project_revision_immutable");
         if (ChangeTracker.Entries<FusionOps.Domain.Scheduling.TemporalScenario>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
             throw new FusionOps.Domain.Scheduling.TemporalModelException("scenario_immutable");
+        if (ChangeTracker.Entries<FusionOps.Domain.Execution.ExecutionBaseline>().Any(e => e.State is EntityState.Modified or EntityState.Deleted)
+            || ChangeTracker.Entries<FusionOps.Domain.Execution.ExecutionPlanDecision>().Any(e => e.State is EntityState.Modified or EntityState.Deleted))
+            throw new FusionOps.Domain.Execution.ExecutionPlanRuleException("execution_history_immutable");
         foreach (var entry in ChangeTracker.Entries<TenantOwnedEntity>().Where(e => e.State is EntityState.Added or EntityState.Modified or EntityState.Deleted))
         {
             if (entry.State == EntityState.Added && entry.Entity.TenantId == Guid.Empty)

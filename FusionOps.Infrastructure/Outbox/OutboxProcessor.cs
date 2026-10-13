@@ -42,6 +42,7 @@ public sealed class OutboxProcessor(
                     CatalogResourceChanged e => e.ResourceId,
                     ProjectChanged e => e.ProjectId,
                     TemporalScenarioCalculated e => e.ScenarioId,
+                    ExecutionPlanChanged e => e.PlanId,
                     StockReplenished e => e.WarehouseId.Value,
                     ReorderPointReached e => e.WarehouseId.Value,
                     _ => Guid.Empty
