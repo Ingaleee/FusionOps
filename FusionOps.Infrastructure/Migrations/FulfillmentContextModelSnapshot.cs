@@ -288,6 +288,45 @@ namespace FusionOps.Infrastructure.Migrations
                     b.ToTable("ops_execution_plan_decisions", (string)null);
                 });
 
+            modelBuilder.Entity("FusionOps.Domain.Execution.TemporalLicenseEffectReceipt", b =>
+                {
+                    b.Property<Guid>("PlanId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Step")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<DateTimeOffset>("At")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Digest")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RejectionCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("Succeeded")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                    b.HasKey("PlanId", "Step");
+
+                    b.HasIndex("TenantId", "ProjectId", "PlanId");
+
+                    b.ToTable("execution_license_effects", (string)null);
+                });
+
             modelBuilder.Entity("FusionOps.Domain.Projects.OperationalProject", b =>
                 {
                     b.Property<Guid>("Id")
@@ -723,6 +762,77 @@ namespace FusionOps.Infrastructure.Migrations
 
             modelBuilder.Entity("FusionOps.Domain.Entities.LicensePool", b =>
                 {
+                    b.OwnsMany("FusionOps.Domain.Entities.TemporalLicenseReservation", "TemporalReservations", b1 =>
+                        {
+                            b1.Property<Guid>("PoolId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("PlanId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("TaskId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("ProjectId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<int>("Seats")
+                                .HasColumnType("integer");
+
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("uuid")
+                                .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
+                            b1.HasKey("PoolId", "PlanId", "TaskId");
+
+                            b1.HasIndex("TenantId", "PoolId");
+
+                            b1.HasIndex("TenantId", "ProjectId", "PlanId");
+
+                            b1.ToTable("license_temporal_reservations", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("TenantId", "PoolId")
+                                .HasPrincipalKey("TenantId", "Id");
+
+                            b1.HasOne("FusionOps.Domain.Execution.ExecutionBaseline", null)
+                                .WithMany()
+                                .HasForeignKey("TenantId", "ProjectId", "PlanId")
+                                .HasPrincipalKey("TenantId", "ProjectId", "Id")
+                                .OnDelete(DeleteBehavior.Restrict)
+                                .IsRequired();
+
+                            b1.OwnsOne("FusionOps.Domain.ValueObjects.TimeRange", "Period", b2 =>
+                                {
+                                    b2.Property<Guid>("TemporalLicenseReservationPoolId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<Guid>("TemporalLicenseReservationPlanId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<Guid>("TemporalLicenseReservationTaskId")
+                                        .HasColumnType("uuid");
+
+                                    b2.Property<DateTimeOffset>("End")
+                                        .HasColumnType("timestamp with time zone")
+                                        .HasColumnName("PeriodEnd");
+
+                                    b2.Property<DateTimeOffset>("Start")
+                                        .HasColumnType("timestamp with time zone")
+                                        .HasColumnName("PeriodStart");
+
+                                    b2.HasKey("TemporalLicenseReservationPoolId", "TemporalLicenseReservationPlanId", "TemporalLicenseReservationTaskId");
+
+                                    b2.ToTable("license_temporal_reservations");
+
+                                    b2.WithOwner()
+                                        .HasForeignKey("TemporalLicenseReservationPoolId", "TemporalLicenseReservationPlanId", "TemporalLicenseReservationTaskId");
+                                });
+
+                            b1.Navigation("Period")
+                                .IsRequired();
+                        });
+
                     b.OwnsMany("FusionOps.Domain.Entities.LicenseAllocationRef", "Allocations", b1 =>
                         {
                             b1.Property<Guid>("id")
@@ -763,6 +873,8 @@ namespace FusionOps.Infrastructure.Migrations
                         });
 
                     b.Navigation("Allocations");
+
+                    b.Navigation("TemporalReservations");
                 });
 
             modelBuilder.Entity("FusionOps.Domain.Execution.ExecutionBaseline", b =>
@@ -806,6 +918,16 @@ namespace FusionOps.Infrastructure.Migrations
                         .WithMany()
                         .HasForeignKey("TenantId", "PlanId")
                         .HasPrincipalKey("TenantId", "Id")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FusionOps.Domain.Execution.TemporalLicenseEffectReceipt", b =>
+                {
+                    b.HasOne("FusionOps.Domain.Execution.ExecutionBaseline", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId", "ProjectId", "PlanId")
+                        .HasPrincipalKey("TenantId", "ProjectId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

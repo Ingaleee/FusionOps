@@ -54,6 +54,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<FusionOps.Application.Scheduling.ITemporalScenarioStore, FusionOps.Infrastructure.Scheduling.PostgresTemporalScenarioStore>();
         services.AddSingleton(sp => FusionOps.Domain.Execution.ExecutionApprovalPolicy.Standard(!sp.GetRequiredService<Microsoft.Extensions.Hosting.IHostEnvironment>().IsDevelopment()));
         services.AddScoped<FusionOps.Application.Execution.IExecutionPlanStore, FusionOps.Infrastructure.Execution.PostgresExecutionPlanStore>();
+        services.AddScoped<FusionOps.Application.Execution.ITemporalWorkforceParticipant, FusionOps.Infrastructure.Execution.SqlTemporalWorkforceParticipant>();
+        services.AddScoped<FusionOps.Application.Execution.ITemporalLicenseParticipant, FusionOps.Infrastructure.Execution.PostgresTemporalLicenseParticipant>();
         services.AddScoped<IOptimizerStrategy, FusionOps.Domain.Services.HungarianOptimizerStrategy>();
         services.AddSingleton<IStockForecaster, FusionOps.Infrastructure.Optimizers.MlNetOptimizer>();
 

@@ -18,6 +18,7 @@
 
     <ItemGroup>
         <Using Include="NUnit.Framework"/>
+        <EmbeddedResource Include="Fixtures/legacy-temporal-proof.json" />
     </ItemGroup>
 
     <ItemGroup>

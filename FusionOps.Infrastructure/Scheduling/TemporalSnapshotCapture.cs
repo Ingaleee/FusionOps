@@ -24,6 +24,7 @@ public sealed class TemporalSnapshotCapture(IDbContextFactory<WorkforceContext> 
         var prices = new Dictionary<string, Money>(StringComparer.Ordinal);
         var seats = new Dictionary<string, int>(StringComparer.Ordinal);
         var stockObservations = new List<StockObservation>(); var licenseObservations = new List<LicenseObservation>();
+        LicenseCapacityBooking[]? licenseBookings = null;
         // Each store contributes one bounded consistent observation. No cross-store atomic snapshot is implied.
         await using (var pg = await fulfillment.CreateDbContextAsync(ct))
         await using (var snapshot = await pg.Database.BeginTransactionAsync(IsolationLevel.RepeatableRead, ct))
@@ -36,7 +37,13 @@ public sealed class TemporalSnapshotCapture(IDbContextFactory<WorkforceContext> 
             var skuNames = definition.Tasks.SelectMany(t => t.Materials).Select(m => m.Sku).Distinct().Order().ToArray();
             var productNames = definition.Tasks.SelectMany(t => t.Licenses).Select(l => l.Product).Distinct().Order().ToArray();
             var items = await pg.StockItems.AsNoTracking().Where(s => skuNames.Contains(s.Sku)).ToListAsync(ct);
-            var pools = await pg.Set<LicensePool>().AsNoTracking().Where(p => productNames.Contains(p.Product)).ToListAsync(ct);
+            var pools = await pg.Set<LicensePool>().AsNoTracking().Where(p => productNames.Contains(p.Product))
+                .Select(p => new { p.Id, p.Product, p.Version, p.TotalSeats, p.AllocatedSeats }).ToListAsync(ct);
+            var observedBookings = await pg.Set<LicensePool>().AsNoTracking().Where(p => productNames.Contains(p.Product)).SelectMany(p => p.TemporalReservations,
+                (p, r) => new { p.Product, r.Seats, r.Period }).Where(r => r.Period.Start < definition.Horizon.End && definition.Horizon.Start < r.Period.End)
+                .OrderBy(r => r.Product).ThenBy(r => r.Period.Start).ThenBy(r => r.Period.End).ThenBy(r => r.Seats).Take(5001).ToListAsync(ct);
+            if (observedBookings.Count > 5000) throw new TemporalModelException("temporal_license_calendar_limits");
+            if (observedBookings.Count > 0) licenseBookings = observedBookings.Select(r => new LicenseCapacityBooking(r.Product, r.Seats, r.Period)).ToArray();
             foreach (var sku in skuNames)
             {
                 var item = items.SingleOrDefault(s => s.Sku == sku); stock[sku] = item?.Quantity ?? 0;
@@ -68,7 +75,7 @@ public sealed class TemporalSnapshotCapture(IDbContextFactory<WorkforceContext> 
             }
             sqlObserved = await SqlQuoteAcceptance.DatabaseTimeAsync(sql, ct); await snapshot.CommitAsync(ct);
         }
-        var input = new TemporalPlanningInput(projectId, definition, candidates, stock, seats, request.GridMinutes, request.MaxSearchNodes, prices, request.MaxElapsedMilliseconds);
+        var input = new TemporalPlanningInput(projectId, definition, candidates, stock, seats, request.GridMinutes, request.MaxSearchNodes, prices, request.MaxElapsedMilliseconds, licenseBookings);
         TemporalModel.Validate(input);
         return new(new(1, version, definitionVersion, digest, pgObserved, sqlObserved, revisions, stockObservations, licenseObservations), input);
     }

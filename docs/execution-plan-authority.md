@@ -1,6 +1,6 @@
 # Reviewed execution plan authority
 
-G3 increment: persisted immutable baselines, reviewed diffs and approval decisions. Temporal resource acceptance, task execution and baseline supersession are still being implemented. An `Approved` plan is reviewed evidence, not an active execution or proof of owned capacity.
+G3 increment: persisted immutable baselines, reviewed diffs and approval decisions. Internal [temporal participants](temporal-participants.md) now implement per-store interval reservation/release decisions. Activation orchestration, task execution and baseline supersession remain unfinished. An `Approved` plan is reviewed evidence, not an active execution or proof of owned capacity.
 
 ## Evidence and state
 
@@ -41,4 +41,4 @@ Diffs retain changed task intervals, assignments, modeled task cost and task-def
 
 The Development walkthrough is `pwsh -File examples/execution-plan-demo.ps1 -BaseUri http://localhost:5121`. It includes the temporal fixture, reviewed-version approval and a changed plan requiring fresh review. Production uses signed identities and a separate approver, as exercised in the integration suite.
 
-Implement authoritative interval reservations for workforce/equipment and license seats; a durable activation coordinator with stable receipts and fenced claims; task dependency/start/completion facts; and recovery after each participant commit. Reject unsupported material participants until G4 supplies them. Resolve hypothetical additions against real capacity. A project may have multiple proposals, but activation must enforce one authoritative active baseline and controlled later supersession. These gates remain incomplete even when approval tests pass.
+Connect the verified workforce/equipment and license interval participants through a durable activation coordinator with fenced claims; implement task dependency/start/completion facts and recovery after each participant commit. Reject unsupported material participants until G4 supplies them. Resolve hypothetical additions against real capacity. A project may have multiple proposals, but activation must enforce one authoritative active baseline and controlled later supersession. These gates remain incomplete even when approval and participant tests pass.

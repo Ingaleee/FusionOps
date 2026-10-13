@@ -30,6 +30,7 @@ public class FulfillmentContext : FusionOps.Infrastructure.Tenancy.TenantDbConte
         modelBuilder.ApplyConfiguration(new FusionOps.Infrastructure.Execution.ExecutionBaselineConfig());
         modelBuilder.ApplyConfiguration(new FusionOps.Infrastructure.Execution.ExecutionPlanConfig());
         modelBuilder.ApplyConfiguration(new FusionOps.Infrastructure.Execution.ExecutionPlanDecisionConfig());
+        modelBuilder.ApplyConfiguration(new FusionOps.Infrastructure.Execution.TemporalLicenseEffectReceiptConfig());
         modelBuilder.Entity<ProjectionCheckpoint>(checkpoint =>
         {
             checkpoint.ToTable("projection_checkpoints");

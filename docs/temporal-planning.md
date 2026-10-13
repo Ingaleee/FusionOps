@@ -1,16 +1,16 @@
 # Temporal project scenarios
 
-G2 calculates persisted, independently validated schedules from a registered project's current definition and observed catalog/calendars/stock/licenses. Calculation, comparison and replay do not reserve capacity or execute tasks. G3 will bind a reviewed execution baseline and recheck participant authority at acceptance.
+G2 calculates persisted, independently validated schedules from a registered project's current definition and observed catalog/calendars/stock/licenses. Calculation, comparison and replay do not reserve capacity or execute tasks. G3 now retains a [reviewed baseline](execution-plan-authority.md) and has internal [temporal participants](temporal-participants.md); activation orchestration and task execution remain unfinished.
 
 ## Model and objective
 
-Algorithm `temporal/bounded-grid-cost-finish-v1` enumerates task starts and distinct resource bundles on an explicit grid anchored at the project horizon start. Tasks are nonpreemptive and finish-to-start dependencies must be met. A resource bundle occupies all selected people/equipment for the entire task interval. Site open windows, task deadlines, milestones, existing bookings, skills/types, total material availability, simultaneous license capacity and the project budget are hard constraints.
+Algorithms `temporal/bounded-grid-cost-finish-v1` (historical null license calendar) and `temporal/bounded-grid-cost-finish-v2` (explicit existing license bookings) enumerate task starts and distinct resource bundles on an explicit grid anchored at the project horizon start. Tasks are nonpreemptive and finish-to-start dependencies must be met. A resource bundle occupies all selected people/equipment for the entire task interval. Site open windows, task deadlines, milestones, existing bookings, skills/types, total material availability, simultaneous license capacity and the project budget are hard constraints.
 
 The objective first requires a complete feasible schedule, then minimizes modeled cost, then project completion time. Stable task/candidate/slot ordering makes completed/node-limited search reproducible. An exhaustive result proves this objective only for the captured candidate set, explicit grid, supplied model and snapshot. It does not prove a continuous-time or fleet-wide optimum. A finer grid can produce different opportunities and takes more work.
 
 Modeled cost includes catalog hourly rates times exact task minutes plus materials at captured unit cost. Existing license contracts have no authoritative price; there is no invented license price. Tax, procurement/transport fees, overtime, equipment setup/maintenance except observed unavailable intervals, recurring calendars, task splitting and approved-plan disruption objectives are later contracts. The stored model makes these boundaries inspectable.
 
-Materials are consumed once per task and require enough total observed stock. Current allocated license seats are conservatively unavailable for the entire scenario horizon; future releases are not guessed. A hypothetical capacity addition must name an observed required product/SKU; material additions require a known unit price. Hypothetical availability and capacity are explicit assumptions and cannot silently become a real commitment.
+Materials are consumed once per task and require enough total observed stock. Current permanent license allocations are conservatively unavailable for the entire horizon; captured temporal reservations occupy only their actual intervals. Future releases are not guessed. A hypothetical capacity addition must name an observed required product/SKU; material additions require a known unit price. Hypothetical availability and capacity are explicit assumptions and cannot silently become a real commitment.
 
 ## Result interpretation
 

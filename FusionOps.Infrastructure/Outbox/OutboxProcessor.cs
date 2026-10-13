@@ -43,6 +43,7 @@ public sealed class OutboxProcessor(
                     ProjectChanged e => e.ProjectId,
                     TemporalScenarioCalculated e => e.ScenarioId,
                     ExecutionPlanChanged e => e.PlanId,
+                    TemporalLicenseCapacityChanged e => e.PoolId,
                     StockReplenished e => e.WarehouseId.Value,
                     ReorderPointReached e => e.WarehouseId.Value,
                     _ => Guid.Empty

@@ -53,7 +53,7 @@ public static class LicenseEndpoints
         var detail = endpoints.MapGet("/api/v1/licenses/{product}", [Authorize(Roles = "License.Manager")] async (string product, ILicenseRepository repo) =>
         {
             var pool = await repo.FindByProductAsync(product);
-            return pool is null ? Results.NotFound() : Results.Ok(new { product = pool.Product, pool.TotalSeats, pool.AllocatedSeats });
+            return pool is null ? Results.NotFound() : Results.Ok(new { product = pool.Product, pool.TotalSeats, pool.AllocatedSeats, pool.TemporalReservedPeak });
         });
         if (env.IsDevelopment()) detail.WithMetadata(new AllowAnonymousAttribute());
 

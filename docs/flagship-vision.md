@@ -2,7 +2,7 @@
 
 Status: accepted product direction, 2026-10-13. [Implementation status](flagship-delivery.md) tracks G1–G7. Current completed checks remain in [verification](verification.md); future capabilities below are not implied by the accepted objective.
 
-The subsequently accepted [extended programme](ultimate-architecture-vision.md) retains this foundation and adds G8–G30 and fifteen research directions. The [commercial pilot analysis](commercial-pilot.md) defines a separate, unvalidated customer experiment using the same core. Neither document declares the foundation or extensions complete.
+The subsequently accepted [extended programme](ultimate-roadmap.md) retains this foundation and adds G8–G30 and fifteen research directions. The [commercial pilot analysis](commercial-pilot.md) defines a separate, unvalidated customer experiment using the same core. Neither document declares the foundation or extensions complete.
 
 ## Objective
 

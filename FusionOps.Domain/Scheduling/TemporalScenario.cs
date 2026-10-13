@@ -100,7 +100,7 @@ public sealed class TemporalScenario : TenantOwnedEntity, IHasDomainEvents
         var evidence = Evidence;
         var validation = new TemporalPlanValidator().Validate(evidence.Input, evidence.Result.Tasks, requireComplete: false);
         if (evidence.Source.SchemaVersion != 1 || evidence.Basis.ProjectId != ProjectId || evidence.Input.ProjectId != ProjectId
-            || evidence.Result.ProjectId != ProjectId || evidence.Result.Algorithm != TemporalPlanner.Algorithm
+            || evidence.Result.ProjectId != ProjectId || evidence.Result.Algorithm != TemporalPlanner.AlgorithmFor(evidence.Input)
             || evidence.Source.ProjectVersion != ProjectVersion || evidence.Source.DefinitionVersion != DefinitionVersion
             || evidence.Source.DefinitionDigest != ProjectDefinitionCodec.Digest(TenantId, ProjectId, DefinitionVersion, ProjectDefinitionCodec.Canonicalize(evidence.Basis.Definition))
             || TemporalInputCodec.Write(evidence.Assumptions.Apply(evidence.Basis)) != TemporalInputCodec.Write(evidence.Input)

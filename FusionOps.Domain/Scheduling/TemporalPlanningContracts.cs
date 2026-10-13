@@ -2,13 +2,16 @@ using FusionOps.Domain.Projects;
 using FusionOps.Domain.Services.Planning;
 using FusionOps.Domain.Shared;
 using FusionOps.Domain.ValueObjects;
+using System.Text.Json.Serialization;
 
 namespace FusionOps.Domain.Scheduling;
 
 public sealed record TemporalPlanningInput(Guid ProjectId, ProjectDefinition Definition,
     IReadOnlyList<ResourceCandidate> Candidates, IReadOnlyDictionary<string, int> Stock,
     IReadOnlyDictionary<string, int> LicenseCapacity, int GridMinutes = 15, long MaxSearchNodes = 50000,
-    IReadOnlyDictionary<string, Money>? MaterialUnitCosts = null, int MaxElapsedMilliseconds = 5000);
+    IReadOnlyDictionary<string, Money>? MaterialUnitCosts = null, int MaxElapsedMilliseconds = 5000,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<LicenseCapacityBooking>? LicenseBookings = null);
+public sealed record LicenseCapacityBooking(string Product, int Seats, TimeRange Period);
 public sealed record ScheduledResource(Guid SlotId, Guid ResourceId);
 public sealed record ScheduledProjectTask(Guid TaskId, TimeRange Period, IReadOnlyList<ScheduledResource> Resources, decimal Cost);
 public sealed record TemporalPlanningIssue(string Code, Guid? TaskId = null, string? Reference = null);
@@ -43,6 +46,9 @@ public static class TemporalModel
                 throw new TemporalModelException("temporal_candidate_invalid");
         }
         if (input.Candidates.Sum(c => (long)c.BusyPeriods.Count) > 20000) throw new TemporalModelException("temporal_calendar_limits");
+        if (input.LicenseBookings is { } bookings && (bookings.Count > 5000 || bookings.Any(b => b is null || b.Period is null
+            || b.Seats is < 1 or > 1_000_000 || !ProjectDefinitionCodec.Text(b.Product, 128))))
+            throw new TemporalModelException("temporal_license_calendar_limits");
         foreach (var capacities in new[] { input.Stock, input.LicenseCapacity })
             if (capacities is null || capacities.Count > 4000 || capacities.Any(p => !ProjectDefinitionCodec.Text(p.Key, 128) || p.Value is < 0 or > 1_000_000))
                 throw new TemporalModelException("temporal_capacity_invalid");

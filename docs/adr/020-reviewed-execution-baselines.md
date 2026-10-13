@@ -12,4 +12,4 @@ The retained proof duplicates scenario evidence to make the baseline self-inspec
 
 Alternative rejected: directly mutate scenario JSON into execution state or feed all temporal tasks into one existing reservation specification. Either would obscure the reviewed version or acquire materially different intervals from the schedule.
 
-See [execution contract](../execution-plan-authority.md), [temporal scenarios](../temporal-planning.md) and [extended programme](../ultimate-architecture-vision.md).
+See [execution contract](../execution-plan-authority.md), [temporal scenarios](../temporal-planning.md) and [extended programme](../ultimate-roadmap.md).

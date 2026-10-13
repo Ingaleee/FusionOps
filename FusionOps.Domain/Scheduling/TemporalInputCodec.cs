@@ -20,7 +20,8 @@ public static class TemporalInputCodec
             }).ToArray(),
             Stock = input.Stock.OrderBy(p => p.Key, StringComparer.Ordinal).ToDictionary(p => p.Key, p => p.Value),
             LicenseCapacity = input.LicenseCapacity.OrderBy(p => p.Key, StringComparer.Ordinal).ToDictionary(p => p.Key, p => p.Value),
-            MaterialUnitCosts = input.MaterialUnitCosts?.OrderBy(p => p.Key, StringComparer.Ordinal).ToDictionary(p => p.Key, p => p.Value)
+            MaterialUnitCosts = input.MaterialUnitCosts?.OrderBy(p => p.Key, StringComparer.Ordinal).ToDictionary(p => p.Key, p => p.Value),
+            LicenseBookings = input.LicenseBookings?.OrderBy(b => b.Product, StringComparer.Ordinal).ThenBy(b => b.Period.Start).ThenBy(b => b.Period.End).ThenBy(b => b.Seats).ToArray()
         };
         var text = JsonSerializer.Serialize(normalized, Json);
         if (text.Length > 4_000_000) throw new TemporalModelException("temporal_evidence_limits");

@@ -86,6 +86,11 @@ public sealed class TemporalPlanValidator
         }
         foreach (var (sku, quantity) in stockUsage)
             if (quantity > input.Stock.GetValueOrDefault(sku)) violations.Add(new("material_capacity_conflict", Reference: sku));
+        foreach (var booking in input.LicenseBookings?.Where(b => b.Period.Overlaps(input.Definition.Horizon)) ?? [])
+        {
+            if (!licenseUsage.TryGetValue(booking.Product, out var intervals)) licenseUsage[booking.Product] = intervals = [];
+            intervals.Add((booking.Period.Start, booking.Seats)); intervals.Add((booking.Period.End, -booking.Seats));
+        }
         foreach (var (product, intervals) in licenseUsage)
         {
             long used = 0;

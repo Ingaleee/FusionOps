@@ -2,6 +2,8 @@
 
 Source review: 2026-10-13, implementation commit `e035daa`. This is a delivery proposal, not a record of implemented guarantees. The accepted [full objective](flagship-vision.md) and [milestone ledger](flagship-delivery.md) remain authoritative for scope and status.
 
+Subsequent G3 increments have implemented [reviewed execution baselines](execution-plan-authority.md) and internal [authoritative interval participants](temporal-participants.md). The table below records the original review; activation orchestration, task lifecycle and complete worker-crash recovery remain the next implementation gates. [Product strategy](product-strategy.md) and [logistics feasibility research](logistics-feasibility.md) preserve commercial options without replacing the Core programme.
+
 ## What the current code proves, and what it does not
 
 The implemented foundation includes versioned project definitions and permissions, independently validated temporal scenarios, immutable decision evidence, authoritative catalog quotes, tenant isolation, durable reservation participants and fenced recovery. The last recorded verification is 191 passing tests, including real database/broker boundaries and an independent oracle for 100 small scheduling instances. Those checks establish particular invariants, not production capacity or completion of the project lifecycle.

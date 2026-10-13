@@ -92,6 +92,7 @@ public sealed partial class ReliabilityTests
         await fulfillment.Set<ProjectionCheckpoint>().ExecuteDeleteAsync();
         await fulfillment.StockItems.ExecuteDeleteAsync();
         await fulfillment.Set<FusionOps.Domain.Execution.ExecutionPlanDecision>().ExecuteDeleteAsync();
+        await fulfillment.Set<FusionOps.Domain.Execution.TemporalLicenseEffectReceipt>().ExecuteDeleteAsync();
         await fulfillment.Set<FusionOps.Domain.Execution.ExecutionPlan>().ExecuteDeleteAsync();
         await fulfillment.Set<FusionOps.Domain.Execution.ExecutionBaseline>().ExecuteDeleteAsync();
         await fulfillment.Set<FusionOps.Domain.Scheduling.TemporalScenario>().ExecuteDeleteAsync();

@@ -9,6 +9,7 @@ namespace FusionOps.Domain.Scheduling;
 public sealed class TemporalPlanner
 {
     public const string Algorithm = "temporal/bounded-grid-cost-finish-v1";
+    public static string AlgorithmFor(TemporalPlanningInput input) => input.LicenseBookings is null ? Algorithm : "temporal/bounded-grid-cost-finish-v2";
     public TemporalPlanningResult Plan(TemporalPlanningInput original, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -155,6 +156,8 @@ public sealed class TemporalPlanner
             foreach (var requirement in task.Licenses)
             {
                 var changes = new List<(DateTimeOffset Time, int Delta)> { (period.Start, requirement.Seats), (period.End, -requirement.Seats) };
+                foreach (var use in input.LicenseBookings?.Where(b => b.Product == requirement.Product && b.Period.Overlaps(period)) ?? [])
+                { changes.Add((use.Period.Start < period.Start ? period.Start : use.Period.Start, use.Seats)); changes.Add((use.Period.End > period.End ? period.End : use.Period.End, -use.Seats)); }
                 if (_licenseUses.TryGetValue(requirement.Product, out var uses))
                     foreach (var use in uses.Where(u => u.Period.Overlaps(period))) { changes.Add((use.Period.Start, use.Seats)); changes.Add((use.Period.End, -use.Seats)); }
                 long seats = 0;
@@ -184,7 +187,7 @@ public sealed class TemporalPlanner
         {
             var validation = new TemporalPlanValidator().Validate(input, tasks, requireComplete: false);
             if (!validation.IsFeasible) throw new InvalidOperationException("Temporal result failed independent feasibility validation");
-            return new(input.ProjectId, Algorithm, validation.IsComplete, completeSearch, _nodes, validation.ComputedCost,
+            return new(input.ProjectId, AlgorithmFor(input), validation.IsComplete, completeSearch, _nodes, validation.ComputedCost,
                 tasks.Length == 0 ? null : tasks.Max(t => t.Period.End), tasks.OrderBy(t => t.TaskId).ToArray(), issues,
                 _limit ?? "exhausted", _watch.ElapsedMilliseconds, _materialCost + _minimumCost.Values.Sum());
         }

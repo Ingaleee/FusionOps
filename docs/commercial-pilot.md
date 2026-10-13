@@ -1,6 +1,6 @@
 # FusionOps Planning Intelligence: commercial experiment
 
-Product analysis of the supplied business proposal, 2026-10-13. This is an unvalidated commercial hypothesis alongside the [full engineering programme](ultimate-architecture-vision.md). No customer demand, saved money, paid pilot, production deployment or real ERP integration is claimed. The initial business experiment uses the same C# domain/planning/authority core; it does not reduce G1–G30 to a planning-only product.
+Product analysis of the supplied business proposal, 2026-10-13. This is an unvalidated commercial hypothesis alongside the [full engineering programme](ultimate-roadmap.md). No customer demand, saved money, paid pilot, production deployment or real ERP integration is claimed. The initial business experiment uses the same C# domain/planning/authority core; it does not reduce G1–G30 to a planning-only product.
 
 ## First workflow and customer hypothesis
 
