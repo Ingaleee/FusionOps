@@ -7,9 +7,9 @@ using FusionOps.Infrastructure.Workflows;
 
 namespace FusionOps.Infrastructure.Persistence.Postgres;
 
-public class FulfillmentContext : DbContext
+public class FulfillmentContext : FusionOps.Infrastructure.Tenancy.TenantDbContext
 {
-    public FulfillmentContext(DbContextOptions<FulfillmentContext> options) : base(options) { }
+    public FulfillmentContext(DbContextOptions<FulfillmentContext> options, FusionOps.Application.Abstractions.TenantScope? scope = null) : base(options, scope) { }
 
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
     public DbSet<StockItem> StockItems => Set<StockItem>();
@@ -44,6 +44,7 @@ public class FulfillmentContext : DbContext
             }
         }
 
+        ConfigureTenancy(modelBuilder);
         base.OnModelCreating(modelBuilder);
     }
 }

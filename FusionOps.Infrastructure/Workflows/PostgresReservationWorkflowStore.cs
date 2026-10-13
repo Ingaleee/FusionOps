@@ -3,6 +3,7 @@ using FusionOps.Application.Workflows;
 using FusionOps.Domain.Workflows;
 using FusionOps.Infrastructure.Persistence.Postgres;
 using Microsoft.EntityFrameworkCore;
+using FusionOps.Application.Abstractions;
 
 namespace FusionOps.Infrastructure.Workflows;
 
@@ -15,7 +16,7 @@ public sealed class PostgresReservationWorkflowStore(IDbContextFactory<Fulfillme
         await using var transaction = await context.Database.BeginTransactionAsync(ct);
         await WorkflowPersistence.LockAsync(context, workflow.Id, "workflow-proposal", ct);
         // Hold an existing aggregate stable while loading its split-query collections.
-        await context.Database.SqlQuery<Guid>($"SELECT \"Id\" AS \"Value\" FROM reservation_workflows WHERE \"Id\" = {workflow.Id} FOR UPDATE").ToListAsync(ct);
+        await context.Database.SqlQuery<Guid>($"SELECT \"Id\" AS \"Value\" FROM reservation_workflows WHERE \"TenantId\" = {context.TenantId} AND \"Id\" = {workflow.Id} FOR UPDATE").ToListAsync(ct);
         var existing = await Query(context).SingleOrDefaultAsync(w => w.Id == workflow.Id, ct);
         if (existing is not null)
         {
@@ -52,7 +53,7 @@ public sealed class PostgresReservationWorkflowStore(IDbContextFactory<Fulfillme
     {
         await using var context = await factory.CreateDbContextAsync(ct);
         await using var transaction = await context.Database.BeginTransactionAsync(ct);
-        var ids = await context.Database.SqlQuery<Guid>($"SELECT \"Id\" AS \"Value\" FROM reservation_workflows WHERE \"Id\" = {id} FOR UPDATE").ToListAsync(ct);
+        var ids = await context.Database.SqlQuery<Guid>($"SELECT \"Id\" AS \"Value\" FROM reservation_workflows WHERE \"TenantId\" = {context.TenantId} AND \"Id\" = {id} FOR UPDATE").ToListAsync(ct);
         if (ids.Count == 0) return null;
         var workflow = await Query(context).SingleAsync(w => w.Id == id, ct);
         if (workflow.Version != expectedVersion) throw new WorkflowVersionException();
@@ -72,6 +73,7 @@ public sealed class PostgresReservationWorkflowStore(IDbContextFactory<Fulfillme
 
     public async Task<WorkflowClaim?> ClaimAsync(TimeSpan leaseDuration, CancellationToken ct)
     {
+        using var tenant = TenantExecution.Enter(TenantScope.System);
         if (leaseDuration < TimeSpan.FromSeconds(5) || leaseDuration > TimeSpan.FromMinutes(2)) throw new ArgumentOutOfRangeException(nameof(leaseDuration));
         await using var context = await factory.CreateDbContextAsync(ct);
         await using var transaction = await context.Database.BeginTransactionAsync(ct);
@@ -105,13 +107,14 @@ public sealed class PostgresReservationWorkflowStore(IDbContextFactory<Fulfillme
 
     public async Task<bool> CompleteAsync(WorkflowClaim claim, WorkflowStepResult result, int maxAttempts, CancellationToken ct)
     {
+        using var tenant = TenantExecution.Enter(TenantScope.System);
         await using var context = await factory.CreateDbContextAsync(ct);
         await using var transaction = await context.Database.BeginTransactionAsync(ct);
         var id = claim.Workflow.Id;
         var step = claim.Workflow.State.ToString();
         var ids = await context.Database.SqlQuery<Guid>($"""
             SELECT "Id" AS "Value" FROM reservation_workflows
-            WHERE "Id" = {id} AND "LeaseToken" = {claim.Token} AND "LeaseEpoch" = {claim.Epoch}
+            WHERE "TenantId" = {claim.Workflow.TenantId} AND "Id" = {id} AND "LeaseToken" = {claim.Token} AND "LeaseEpoch" = {claim.Epoch}
               AND "LeaseExpiresAt" > clock_timestamp() AND "State" = {step}
             FOR UPDATE
             """).ToListAsync(ct);

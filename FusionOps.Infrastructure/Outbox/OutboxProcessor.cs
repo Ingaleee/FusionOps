@@ -32,6 +32,7 @@ public sealed class OutboxProcessor(
             delivery.CancelAfter(TimeSpan.FromSeconds(10));
             try
             {
+                using var tenant = TenantExecution.Enter(TenantScope.For(message.TenantId));
                 var domainEvent = DomainEventSerializer.Deserialize(message);
                 var aggregateId = domainEvent switch
                 {
@@ -44,7 +45,8 @@ public sealed class OutboxProcessor(
                     _ => Guid.Empty
                 };
                 await audit.WriteAsync(new AuditEnvelope<object>(message.Id, message.Type, aggregateId,
-                    message.Actor, message.CorrelationId, domainEvent, domainEvent.OccurredOn.UtcDateTime), delivery.Token);
+                    message.Actor, message.CorrelationId, domainEvent, domainEvent.OccurredOn.UtcDateTime,
+                    message.TenantId == FusionOps.Domain.Tenancy.TenantIdentity.Legacy ? null : message.TenantId), delivery.Token);
                 await bus.PublishAsync(domainEvent, delivery.Token);
                 await notifications.Publish(domainEvent, delivery.Token);
                 message.ProcessedAt = clock.GetUtcNow().UtcDateTime;

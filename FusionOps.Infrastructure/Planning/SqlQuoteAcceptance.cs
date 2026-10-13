@@ -11,7 +11,7 @@ public static class SqlQuoteAcceptance
     public static async Task<PlanningQuote> ValidateAsync(WorkforceContext context, ReservationWorkflow workflow, CancellationToken ct)
     {
         var binding = workflow.Quote ?? throw new InvalidOperationException("A quote binding is required");
-        await context.Database.SqlQuery<Guid>($"SELECT Id AS Value FROM PlanningQuotes WITH (UPDLOCK, HOLDLOCK) WHERE Id = {binding.Id}").ToListAsync(ct);
+        await context.Database.SqlQuery<Guid>($"SELECT Id AS Value FROM PlanningQuotes WITH (UPDLOCK, HOLDLOCK) WHERE TenantId = {context.TenantId} AND Id = {binding.Id}").ToListAsync(ct);
         var quote = await context.PlanningQuotes.SingleOrDefaultAsync(q => q.Id == binding.Id, ct)
             ?? throw new QuoteAdmissionException("quote_missing");
         quote.VerifyBinding(binding);

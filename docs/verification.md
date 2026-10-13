@@ -5,17 +5,19 @@ Updated: 2026-10-13. Local environment: Windows x64, .NET SDK 10.0.303 / runtime
 | Check | Result |
 | --- | --- |
 | Release solution build with warnings as errors | Pass, 0 warnings, 0 errors; 11 projects |
-| Fast tests | 83 pass: 48 domain/algorithm/contract/architecture/workflow/quote tests and 35 application/HTTP/authorization/idempotency/worker tests |
-| Reliability tests on disposable databases, RabbitMQ and EventStoreDB | 49 pass, 0 skipped; includes authoritative quotes, catalog/acceptance races, upgrades, durable saga decisions, crashes and compensation |
+| Fast tests | 90 pass: 48 domain/algorithm/contract/architecture/workflow/quote tests and 42 application/HTTP/authorization/idempotency/worker/tenant tests |
+| Reliability tests on disposable databases, RabbitMQ and EventStoreDB | 59 pass, 0 skipped; includes tenant/RLS/connection reuse, repeated independent-tenant concurrency, legacy audit upgrade retry, authoritative quotes, upgrades, durable saga decisions, crashes and compensation |
 | Hungarian randomized verification | 300 seeded sparse rectangular matrices agree with exhaustive enumeration; dual feasibility and objective equality checked |
 | EF model / migration consistency | No pending changes for WorkforceContext or FulfillmentContext |
 | Locked NuGet restore | Pass |
 | API and Gateway Docker builds | Pass; both restore locked dependencies and publish without another restore |
 | API container planning smoke check | Pass: liveness and Swagger 200, complete two-slot USD 60 plan, objective = dual objective = 60 |
 | Full API-container catalog/quote/workflow walkthrough | Pass: readiness 200, persisted catalog/skills, two USD 100 authoritative quotes, success then cancellation, capacity rejection then compensation; 14 PostgreSQL outbox events delivered, 0 dead letters |
+| Full API-container tenant walkthrough | Pass on the final image after calendar-lock correction: readiness 200, independent USD 50/USD 198 quotes, scoped capacity under the same product name, denied foreign reads/reservations, both reservations compensated |
 | Git whitespace validation | Pass |
 | Independent GitHub Actions verification | Pass for catalog implementation commit `8181e3a`: fast suites on Windows and Ubuntu, Linux reliability suite and API Docker build ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38318219468)) |
 | Independent Gateway container build | Pass for the same implementation commit ([run](https://github.com/Ingaleee/FusionOps/actions/runs/38318219382)) |
+| Tenant increment published CI | The same Windows/Ubuntu fast suites, Linux reliability suite and API/Gateway container checks run on the branch; current results are available in [PR checks](https://github.com/Ingaleee/FusionOps/pull/1/checks) |
 
 The original ten reliability scenarios are:
 
@@ -72,10 +74,29 @@ The authoritative-planning increment adds 13 database scenarios, bringing the ac
 12. Changed quote evidence is detected before effects and its rejection is durable.
 13. Sub-microsecond quote boundaries are rejected rather than silently changing the cross-store period.
 
-The latest full-container walkthrough uses the updated `examples/workflow-demo.ps1`, the built API image, fresh SQL Server/PostgreSQL/RabbitMQ/EventStoreDB and real background services. It registers four catalog resources/skill sets, calculates two complete USD 100 quotes, then verifies successful reservation, user cancellation and capacity compensation. Final states are Compensated/UserCancelled/version 7 and Compensated/Rejected/version 5. Readiness returned 200; PostgreSQL delivered 14 outbox events with no dead letters. The temporary verification stack was removed after checking persisted state and event delivery.
+The catalog increment's full-container walkthrough uses the updated `examples/workflow-demo.ps1`, the built API image, fresh SQL Server/PostgreSQL/RabbitMQ/EventStoreDB and real background services. It registers four catalog resources/skill sets, calculates two complete USD 100 quotes, then verifies successful reservation, user cancellation and capacity compensation. Final states are Compensated/UserCancelled/version 7 and Compensated/Rejected/version 5. Readiness returned 200; PostgreSQL delivered 14 outbox events with no dead letters. That temporary verification stack was removed after checking persisted state and event delivery.
 
-An initial catalog test exposed sub-microsecond period truncation in PostgreSQL. The final implementation rejects unsupported precision explicitly and stores quote timestamps at the common microsecond precision. The decimal quote amount uses PostgreSQL numeric without a fixed scale; exact fractional-hour cost is checked after reload. Final local total: 132 tests, zero failures and skips.
+An initial catalog test exposed sub-microsecond period truncation in PostgreSQL. The final implementation rejects unsupported precision explicitly and stores quote timestamps at the common microsecond precision. The decimal quote amount uses PostgreSQL numeric without a fixed scale; exact fractional-hour cost is checked after reload. The catalog increment completed with 132 local tests, zero failures and skips.
+
+The tenant increment adds seven fast JWT/notification cases and ten database scenarios:
+
+1. Foreign catalog/quote reads, edits, allocation and workflow proposal cannot consume another tenant's resources.
+2. Identical product/SKU names have independent capacity and restock effects.
+3. Concurrent identical actor/key requests in different tenants retain independent receipts and events; the race repeats eight times with fresh state.
+4. Global worker claims execute both participants and compensation in the persisted workflow tenant.
+5. Foreign attached writes fail; a context cannot change its scope after an untracked read; missing scope fails closed.
+6. SQL raw/unfiltered reads and foreign writes remain scoped; composite foreign keys reject a foreign resource owner.
+7. Restricted PostgreSQL principals cannot read foreign root/owned rows or enable global access; pooled checkout/reset preserves isolation.
+8. Tenant audit streams project and replay into separate history rows.
+9. Restricted SQL principals preserve scope through physical connection reuse and cannot enable system authority with a flag alone.
+10. An EventStore append containing the exact pre-tenancy JSON is resolved by upgraded outbox delivery without creating a second event.
+
+The final review reproduced a sparse-calendar deadlock: the SQL graph showed shared PK_Allocations ranges followed by competing inserts. A predicate alone did not stop the optimizer choosing a clustered scan. Locked reservation reads and quote calendar reads now explicitly seek the tenant/resource index; materialization uses the same query as lock acquisition. The repeated independent-tenant race checks this sparse-table case. Legacy audit retries preserve their old stream and omitted optional tenant field. The initial Windows verification also required the .NET named-pipe URI form documented in the README; a testhost IPC timeout was rerun with appropriate process permissions.
 
 Test images: SQL Server 2022 CU14, PostgreSQL 16 Alpine, EventStoreDB 23.10.0, RabbitMQ 3 management Alpine. Testcontainers provides ephemeral isolation and random host ports. Recorded runs validate these versions; compatibility with other database versions is not implied.
+
+Final local tenant total: 149 tests, zero failures or skips. Repeated NUnit concurrency attempts are additional executions of one reported test case. Both EF models match the migrations. SQL Server/PostgreSQL policies are exercised through actual restricted principals, not inferred from filtered repository results.
+
+Both shipped PowerShell demonstrations also pass on the final API container. The new tenant run delivers nine PostgreSQL outbox events per tenant, independently of the legacy walkthrough's fourteen events. Four walkthrough pairs completed during verification; the final database inspection found all 128 PostgreSQL outbox messages delivered and zero dead letters across the legacy tenant and eight new tenants. The final check waits for delivery completion rather than assuming workflow completion implies an empty outbox.
 
 Commands and generated TRX files are described in the README and CI workflow. The linked GitHub runs independently verified the catalog implementation commit; subsequent documentation changes do not change that code evidence. Docker images are local verification artifacts, not published releases. No throughput, tail-latency, availability or security certification is inferred from these tests.

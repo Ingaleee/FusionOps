@@ -9,9 +9,9 @@ using FusionOps.Infrastructure.Planning;
 
 namespace FusionOps.Infrastructure.Persistence.SqlServer;
 
-public class WorkforceContext : DbContext
+public class WorkforceContext : FusionOps.Infrastructure.Tenancy.TenantDbContext
 {
-    public WorkforceContext(DbContextOptions<WorkforceContext> options) : base(options) { }
+    public WorkforceContext(DbContextOptions<WorkforceContext> options, FusionOps.Application.Abstractions.TenantScope? scope = null) : base(options, scope) { }
 
     public DbSet<HumanResource> HumanResources => Set<HumanResource>();
     public DbSet<EquipmentResource> EquipmentResources => Set<EquipmentResource>();
@@ -32,6 +32,7 @@ public class WorkforceContext : DbContext
         modelBuilder.ApplyConfiguration(new CatalogResourceConfig());
         modelBuilder.ApplyConfiguration(new PlanningQuoteConfig());
 
+        ConfigureTenancy(modelBuilder);
         base.OnModelCreating(modelBuilder);
     }
 }

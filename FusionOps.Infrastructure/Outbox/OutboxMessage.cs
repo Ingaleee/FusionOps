@@ -2,7 +2,7 @@ using System;
 
 namespace FusionOps.Infrastructure.Outbox;
 
-public class OutboxMessage
+public class OutboxMessage : FusionOps.Domain.Tenancy.TenantOwnedEntity
 {
     public Guid Id { get; set; }
     public DateTime OccurredOn { get; set; }

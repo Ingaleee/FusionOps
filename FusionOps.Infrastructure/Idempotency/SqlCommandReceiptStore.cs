@@ -14,8 +14,13 @@ public sealed class SqlCommandReceiptStore(WorkforceContext context, IExecutionC
     private string? _lockedScope;
     private Guid? _lockedTransactionId;
 
-    private string Scope(string operation, string key) => Convert.ToHexString(SHA256.HashData(
-        JsonSerializer.SerializeToUtf8Bytes(new[] { execution.Actor, operation, key })));
+    private string Scope(string operation, string key)
+    {
+        // Preserve legacy receipt identity; all new tenant identities add a distinct namespace.
+        var components = context.TenantId == FusionOps.Domain.Tenancy.TenantIdentity.Legacy
+            ? new[] { execution.Actor, operation, key } : new[] { context.TenantId.ToString("D"), execution.Actor, operation, key };
+        return Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(components)));
+    }
 
     public async Task<StoredCommandResult?> FindForUpdateAsync(string operation, string key, CancellationToken cancellationToken)
     {

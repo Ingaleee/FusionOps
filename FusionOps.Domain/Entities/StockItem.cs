@@ -9,7 +9,7 @@ namespace FusionOps.Domain.Entities;
 /// Represents a SKU stored in a warehouse with quantity tracking.
 /// </summary>
 [FusionOps.Domain.Attributes.PartitionedTable("range_month")]
-public class StockItem : IEntity<StockItemId>
+public class StockItem : FusionOps.Domain.Tenancy.TenantOwnedEntity, IEntity<StockItemId>
 {
     private StockItem() { }
 

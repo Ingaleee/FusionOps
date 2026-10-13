@@ -51,4 +51,6 @@ Apply both context migrations before enabling the API. The SQL migration copies 
 
 If a legacy human and equipment share an ID, migration fails and rolls back with SQL error 51000; resolve the collision explicitly. The PostgreSQL migration adds nullable quote binding fields and preserves unquoted workflows. Retain quote evidence and receipts indefinitely until a documented retention/tombstone policy exists; deleting history can invalidate recovery and commercial audit.
 
-This release uses the shared catalog and existing role policies. Tenant isolation and project ownership remain open architecture work, alongside multi-period optimization and measured capacity/SLOs. See [ADR 016](adr/016-authoritative-planning-quotes.md) and [verification evidence](verification.md).
+Catalog, quotes, calendars and reservation workflows now belong to the verified request tenant. Tenant identity enters new quote/workflow fingerprints; composite foreign keys and database row policies enforce ownership through acceptance and compensation. Existing records belong to the documented legacy tenant and retain their original fingerprints. See [tenant contract](tenant-isolation.md) and [ADR 017](adr/017-tenant-boundaries-and-row-security.md).
+
+Project membership authorization, multi-period optimization and measured capacity/SLOs remain open architecture work. [ADR 016](adr/016-authoritative-planning-quotes.md) records the original quote protocol; [verification evidence](verification.md) distinguishes local checks from published CI results.

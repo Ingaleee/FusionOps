@@ -41,7 +41,7 @@ public class GetAllocationHistoryHandlerTests
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
 
-        await using var ctx = new FulfillmentContext(options);
+        await using var ctx = new FulfillmentContext(options, FusionOps.Application.Abstractions.TenantScope.Legacy);
 
         var row1 = new AllocationHistoryRow
         {

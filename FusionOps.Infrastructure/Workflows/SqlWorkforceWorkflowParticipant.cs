@@ -24,7 +24,7 @@ public sealed class SqlWorkforceWorkflowParticipant(IDbContextFactory<WorkforceC
     public async Task<IReadOnlyList<Guid>> ReserveAsync(ReservationWorkflow workflow, CancellationToken ct)
     {
         var command = new ReserveWorkflowResources(workflow.Id, workflow.SpecificationHash);
-        var result = await ExecuteAsync<ReserveWorkflowResources, WorkflowStepResult>(workflow.Id, command,
+        var result = await ExecuteAsync<ReserveWorkflowResources, WorkflowStepResult>(workflow, command,
             async (context, token) =>
             {
                 try
@@ -61,17 +61,20 @@ public sealed class SqlWorkforceWorkflowParticipant(IDbContextFactory<WorkforceC
     {
         var command = new CancelWorkflowResourcesCommand(workflow.ProjectId, workflow.ResourceIds, workflow.AllocationIds,
             workflow.Period, $"workflow.{workflow.Id:N}.release");
-        await ExecuteAsync<CancelWorkflowResourcesCommand, bool>(workflow.Id, command,
+        await ExecuteAsync<CancelWorkflowResourcesCommand, bool>(workflow, command,
             (context, token) => new CancelWorkflowResourcesHandler(new AllocationRepository(context)).Handle(command, token), ct);
     }
 
-    private async Task<TResponse> ExecuteAsync<TCommand, TResponse>(Guid id, TCommand command,
+    private async Task<TResponse> ExecuteAsync<TCommand, TResponse>(ReservationWorkflow workflow, TCommand command,
         Func<WorkforceContext, CancellationToken, Task<TResponse>> handler, CancellationToken ct)
         where TCommand : IRequest<TResponse>
     {
+        using var tenant = TenantExecution.Enter(TenantScope.For(workflow.TenantId));
         await using var workforce = await workforceFactory.CreateDbContextAsync(ct);
         await using var fulfillment = await fulfillmentFactory.CreateDbContextAsync(ct);
-        var execution = new WorkflowExecutionContext(id);
+        workforce.BindScope(TenantScope.For(workflow.TenantId));
+        fulfillment.BindScope(TenantScope.For(workflow.TenantId));
+        var execution = new WorkflowExecutionContext(workflow.Id);
         var unit = new EfUnitOfWork(workforce, fulfillment, execution);
         var transaction = new TransactionBehavior<TCommand, TResponse>(unit);
         var idempotency = new IdempotencyBehavior<TCommand, TResponse>(new SqlCommandReceiptStore(workforce, execution, clock));

@@ -14,7 +14,7 @@ public sealed record PlanningQuoteBinding(Guid Id, string Digest, decimal Amount
 }
 
 /// <summary>Immutable, self-contained planning evidence; consumption is the only mutable field.</summary>
-public sealed class PlanningQuote
+public sealed class PlanningQuote : FusionOps.Domain.Tenancy.TenantOwnedEntity
 {
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private PlanningQuote() { }
@@ -36,13 +36,14 @@ public sealed class PlanningQuote
         }
     }
 
-    public static PlanningQuote Create(QuoteEvidence evidence, string actor, DateTimeOffset now, int validitySeconds)
+    public static PlanningQuote Create(QuoteEvidence evidence, string actor, DateTimeOffset now, int validitySeconds, Guid? tenantId = null)
     {
         if (validitySeconds is < 15 or > 900) throw new DomainException("Quote validity must be 15–900 seconds");
         if (string.IsNullOrWhiteSpace(actor) || actor.Length > 200) throw new DomainException("A bounded quote actor is required");
         // PostgreSQL timestamps retain microseconds; preserve an identical binding across both stores.
         var timestamp = new DateTimeOffset(now.UtcTicks / 10 * 10, TimeSpan.Zero);
         var quote = new PlanningQuote { Id = Guid.NewGuid(), CreatedBy = actor, CreatedAt = timestamp, ExpiresAt = timestamp.AddSeconds(validitySeconds) };
+        quote.BindTenant(tenantId ?? FusionOps.Domain.Tenancy.TenantIdentity.Legacy);
         quote.EvidenceJson = JsonSerializer.Serialize(evidence, Json);
         quote.Digest = quote.CalculateDigest();
         return quote;
@@ -57,10 +58,12 @@ public sealed class PlanningQuote
     {
         if (Digest != CalculateDigest()) throw new QuoteAdmissionException("quote_evidence_invalid");
     }
-    private string CalculateDigest() => Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new
+    private string CalculateDigest()
     {
-        Id, CreatedBy, CreatedAt, ExpiresAt, EvidenceJson
-    }, Json)));
+        var legacy = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { Id, CreatedBy, CreatedAt, ExpiresAt, EvidenceJson }, Json)));
+        return TenantId == FusionOps.Domain.Tenancy.TenantIdentity.Legacy ? legacy
+            : Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { TenantId, Digest = legacy }, Json)));
+    }
     public void Consume(Guid workflowId, DateTimeOffset now)
     {
         if (workflowId == Guid.Empty) throw new DomainException("A workflow ID is required");

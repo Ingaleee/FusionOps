@@ -16,7 +16,7 @@ Code to discuss: `HungarianAssignmentSolver`, `ResourcePlanner`, `ResourcePlanne
 
 In full mode, use `examples/fusionops.http`. Send a reservation with an Idempotency-Key, then repeat it. The second request returns the original allocation IDs and the same 201 Location. Follow that Location to read the project's bookings. Change the project or time while retaining the completed key: the API returns 409.
 
-Validation and authorization precede replay. The actor, operation version and client key define the durable scope. A logical SQL application lock serializes concurrent uses of that scope. A canonical fingerprint ignores resource order and timezone notation while preserving command meaning.
+Validation and authorization precede replay. The tenant, actor, operation version and client key define the durable scope. A logical SQL application lock serializes concurrent uses of that scope. A canonical fingerprint ignores resource order and timezone notation while preserving command meaning.
 
 The command transaction encloses calendar reads, state changes, outbox staging and receipt staging. Nothing outside that transaction can turn an uncommitted result into a successful replay. When a later resource in a batch conflicts, the entire batch rolls back, including its receipt and events.
 
@@ -42,8 +42,16 @@ The worker commits a short claim before participant I/O. Its token, epoch and da
 
 Code to discuss: `ReservationWorkflow`, `ReservationWorkflowRunner`, `PostgresReservationWorkflowStore`, `SqlWorkforceWorkflowParticipant`, `PostgresLicenseWorkflowParticipant` and `WorkflowReliabilityTests`. Tests inject lost replies after both reservation and compensation commits, and verify isolation of another workflow's license ownership.
 
-## 5. Show evidence and state limits
+## 5. Demonstrate tenant authority
+
+Run `examples/tenant-isolation-demo.ps1`: two tenants calculate USD 50 and USD 198 quotes, reserve the same license product against independent capacities, reject foreign reads/reservations and compensate their own effects. The Development header represents an anonymous local test scope. Production requires one tenant and subject from a verified JWT and rejects a header override.
+
+Discuss why an EF filter alone cannot protect raw SQL or attached entities. The context captures/seals its scope, tracked writes reject foreign ownership, composite foreign keys protect parent/child ownership, and both databases enforce row policies. Application logins cannot activate global access by setting a session flag: system authority also requires role membership. Worker claims use that authority, then participants open scoped application connections for the persisted tenant.
+
+Code to discuss: `TenantMiddleware`, `TenantDbContext`, `TenantConnectionInterceptor`, `TenantSecurityMigration` and `TenantIsolationTests`. Show restricted database principals, physical connection reuse, scoped retry keys and pre-upgrade audit retry tests. ADR 017 documents the migration assignment and trust boundary.
+
+## 6. Show evidence and state limits
 
 Use `docs/verification.md` for the actual checks and `docs/adr` for design decisions. Show the CI workflow and lock files. Start the planning demo from a clean clone rather than relying on a developer database.
 
-Be explicit about the next architectural steps: tenant/project ownership, general consumer inbox, stock shipment compensation, multi-period scheduling and measured SLOs. Direct SQL writes are outside the reservation locking protocol. Disconnected SignalR clients do not have a durable subscription. No performance number or production-readiness claim is supported until measured.
+Be explicit about the next architectural steps: project membership authorization, tenant provisioning/capacity controls, general consumer inbox, stock shipment compensation, multi-period scheduling and measured SLOs. Direct SQL writes are outside the reservation locking protocol. Disconnected SignalR clients do not have a durable subscription. No performance number or production-readiness claim is supported until measured.

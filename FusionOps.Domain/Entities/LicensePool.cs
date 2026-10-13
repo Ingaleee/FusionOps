@@ -9,7 +9,7 @@ namespace FusionOps.Domain.Entities;
 /// <summary>
 /// Aggregate root representing a pool of product licenses.
 /// </summary>
-public class LicensePool : IEntity<Guid>, IHasDomainEvents
+public class LicensePool : FusionOps.Domain.Tenancy.TenantOwnedEntity, IEntity<Guid>, IHasDomainEvents
 {
     private readonly HashSet<LicenseAllocationRef> _allocations = new();
     private readonly List<IDomainEvent> _domainEvents = new();

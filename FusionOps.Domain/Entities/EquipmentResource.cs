@@ -9,7 +9,7 @@ namespace FusionOps.Domain.Entities;
 /// <summary>
 /// Physical equipment that can be reserved for project execution.
 /// </summary>
-public class EquipmentResource : IEntity<EquipmentResourceId>, IHasDomainEvents
+public class EquipmentResource : FusionOps.Domain.Tenancy.TenantOwnedEntity, IEntity<EquipmentResourceId>, IHasDomainEvents
 {
     private readonly List<IDomainEvent> _domainEvents = new();
 

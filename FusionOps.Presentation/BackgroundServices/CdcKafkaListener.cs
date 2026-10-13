@@ -36,7 +36,7 @@ public class CdcKafkaListener : BackgroundService
                 try
                 {
                     var cr = _consumer.Consume(stoppingToken);
-                    _log.LogInformation("CDC Allocation event offset {Offset}: {Payload}", cr.Offset, cr.Message.Value);
+                    _log.LogInformation("CDC allocation event received at offset {Offset}", cr.Offset);
                 }
                 catch (OperationCanceledException)
                 {

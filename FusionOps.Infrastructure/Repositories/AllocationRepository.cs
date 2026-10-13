@@ -24,13 +24,13 @@ public class AllocationRepository : IAllocationRepository
 
     public async Task<Allocation?> GetAsync(AllocationId id)
     {
-        return await _ctx.Allocations.FindAsync(id);
+        return await _ctx.Allocations.SingleOrDefaultAsync(a => a.Id == id);
     }
 
     public async Task<IReadOnlyCollection<Allocation>> FindForResourceAsync(Guid resourceId)
     {
         return await _ctx.Allocations
-            .Where(a => a.ResourceId == resourceId)
+            .Where(a => a.TenantId == _ctx.TenantId && a.ResourceId == resourceId)
             .ToListAsync();
     }
 
@@ -41,14 +41,12 @@ public class AllocationRepository : IAllocationRepository
 
         await CatalogLocks.RequireAsync(_ctx, resourceId, requireActive, cancellationToken);
 
-        // HOLDLOCK protects the index key range even when this resource has no bookings yet.
-        var sql = @"
-            SELECT Id AS Value FROM Allocations WITH (UPDLOCK, HOLDLOCK)
-            WHERE ResourceId = {0}";
-        // Acquire the transaction's calendar locks independently of entity materialization.
-        // LINQ then projects complex values using the configured physical column names.
-        await _ctx.Database.SqlQueryRaw<Guid>(sql, resourceId).ToListAsync(cancellationToken);
-        return await _ctx.Allocations.Where(a => a.ResourceId == resourceId).ToListAsync(cancellationToken);
+        // An empty/sparse table can otherwise use a clustered scan and share broad PK ranges.
+        // Both lock acquisition and entity materialization must seek the same tenant/resource index.
+        // HOLDLOCK protects first use; the composite ownership migration installs this index.
+        // EF's FromSql complex-value projection needs conventional aliases as well as retained columns.
+        return await _ctx.Allocations.FromSqlInterpolated($"SELECT *, PeriodStart AS Period_Start, PeriodEnd AS Period_End FROM Allocations WITH (UPDLOCK, HOLDLOCK, INDEX(IX_Allocations_TenantId_ResourceId), FORCESEEK) WHERE TenantId = {_ctx.TenantId} AND ResourceId = {resourceId}")
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<IReadOnlyCollection<Allocation>> FindFreeAsync(TimeRange period)

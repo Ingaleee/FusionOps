@@ -12,7 +12,7 @@ pwsh -File examples/workflow-demo.ps1
 
 The script creates unique project/resource/workflow IDs and development license pools. It demonstrates successful reservation, cancellation with release, and insufficient-license compensation. Records remain available for inspection. The API worker runs by default; `Workflows:WorkerEnabled=false` disables execution while preserving proposal and operator endpoints.
 
-The [HTTP requests](../examples/workflows.http) expose each operation separately. In production all workflow routes require both Resource.Manager and License.Manager. Approval also requires an authenticated actor different from the proposer. Development permits one anonymous actor for the local walkthrough. This is operational role authorization; catalog ownership and tenant isolation remain separate milestones.
+The [HTTP requests](../examples/workflows.http) expose each operation separately. In production all workflow routes require both Resource.Manager and License.Manager, a verified tenant claim and an authenticated actor. Approval requires an actor different from the proposer. Development permits one anonymous actor for the local walkthrough. Tenant ownership is enforced independently of manager roles; project membership authorization remains future work. See [tenant contract](tenant-isolation.md).
 
 ## Contract
 
@@ -60,6 +60,8 @@ sequenceDiagram
 
 Claim transactions use SKIP LOCKED and commit before participant calls. The 45-second lease uses the database clock; participant attempts are bounded to 20 seconds. Each claim increments an epoch. Completion requires matching epoch, token, step and an unexpired lease under the row lock. Worker loss leaves the step available after lease expiry. A stale worker's completion cannot overwrite the coordinator.
 
+Coordinator claims use the restricted global worker principal. Each participant opens a fresh application connection in the persisted workflow's tenant scope. Completion also matches that tenant; compensation resolves the original tenant-owned receipt and allocation IDs. A worker cannot adopt the requesting operator's tenant for another workflow. `examples/tenant-isolation-demo.ps1` demonstrates two independent workflows with the same license product name.
+
 Each participant retains its own result. Resource state/outbox/receipt commit together in SQL Server. License state/outbox/effect inbox commit together in PostgreSQL. Confirmed business rejections are durable decisions too: increased capacity or a freed calendar cannot turn a late replay into a new effect after the saga has compensated. Transient and unknown exceptions do not create a rejected decision.
 
 Compensation uses only the original allocation IDs and workflow-owned license reference. It cannot release ordinary project license allocations or another workflow's seats. Repeating successful compensation, or replaying an old reservation after release, returns its original receipt without recreating an effect.
@@ -85,4 +87,4 @@ Read `workflow_transitions` for the cause and actor, `workflow_effect_inbox` for
 
 The additive fulfillment migrations introduce coordinator, history and inbox tables plus nullable license reservation ownership. The decision migration marks earlier inbox rows as successful before enabling negative decisions. Readiness checks include workflow and receipt schemas. Review upgrades and take backups; rollback of these migrations discards recovery evidence and is unsuitable for active sagas.
 
-The [ADR](adr/015-durable-reservation-workflow.md) records the protocol and scope. Stock shipment, tenant ownership, general RabbitMQ consumer deduplication, bounded retention and measured capacity remain future increments.
+The [workflow ADR](adr/015-durable-reservation-workflow.md) records the original protocol; [ADR 017](adr/017-tenant-boundaries-and-row-security.md) adds tenant ownership. Stock shipment, project membership authorization, general RabbitMQ consumer deduplication, bounded retention and measured capacity remain future increments.

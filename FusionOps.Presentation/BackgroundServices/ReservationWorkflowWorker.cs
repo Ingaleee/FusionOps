@@ -11,6 +11,7 @@ public sealed class ReservationWorkflowWorker(IServiceScopeFactory scopes, ILogg
         {
             try
             {
+                using var tenant = FusionOps.Application.Abstractions.TenantExecution.Enter(FusionOps.Application.Abstractions.TenantScope.System);
                 using var scope = scopes.CreateScope();
                 var runner = scope.ServiceProvider.GetRequiredService<ReservationWorkflowRunner>();
                 for (var i = 0; i < 8 && await runner.RunOnceAsync(stoppingToken); i++) { }

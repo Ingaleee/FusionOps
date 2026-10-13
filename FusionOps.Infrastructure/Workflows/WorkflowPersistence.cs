@@ -20,8 +20,10 @@ internal static class WorkflowPersistence
     {
         var sources = context.ChangeTracker.Entries().Select(e => e.Entity).OfType<IHasDomainEvents>()
             .Where(e => e.DomainEvents.Count > 0).ToArray();
-        foreach (var domainEvent in sources.SelectMany(e => e.DomainEvents))
-            context.Set<OutboxMessage>().Add(DomainEventSerializer.Serialize(domainEvent, actor, $"workflow.{workflowId:N}"));
+        foreach (var source in sources)
+        foreach (var domainEvent in source.DomainEvents)
+            context.Set<OutboxMessage>().Add(DomainEventSerializer.Serialize(domainEvent, actor, $"workflow.{workflowId:N}",
+                ((FusionOps.Domain.Tenancy.TenantOwnedEntity)source).TenantId));
         return sources;
     }
 }

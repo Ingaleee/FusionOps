@@ -28,6 +28,11 @@ public class RabbitBus : IEventBus
     {
         _logger.LogInformation("Publishing domain event {EventName} via MassTransit", domainEvent.GetType().Name);
         await _retryPolicy.ExecuteAsync(ct => _bus.Publish(domainEvent, domainEvent.GetType(),
-            context => context.MessageId = domainEvent.Id, ct), cancellationToken);
+            context =>
+            {
+                context.MessageId = domainEvent.Id;
+                context.Headers.Set("fusionops-tenant-id", (FusionOps.Application.Abstractions.TenantExecution.Current?.Id
+                    ?? FusionOps.Domain.Tenancy.TenantIdentity.Legacy).ToString("D"));
+            }, ct), cancellationToken);
     }
 }

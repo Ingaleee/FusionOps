@@ -12,8 +12,9 @@ FusionOps answers two operations questions: **which feasible assignment costs le
 | --- | --- |
 | Optimal, explainable assignment | Rectangular Hungarian solver; forbidden edges; skill/calendar/type constraints; primal/dual objective; 300 seeded cases checked against exhaustive search |
 | Authoritative commercial planning | Persisted versioned catalog and skills; immutable database quotes; exact reviewed price; atomic acceptance checks revision, calendar, expiry and one-time consumption |
+| Tenant authority | Verified JWT tenant/subject, immutable context scope, EF filters/write guards, SQL Server/PostgreSQL row policies, composite ownership, scoped receipts/audit/notifications and separate worker roles |
 | Concurrent reservation | Transaction starts before the decision; empty-calendar range locks; sorted lock acquisition; conflict response 409 |
-| Safe HTTP retries | Durable actor/operation-scoped idempotency receipts; canonical command fingerprint; original response replay; state/outbox/receipt share a commit |
+| Safe HTTP retries | Durable tenant/actor/operation-scoped idempotency receipts; canonical command fingerprint; original response replay; state/outbox/receipt share a commit |
 | Approved cross-store reservation | Immutable proposals, ETag/If-Match approval, separate production approver, resource + license saga and ownership-preserving compensation |
 | Worker crash recovery | Short SKIP LOCKED claims, database-clock lease tokens/epochs, durable success and rejection decisions, saved unresolved step and operator resume |
 | Atomic integration events | State + original event identity persisted in the owning database transaction; no early event clearing |
@@ -71,6 +72,8 @@ Workflow HTTP mutations require the current ETag in If-Match. Production workflo
 
 See [workflow operations and API contract](docs/reservation-workflows.md), [HTTP requests](examples/workflows.http) and [workflow ADR](docs/adr/015-durable-reservation-workflow.md).
 
+Run `pwsh -File examples/tenant-isolation-demo.ps1` against the same Development API for two tenant-owned quotes, independent license capacities under the same product name, denied foreign reads/reservations and compensation. Production derives tenant identity from the verified JWT; the script's `X-Tenant-Id` header is available only to anonymous Development requests. [Tenant operations](docs/tenant-isolation.md) describes separate application/worker principals and upgrade ownership.
+
 ## Architecture
 
 ```mermaid
@@ -116,16 +119,20 @@ dotnet test FusionOps.Integration.Tests -c Release --no-build --no-restore
 
 The database suite applies real migrations and tests simultaneous empty-calendar reservations, atomic rollback, cross-boundary rejection, concurrent dispatch, poison events, audit retries, projection replay and actual RabbitMQ delivery with the original message ID. Workflow cases cover lost replies after participant commits, fenced stale workers, cancellation in flight, durable rejection, ownership-preserving compensation, operator resume, upgrades and the hosted HTTP worker. Fast tests cover optimality, business constraints, state-machine invariants, command behavior, HTTP planning and production authorization.
 
+Tenant cases include genuinely signed JWTs, ambiguous claims/header overrides, concurrent execution scopes, raw SQL and owned-row access under restricted database roles, physical connection reuse, composite foreign keys, scoped idempotency, global worker recovery, notifications, broker metadata and audit replay. The legacy audit retry scenario starts with the pre-tenancy JSON already committed in EventStoreDB. See the [verification record](docs/verification.md) for counts and completed runs.
+
 On Windows, if Docker's current context works but Testcontainers cannot find the default pipe, select its endpoint for the current shell before running the database suite:
 
 ```powershell
-$env:DOCKER_HOST = docker context inspect --format '{{.Endpoints.docker.Host}}'
+$taskDockerEndpoint = docker context inspect --format '{{.Endpoints.docker.Host}}'
+# Testcontainers' .NET named-pipe client expects a URI authority, e.g. npipe://./pipe/...
+$env:DOCKER_HOST = $taskDockerEndpoint -replace '^npipe:////', 'npipe://'
 ```
 
 ## Scope and next milestones
 
 Implemented: single-horizon assignment, persisted resource catalog/skills, immutable authoritative quotes, atomic one-time acceptance with freshness checks, reservation conflict control, durable reservation idempotency keys, approved workforce/license saga with compensation, participant effect inbox, fenced worker claims, versioned transition history, operator resume, transactional outboxes, original typed contracts, durable audit and checkpointed allocation history.
 
-Planned: tenant/project ownership, general broker consumer inbox, stock shipping saga, outbox replay API, multi-period scheduling, SLOs and reproducible performance reports. The legacy MassTransit saga contracts, ML experiment, performance runner and deployment/chaos manifests remain exploratory material. The legacy `FusionOps.EventStore.IntegrationTests` directory is superseded by the active reliability suite. SignalR cannot deliver to disconnected clients, and API reservation locks do not govern direct SQL writers.
+Planned: project membership ACLs, tenant provisioning/capacity controls, general broker consumer inbox, stock shipping saga, outbox replay API, multi-period scheduling, SLOs and reproducible performance reports. The legacy MassTransit saga contracts, ML experiment, performance runner and deployment/chaos manifests remain exploratory material. The legacy `FusionOps.EventStore.IntegrationTests` directory is superseded by the active reliability suite. SignalR cannot deliver to disconnected clients, and API reservation locks do not govern direct SQL writers.
 
-New bookings require active catalog resources; public workflows derive their resources and reviewed price from persisted quotes. The catalog is currently shared: tenant and project ownership are not enforced. No throughput or production readiness claim is made without a measured report. [Source audit and delivery roadmap](docs/engineering-roadmap.md) records the gaps and acceptance criteria for the next increments.
+New bookings require tenant-owned active catalog resources; public workflows derive resources and price from tenant-owned quotes. Tenant isolation spans persistence, workflows, receipts, audit and notifications. Project membership ACLs and tenant provisioning/capacity controls remain future work. Read the [tenant contract and role setup](docs/tenant-isolation.md). No throughput or production readiness claim is made without a measured report. [Source audit and delivery roadmap](docs/engineering-roadmap.md) records remaining milestones.

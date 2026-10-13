@@ -21,6 +21,7 @@ public sealed class OutboxDispatcher(IServiceScopeFactory scopes, ILogger<Outbox
     {
         try
         {
+            using var tenant = FusionOps.Application.Abstractions.TenantExecution.Enter(FusionOps.Application.Abstractions.TenantScope.System);
             using var scope = scopes.CreateScope();
             await scope.ServiceProvider.GetRequiredService<OutboxProcessor>().DispatchAsync(
                 scope.ServiceProvider.GetRequiredService<TContext>(), 25, 5, cancellationToken);

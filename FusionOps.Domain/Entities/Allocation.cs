@@ -10,7 +10,7 @@ namespace FusionOps.Domain.Entities;
 /// <summary>
 /// Aggregate root that captures reservation of a resource for a time period.
 /// </summary>
-public class Allocation : IEntity<AllocationId>, IHasDomainEvents
+public class Allocation : FusionOps.Domain.Tenancy.TenantOwnedEntity, IEntity<AllocationId>, IHasDomainEvents
 {
     private readonly List<IDomainEvent> _domainEvents = new();
 

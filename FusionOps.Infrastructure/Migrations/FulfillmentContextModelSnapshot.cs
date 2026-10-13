@@ -37,6 +37,11 @@ namespace FusionOps.Infrastructure.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.Property<int>("TotalSeats")
                         .HasColumnType("integer");
 
@@ -46,7 +51,7 @@ namespace FusionOps.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Product")
+                    b.HasIndex("TenantId", "Product")
                         .IsUnique();
 
                     b.ToTable("license_pools", (string)null);
@@ -68,6 +73,11 @@ namespace FusionOps.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.ComplexProperty(typeof(Dictionary<string, object>), "UnitCost", "FusionOps.Domain.Entities.StockItem.UnitCost#Money", b1 =>
                         {
                             b1.IsRequired();
@@ -83,7 +93,7 @@ namespace FusionOps.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Sku")
+                    b.HasIndex("TenantId", "Sku")
                         .IsUnique();
 
                     b.ToTable("StockItems", (string)null);
@@ -95,6 +105,11 @@ namespace FusionOps.Infrastructure.Migrations
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
 
                     b.HasKey("Id");
 
@@ -171,6 +186,11 @@ namespace FusionOps.Infrastructure.Migrations
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -249,6 +269,11 @@ namespace FusionOps.Infrastructure.Migrations
                     b.Property<DateTime?>("ProcessedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -297,13 +322,18 @@ namespace FusionOps.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("sku");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.Property<DateTime>("ToTs")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("to_ts");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProjectId", "Recorded")
+                    b.HasIndex("TenantId", "ProjectId", "Recorded")
                         .HasDatabaseName("ix_history_project_rec");
 
                     b.ToTable("allocation_history", (string)null);
@@ -352,6 +382,11 @@ namespace FusionOps.Infrastructure.Migrations
                     b.Property<bool>("Succeeded")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uuid")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.HasKey("WorkflowId", "Step");
 
                     b.ToTable("workflow_effect_inbox", (string)null);
@@ -377,10 +412,16 @@ namespace FusionOps.Infrastructure.Migrations
                                 .HasColumnType("integer")
                                 .HasColumnName("seats");
 
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("uuid")
+                                .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                             b1.Property<Guid>("pool_id")
                                 .HasColumnType("uuid");
 
                             b1.HasKey("id");
+
+                            b1.HasIndex("TenantId", "pool_id");
 
                             b1.HasIndex("pool_id", "ReservationId")
                                 .IsUnique();
@@ -388,7 +429,8 @@ namespace FusionOps.Infrastructure.Migrations
                             b1.ToTable("license_allocations", (string)null);
 
                             b1.WithOwner()
-                                .HasForeignKey("pool_id");
+                                .HasForeignKey("TenantId", "pool_id")
+                                .HasPrincipalKey("TenantId", "Id");
                         });
 
                     b.Navigation("Allocations");
@@ -443,12 +485,19 @@ namespace FusionOps.Infrastructure.Migrations
                             b1.Property<int>("Seats")
                                 .HasColumnType("integer");
 
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("uuid")
+                                .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                             b1.HasKey("WorkflowId", "Product");
+
+                            b1.HasIndex("TenantId", "WorkflowId");
 
                             b1.ToTable("workflow_license_requirements", (string)null);
 
                             b1.WithOwner()
-                                .HasForeignKey("WorkflowId");
+                                .HasForeignKey("TenantId", "WorkflowId")
+                                .HasPrincipalKey("TenantId", "Id");
                         });
 
                     b.OwnsMany("FusionOps.Domain.Workflows.WorkflowTransition", "Transitions", b1 =>
@@ -476,6 +525,10 @@ namespace FusionOps.Infrastructure.Migrations
                                 .HasMaxLength(100)
                                 .HasColumnType("character varying(100)");
 
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("uuid")
+                                .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                             b1.Property<string>("To")
                                 .IsRequired()
                                 .HasMaxLength(32)
@@ -483,10 +536,13 @@ namespace FusionOps.Infrastructure.Migrations
 
                             b1.HasKey("WorkflowId", "Version");
 
+                            b1.HasIndex("TenantId", "WorkflowId");
+
                             b1.ToTable("workflow_transitions", (string)null);
 
                             b1.WithOwner()
-                                .HasForeignKey("WorkflowId");
+                                .HasForeignKey("TenantId", "WorkflowId")
+                                .HasPrincipalKey("TenantId", "Id");
                         });
 
                     b.Navigation("Licenses");

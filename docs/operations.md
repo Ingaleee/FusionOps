@@ -19,7 +19,7 @@ The old fulfillment migration accidentally included workforce tables. The correc
 
 Send `Idempotency-Key` on the first reservation request and reuse that key with the same command data for all retries. A successful retry returns 201 and the original allocation IDs. Resource order and UTC-equivalent timezone representations are canonicalized. Different command data under a completed key returns `409 idempotency_conflict`. While the original transaction is still running, a lock timeout returns `409 idempotency_in_progress` with `Retry-After: 2`.
 
-The receipt lives in the workforce database and commits alongside state and outbox. A failed command or failed commit leaves no receipt and can be retried. Receipt keys are actor/operation scoped and currently retained indefinitely. Do not purge these records without first defining the client retry horizon and tombstone policy; deletion can permit a historical command to execute again. See [ADR 014](adr/014-durable-reservation-idempotency.md).
+The receipt lives in the workforce database and commits alongside state and outbox. A failed command or failed commit leaves no receipt and can be retried. Receipt keys are tenant/actor/operation scoped and currently retained indefinitely. Legacy tenant keys retain their historical identity. Do not purge these records without first defining the client retry horizon and tombstone policy; deletion can permit a historical command to execute again. See [ADR 014](adr/014-durable-reservation-idempotency.md).
 
 ## Delivery state
 
@@ -42,6 +42,12 @@ For a containerized API, configure `Rabbit:Host`, `Rabbit:Username`, `Rabbit:Pas
 The [authoritative planning contract](authoritative-planning.md) replaces arbitrary resource IDs in new workflows with quoteId. Apply SQL AuthoritativePlanningCatalog and PostgreSQL ApprovedQuoteBinding together before enabling traffic. Historical humans/equipment and anonymous allocated IDs become inactive catalog records; review metadata and activate with an ETag update. A legacy human/equipment ID collision aborts and rolls back migration instead of choosing a kind. Existing allocations, receipts and unquoted workflows remain available for recovery. Quotes are immutable commercial evidence with indefinite retention; compensation does not make a quote reusable.
 
 Readiness checks catalog/skills, quotes, coordinator and participant tables. A deployment with only one context upgraded remains unready. A quote rejected for stale metadata, availability or expiry needs a new calculation and review; operator resume cannot override the durable decision.
+
+## Tenant rollout
+
+Apply both TenantOwnership migrations with administrator credentials before admitting traffic. They assign existing records and preserved PostgreSQL archives to the fixed legacy tenant, preserve historical fingerprints and install row security. Configure separate restricted application and worker principals using `sql`/`pg` and `sqlWorker`/`pgWorker`; production readiness rejects administrator credentials and unsafe role membership. Review the grants and ownership assignment in [tenant operations](tenant-isolation.md). Back up both stores together; removing tenant ownership after multi-tenant use is not a safe rollback.
+
+Production tenant identity comes from exactly one verified JWT claim. Development-only `X-Tenant-Id` supports `examples/tenant-isolation-demo.ps1`; it cannot override an authenticated token. Outbox scans/coordinator claims use worker authority, then delivery/participants enter the persisted tenant. RabbitMQ headers, audit streams and SignalR groups carry that scope. Keep Npgsql connection reset enabled and use a fresh context per execution scope.
 
 ## Projection
 

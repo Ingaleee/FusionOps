@@ -10,7 +10,7 @@ namespace FusionOps.Domain.Entities;
 /// <summary>
 /// Represents an employee or contractor that can be allocated to projects.
 /// </summary>
-public class HumanResource : IEntity<HumanResourceId>, IHasDomainEvents
+public class HumanResource : FusionOps.Domain.Tenancy.TenantOwnedEntity, IEntity<HumanResourceId>, IHasDomainEvents
 {
     private readonly List<IDomainEvent> _domainEvents = new();
 

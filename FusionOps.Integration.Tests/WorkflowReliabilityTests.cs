@@ -464,7 +464,7 @@ public sealed partial class ReliabilityTests
         var createDatabase = "CREATE DATABASE " + sqlBuilder.QuoteIdentifier(database);
         await primary.Database.ExecuteSqlRawAsync(createDatabase);
         connection.Database = database;
-        await using var upgrade = new FulfillmentContext(new DbContextOptionsBuilder<FulfillmentContext>().UseNpgsql(connection.ConnectionString).Options);
+        await using var upgrade = new FulfillmentContext(new DbContextOptionsBuilder<FulfillmentContext>().UseNpgsql(connection.ConnectionString).Options, FusionOps.Application.Abstractions.TenantScope.Legacy);
         var migrator = upgrade.GetService<IMigrator>();
         await migrator.MigrateAsync("20261012211539_ApprovedReservationWorkflows");
         var workflowId = Guid.NewGuid();

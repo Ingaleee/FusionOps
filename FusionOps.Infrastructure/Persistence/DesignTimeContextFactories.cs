@@ -9,11 +9,11 @@ namespace FusionOps.Infrastructure.Persistence;
 public sealed class WorkforceDesignTimeFactory : IDesignTimeDbContextFactory<WorkforceContext>
 {
     public WorkforceContext CreateDbContext(string[] args) => new(new DbContextOptionsBuilder<WorkforceContext>()
-        .UseSqlServer("Server=localhost;Database=FusionOpsWorkforce;Integrated Security=true;TrustServerCertificate=true").Options);
+        .UseSqlServer("Server=localhost;Database=FusionOpsWorkforce;Integrated Security=true;TrustServerCertificate=true").Options, FusionOps.Application.Abstractions.TenantScope.System);
 }
 
 public sealed class FulfillmentDesignTimeFactory : IDesignTimeDbContextFactory<FulfillmentContext>
 {
     public FulfillmentContext CreateDbContext(string[] args) => new(new DbContextOptionsBuilder<FulfillmentContext>()
-        .UseNpgsql("Host=localhost;Database=fusionops;Username=fusionops").Options);
+        .UseNpgsql("Host=localhost;Database=fusionops;Username=fusionops").Options, FusionOps.Application.Abstractions.TenantScope.System);
 }

@@ -33,6 +33,14 @@ public class ExceptionMiddleware
         {
             await WriteProblem(context, HttpStatusCode.PreconditionFailed, "workflow_version_mismatch", ex.Message);
         }
+        catch (FusionOps.Domain.Tenancy.TenantBoundaryException)
+        {
+            await WriteProblem(context, HttpStatusCode.Forbidden, "tenant_boundary", "The operation is outside the verified tenant");
+        }
+        catch (FusionOps.Domain.Tenancy.TenantRequiredException)
+        {
+            await WriteProblem(context, HttpStatusCode.Forbidden, "tenant_required", "A verified tenant context is required");
+        }
         catch (CatalogVersionException ex)
         {
             await WriteProblem(context, HttpStatusCode.PreconditionFailed, "catalog_version_mismatch", ex.Message);

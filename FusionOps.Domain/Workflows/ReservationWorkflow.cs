@@ -8,7 +8,7 @@ using FusionOps.Domain.Services.Planning;
 
 namespace FusionOps.Domain.Workflows;
 
-public sealed class ReservationWorkflow : IHasDomainEvents
+public sealed class ReservationWorkflow : FusionOps.Domain.Tenancy.TenantOwnedEntity, IHasDomainEvents
 {
     private Guid[] _resourceIds = [];
     private Guid[] _allocationIds = [];
@@ -48,7 +48,7 @@ public sealed class ReservationWorkflow : IHasDomainEvents
     public static bool IsExecutable(WorkflowState state) => state is WorkflowState.ReservingResources or WorkflowState.ReservingLicenses
         or WorkflowState.ReleasingLicenses or WorkflowState.ReleasingResources;
 
-    public static ReservationWorkflow Propose(Guid id, ReservationSpecification specification, string actor, DateTimeOffset now)
+    public static ReservationWorkflow Propose(Guid id, ReservationSpecification specification, string actor, DateTimeOffset now, Guid? tenantId = null)
     {
         ArgumentNullException.ThrowIfNull(specification);
         CheckActor(actor);
@@ -71,6 +71,7 @@ public sealed class ReservationWorkflow : IHasDomainEvents
             CreatedAt = now.ToUniversalTime(), CompletionTimeoutSeconds = specification.CompletionTimeoutSeconds,
             State = WorkflowState.AwaitingApproval, Quote = specification.Quote
         };
+        workflow.BindTenant(tenantId ?? FusionOps.Domain.Tenancy.TenantIdentity.Legacy);
         workflow._licenses.AddRange(specification.Licenses.OrderBy(l => l.Product, StringComparer.Ordinal));
         workflow.SpecificationHash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new
         {
@@ -85,6 +86,8 @@ public sealed class ReservationWorkflow : IHasDomainEvents
             // Leave historical unquoted workflow fingerprints unchanged.
             workflow.SpecificationHash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { workflow.SpecificationHash, Quote = quote })));
         }
+        if (workflow.TenantId != FusionOps.Domain.Tenancy.TenantIdentity.Legacy)
+            workflow.SpecificationHash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { workflow.TenantId, workflow.SpecificationHash })));
         workflow.Record(null, actor, "proposed", now);
         return workflow;
     }

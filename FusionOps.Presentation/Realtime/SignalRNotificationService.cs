@@ -10,10 +10,10 @@ public sealed class SignalRNotificationService : IResourceNotification
     public SignalRNotificationService(IHubContext<NotificationHub> hub) => _hub = hub;
 
     public Task LowStockAlertAsync(string sku, DateTime expected, int qty, CancellationToken ct)
-        => _hub.Clients.Group("StockAdmins")
+        => _hub.Clients.Group($"tenant:{FusionOps.Application.Abstractions.TenantExecution.RequiredTenant:N}:StockAdmins")
               .SendAsync("lowStock", new { sku, expectedDate = expected, qtyLeft = qty }, ct);
 
     public Task AllocationUpdateAsync(Guid projectId, string status, CancellationToken ct)
-        => _hub.Clients.Group("Managers")
+        => _hub.Clients.Group($"tenant:{FusionOps.Application.Abstractions.TenantExecution.RequiredTenant:N}:Managers")
               .SendAsync("allocationUpdate", new { projectId, status }, ct);
-} 
+}

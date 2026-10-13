@@ -39,7 +39,7 @@ public sealed class ReservationWorkflowConfig : IEntityTypeConfiguration<Reserva
         b.OwnsMany(w => w.Licenses, l =>
         {
             l.ToTable("workflow_license_requirements");
-            l.WithOwner().HasForeignKey("WorkflowId");
+            l.WithOwner().HasForeignKey("TenantId", "WorkflowId").HasPrincipalKey(nameof(ReservationWorkflow.TenantId), nameof(ReservationWorkflow.Id));
             l.Property(r => r.Product).HasMaxLength(128);
             l.HasKey("WorkflowId", nameof(LicenseRequirement.Product));
         });
@@ -55,7 +55,7 @@ public sealed class ReservationWorkflowConfig : IEntityTypeConfiguration<Reserva
         b.OwnsMany(w => w.Transitions, t =>
         {
             t.ToTable("workflow_transitions");
-            t.WithOwner().HasForeignKey("WorkflowId");
+            t.WithOwner().HasForeignKey("TenantId", "WorkflowId").HasPrincipalKey(nameof(ReservationWorkflow.TenantId), nameof(ReservationWorkflow.Id));
             t.HasKey("WorkflowId", nameof(WorkflowTransition.Version));
             t.Property(r => r.Version).ValueGeneratedNever();
             t.Property(r => r.From).HasConversion<string>().HasMaxLength(32);

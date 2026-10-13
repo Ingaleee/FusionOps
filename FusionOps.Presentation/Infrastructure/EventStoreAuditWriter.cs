@@ -12,7 +12,8 @@ public sealed class EventStoreAuditWriter(EventStoreClient client) : IAuditWrite
     public async Task WriteAsync<T>(AuditEnvelope<T> envelope, CancellationToken ct)
     {
         var data = JsonSerializer.SerializeToUtf8Bytes(envelope, DomainEventSerializer.Options);
-        var stream = $"audit-event-{envelope.Id:N}";
+        var stream = envelope.TenantId is { } tenant
+            ? $"audit-tenant-{tenant:N}-event-{envelope.Id:N}" : $"audit-event-{envelope.Id:N}";
         try
         {
             await client.AppendToStreamAsync(stream, StreamState.NoStream,

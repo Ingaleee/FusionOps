@@ -20,6 +20,7 @@ using FusionOps.Application.Workflows;
 using FusionOps.Infrastructure.Workflows;
 using FusionOps.Application.Planning;
 using FusionOps.Infrastructure.Planning;
+using FusionOps.Infrastructure.Tenancy;
 
 namespace FusionOps.Presentation.Extensions;
 
@@ -27,8 +28,12 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration cfg)
     {
-        services.AddDbContextFactory<WorkforceContext>(o => o.UseSqlServer(cfg.GetConnectionString("sql")));
-        services.AddDbContextFactory<FulfillmentContext>(o => o.UseNpgsql(cfg.GetConnectionString("pg")));
+        var sql = cfg.GetConnectionString("sql") ?? throw new InvalidOperationException("SQL connection is required");
+        var pg = cfg.GetConnectionString("pg") ?? throw new InvalidOperationException("PostgreSQL connection is required");
+        services.AddSingleton<IDbContextFactory<WorkforceContext>>(new TenantWorkforceFactory(sql, cfg.GetConnectionString("sqlWorker") ?? sql));
+        services.AddSingleton<IDbContextFactory<FulfillmentContext>>(new TenantFulfillmentFactory(pg, cfg.GetConnectionString("pgWorker") ?? pg));
+        services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<WorkforceContext>>().CreateDbContext());
+        services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<FulfillmentContext>>().CreateDbContext());
 
         services.AddScoped<IAllocationRepository, AllocationRepository>();
         services.AddScoped<IStockRepository, StockRepository>();

@@ -49,6 +49,11 @@ namespace FusionOps.Infrastructure.Migrations.Workforce
                         .IsConcurrencyToken()
                         .HasColumnType("bigint");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.ComplexProperty(typeof(Dictionary<string, object>), "HourRate", "FusionOps.Domain.Catalog.CatalogResource.HourRate#Money", b1 =>
                         {
                             b1.IsRequired();
@@ -82,6 +87,11 @@ namespace FusionOps.Infrastructure.Migrations.Workforce
                     b.Property<Guid>("ResourceId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.ComplexProperty(typeof(Dictionary<string, object>), "Period", "FusionOps.Domain.Entities.Allocation.Period#TimeRange", b1 =>
                         {
                             b1.IsRequired();
@@ -97,7 +107,7 @@ namespace FusionOps.Infrastructure.Migrations.Workforce
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ResourceId");
+                    b.HasIndex("TenantId", "ResourceId");
 
                     b.ToTable("Allocations", (string)null);
                 });
@@ -111,6 +121,11 @@ namespace FusionOps.Infrastructure.Migrations.Workforce
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
 
                     b.Property<int>("Type")
                         .HasColumnType("int");
@@ -142,6 +157,11 @@ namespace FusionOps.Infrastructure.Migrations.Workforce
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
 
                     b.ComplexProperty(typeof(Dictionary<string, object>), "HourRate", "FusionOps.Domain.Entities.HumanResource.HourRate#Money", b1 =>
                         {
@@ -190,6 +210,11 @@ namespace FusionOps.Infrastructure.Migrations.Workforce
                     b.Property<DateTimeOffset>("ExpiresAt")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.HasKey("Id");
 
                     b.HasIndex("ExpiresAt");
@@ -216,6 +241,11 @@ namespace FusionOps.Infrastructure.Migrations.Workforce
                     b.Property<string>("ResultJson")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
 
                     b.HasKey("ScopeHash");
 
@@ -260,6 +290,11 @@ namespace FusionOps.Infrastructure.Migrations.Workforce
                     b.Property<DateTime?>("ProcessedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<Guid>("TenantId")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier")
+                        .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -287,12 +322,19 @@ namespace FusionOps.Infrastructure.Migrations.Workforce
                             b1.Property<int>("Level")
                                 .HasColumnType("int");
 
+                            b1.Property<Guid>("TenantId")
+                                .HasColumnType("uniqueidentifier")
+                                .HasDefaultValue(new Guid("11111111-1111-1111-1111-111111111111"));
+
                             b1.HasKey("ResourceId", "Name");
+
+                            b1.HasIndex("TenantId", "ResourceId");
 
                             b1.ToTable("CatalogSkills", (string)null);
 
                             b1.WithOwner()
-                                .HasForeignKey("ResourceId");
+                                .HasForeignKey("TenantId", "ResourceId")
+                                .HasPrincipalKey("TenantId", "Id");
                         });
 
                     b.Navigation("Skills");
@@ -302,7 +344,8 @@ namespace FusionOps.Infrastructure.Migrations.Workforce
                 {
                     b.HasOne("FusionOps.Domain.Catalog.CatalogResource", null)
                         .WithMany()
-                        .HasForeignKey("ResourceId")
+                        .HasForeignKey("TenantId", "ResourceId")
+                        .HasPrincipalKey("TenantId", "Id")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

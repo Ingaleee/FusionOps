@@ -19,6 +19,7 @@ public sealed class SqlResourceCatalogStore(IDbContextFactory<WorkforceContext> 
         if (!edit.IsActive) resource.Revise(edit.Name, edit.HourRate, edit.Skills, edit.EquipmentType, false);
         await using var context = await factory.CreateDbContextAsync(ct);
         await using var tx = await context.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        resource.BindTenant(context.TenantId);
         if (await CatalogLocks.FindAsync(context, id, ct) is not null) throw new ResourceAdmissionException("resource_exists", id);
         context.Add(resource);
         await SaveAsync(context, ct);
@@ -54,7 +55,7 @@ public sealed class SqlResourceCatalogStore(IDbContextFactory<WorkforceContext> 
     private async Task SaveAsync(WorkforceContext context, CancellationToken ct)
     {
         foreach (var domainEvent in context.ChangeTracker.Entries().Select(e => e.Entity).OfType<IHasDomainEvents>().SelectMany(e => e.DomainEvents).ToArray())
-            context.OutboxMessages.Add(DomainEventSerializer.Serialize(domainEvent, execution.Actor, execution.CorrelationId));
+            context.OutboxMessages.Add(DomainEventSerializer.Serialize(domainEvent, execution.Actor, execution.CorrelationId, context.TenantId));
         await context.SaveChangesAsync(ct);
     }
 }

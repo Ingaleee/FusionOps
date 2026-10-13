@@ -21,15 +21,20 @@ public static class DomainEventSerializer
     public static string GetName(Type type) =>
         type.GetCustomAttribute<EventTypeAttribute>()?.Name ?? $"v1.{type.Name}";
 
-    public static OutboxMessage Serialize(IDomainEvent domainEvent, string actor, string correlationId) => new()
+    public static OutboxMessage Serialize(IDomainEvent domainEvent, string actor, string correlationId, Guid? tenantId = null)
     {
+        var message = new OutboxMessage
+        {
         Id = domainEvent.Id,
         OccurredOn = domainEvent.OccurredOn.UtcDateTime,
         Type = GetName(domainEvent.GetType()),
         Payload = JsonSerializer.Serialize(domainEvent, domainEvent.GetType(), Options),
         Actor = actor,
         CorrelationId = correlationId
-    };
+        };
+        message.BindTenant(tenantId ?? FusionOps.Domain.Tenancy.TenantIdentity.Legacy);
+        return message;
+    }
 
     public static IDomainEvent Deserialize(OutboxMessage message)
     {

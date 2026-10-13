@@ -43,7 +43,7 @@ public sealed class EfUnitOfWork(
             .OfType<IHasDomainEvents>().Where(e => e.DomainEvents.Count > 0).ToArray();
         foreach (var domainEvent in sources.SelectMany(e => e.DomainEvents))
             context.Set<OutboxMessage>().Add(DomainEventSerializer.Serialize(
-                domainEvent, executionContext.Actor, executionContext.CorrelationId));
+                domainEvent, executionContext.Actor, executionContext.CorrelationId, ((FusionOps.Infrastructure.Tenancy.TenantDbContext)context).TenantId));
 
         await context.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);

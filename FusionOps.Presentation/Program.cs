@@ -88,6 +88,7 @@ app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication();
 app.UseMiddleware<CorrelationMiddleware>();
 app.UseAuthorization();
+app.UseMiddleware<TenantMiddleware>();
 if (app.Environment.IsDevelopment()) { app.UseSwagger(); app.UseSwaggerUI(); }
 app.MapPlanningEndpoints();
 app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions { Predicate = _ => false });
@@ -100,6 +101,7 @@ if (!demoMode)
     if (app.Environment.IsDevelopment() && builder.Configuration.GetValue<bool>("Database:Initialize"))
     {
         using var scope = app.Services.CreateScope();
+        using var tenantScope = FusionOps.Application.Abstractions.TenantExecution.Enter(FusionOps.Application.Abstractions.TenantScope.System);
         await scope.ServiceProvider.GetRequiredService<WorkforceContext>().Database.MigrateAsync();
         await scope.ServiceProvider.GetRequiredService<FulfillmentContext>().Database.MigrateAsync();
     }

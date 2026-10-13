@@ -18,7 +18,7 @@ public class StockItemConfig : IEntityTypeConfiguration<StockItem>
                .HasMaxLength(100)
                .IsRequired();
 
-        builder.HasIndex(s => s.Sku).IsUnique();
+        builder.HasIndex(s => new { s.TenantId, s.Sku }).IsUnique();
 
         builder.ComplexProperty(s => s.UnitCost, rate =>
         {

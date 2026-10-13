@@ -9,7 +9,7 @@ public sealed class ReservationWorkflowService(IReservationWorkflowStore store, 
     TimeProvider clock, WorkflowApprovalPolicy approvalPolicy, IPlanningQuoteStore quotes)
 {
     public Task<ReservationWorkflow> ProposeAsync(Guid id, ReservationSpecification specification, CancellationToken ct) =>
-        store.CreateAsync(ReservationWorkflow.Propose(id, specification, execution.Actor, clock.GetUtcNow()), ct);
+        store.CreateAsync(ReservationWorkflow.Propose(id, specification, execution.Actor, clock.GetUtcNow(), execution.TenantId), ct);
     public async Task<ReservationWorkflow> ProposeQuoteAsync(Guid id, Guid quoteId, IReadOnlyList<LicenseRequirement> licenses,
         int completionTimeoutSeconds, CancellationToken ct)
     {

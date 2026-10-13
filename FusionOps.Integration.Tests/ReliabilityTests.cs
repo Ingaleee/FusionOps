@@ -77,8 +77,8 @@ public sealed partial class ReliabilityTests
     [SetUp]
     public async Task ClearTestData()
     {
-        await using var workforce = Workforce();
-        await using var fulfillment = Fulfillment();
+        await using var workforce = new WorkforceContext(_workforceOptions, TenantScope.System);
+        await using var fulfillment = new FulfillmentContext(_fulfillmentOptions, TenantScope.System);
         await workforce.OutboxMessages.ExecuteDeleteAsync();
         await workforce.Allocations.ExecuteDeleteAsync();
         await workforce.CommandReceipts.ExecuteDeleteAsync();
@@ -90,6 +90,7 @@ public sealed partial class ReliabilityTests
         await fulfillment.Set<LicensePool>().ExecuteDeleteAsync();
         await fulfillment.AllocationHistory.ExecuteDeleteAsync();
         await fulfillment.Set<ProjectionCheckpoint>().ExecuteDeleteAsync();
+        await fulfillment.StockItems.ExecuteDeleteAsync();
     }
 
     [OneTimeTearDown]
@@ -101,8 +102,8 @@ public sealed partial class ReliabilityTests
         await _sql.DisposeAsync();
     }
 
-    private WorkforceContext Workforce() => new(_workforceOptions);
-    private FulfillmentContext Fulfillment() => new(_fulfillmentOptions);
+    private WorkforceContext Workforce() => new(_workforceOptions, TenantScope.Legacy);
+    private FulfillmentContext Fulfillment() => new(_fulfillmentOptions, TenantScope.Legacy);
     private static TimeRange Period => new(DateTimeOffset.Parse("2026-10-20T08:00:00Z"), DateTimeOffset.Parse("2026-10-20T10:00:00Z"));
 
     private async Task<IReadOnlyCollection<Guid>> ExecuteIdempotentAsync(AllocateCommand command, string actor = "tester",
@@ -276,8 +277,8 @@ public sealed partial class ReliabilityTests
                 services.RemoveAll<FulfillmentContext>();
                 services.RemoveAll<IDbContextFactory<WorkforceContext>>();
                 services.RemoveAll<IDbContextFactory<FulfillmentContext>>();
-                services.AddScoped(_ => new WorkforceContext(workforceOptions));
-                services.AddScoped(_ => new FulfillmentContext(fulfillmentOptions));
+                services.AddScoped(_ => new WorkforceContext(workforceOptions, TenantExecution.Current ?? TenantScope.Legacy));
+                services.AddScoped(_ => new FulfillmentContext(fulfillmentOptions, TenantExecution.Current ?? TenantScope.Legacy));
                 services.AddSingleton<IDbContextFactory<WorkforceContext>>(new WorkforceContextFactory(workforceOptions));
                 services.AddSingleton<IDbContextFactory<FulfillmentContext>>(new TestContextFactory(fulfillmentOptions));
                 if (runWorkflowWorker) services.AddHostedService<FusionOps.Presentation.BackgroundServices.ReservationWorkflowWorker>();
@@ -294,7 +295,7 @@ public sealed partial class ReliabilityTests
 
     private sealed class WorkforceContextFactory(DbContextOptions<WorkforceContext> options) : IDbContextFactory<WorkforceContext>
     {
-        public WorkforceContext CreateDbContext() => new(options);
+        public WorkforceContext CreateDbContext() => new(options, TenantExecution.Current ?? TenantScope.Legacy);
         public Task<WorkforceContext> CreateDbContextAsync(CancellationToken cancellationToken = default) => Task.FromResult(CreateDbContext());
     }
 
@@ -456,11 +457,41 @@ public sealed partial class ReliabilityTests
         Assert.That(count, Is.EqualTo(1));
     }
 
+    [Test]
+    public async Task LegacyAuditAppendSurvivesTenantUpgradeAndOutboxRetry()
+    {
+        using var client = new EventStoreClient(EventStoreClientSettings.Create($"esdb://{_eventStore.Hostname}:{_eventStore.GetMappedPublicPort(2113)}?tls=false"));
+        var allocation = Allocation.Reserve(Guid.NewGuid(), Guid.NewGuid(), Period, []);
+        var domainEvent = allocation.DomainEvents.Single();
+        var message = DomainEventSerializer.Serialize(domainEvent, "tester", "upgrade-retry");
+        // Exact pre-tenancy JSON: the old append committed, but delivery had no recorded completion.
+        var oldData = System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            message.Id, EventType = message.Type, AggregateId = allocation.Id.Value,
+            message.Actor, message.CorrelationId, Payload = (object)domainEvent, OccurredOn = domainEvent.OccurredOn.UtcDateTime
+        }, DomainEventSerializer.Options);
+        await client.AppendToStreamAsync($"audit-event-{message.Id:N}", StreamState.NoStream,
+            [new EventData(Uuid.FromGuid(message.Id), message.Type, oldData)]);
+        await using var context = Workforce();
+        context.Add(message);
+        await context.SaveChangesAsync();
+        var bus = new TestBus();
+        var processor = new OutboxProcessor(bus, new EventStoreAuditWriter(client), new TestPublisher(), TimeProvider.System,
+            NullLogger<OutboxProcessor>.Instance);
+        Assert.That(await processor.DispatchAsync(context, 1, 5, default), Is.EqualTo(1));
+        Assert.That(bus.Published, Has.Count.EqualTo(1));
+        var matchingEvents = 0;
+        await foreach (var item in client.ReadAllAsync(Direction.Forwards, Position.Start))
+            if (item.Event.EventId == Uuid.FromGuid(message.Id)) matchingEvents++;
+        Assert.That(matchingEvents, Is.EqualTo(1), "An upgraded retry must reuse the original stream and bytes");
+        Assert.That((await context.OutboxMessages.SingleAsync()).ProcessedAt, Is.Not.Null);
+    }
+
     private sealed record TestExecutionContext(string Actor = "tester") : IExecutionContext { public string CorrelationId => "integration-test"; }
     [Test]
     public async Task ActualRabbitDeliveryPreservesConcreteContractAndOriginalMessageIdentity()
     {
-        var received = new TaskCompletionSource<(ResourceAllocated Event, Guid? MessageId)>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var received = new TaskCompletionSource<(ResourceAllocated Event, Guid? MessageId, string? Tenant)>(TaskCreationOptions.RunContinuationsAsynchronously);
         var bus = Bus.Factory.CreateUsingRabbitMq(config =>
         {
             config.Host(_rabbit.Hostname, (ushort)_rabbit.GetMappedPublicPort(5672), "/", host =>
@@ -471,7 +502,7 @@ public sealed partial class ReliabilityTests
             config.ReceiveEndpoint($"fusionops-proof-{Guid.NewGuid():N}", endpoint =>
                 endpoint.Handler<ResourceAllocated>(context =>
                 {
-                    received.TrySetResult((context.Message, context.MessageId));
+                    received.TrySetResult((context.Message, context.MessageId, context.Headers.Get<string>("fusionops-tenant-id")));
                     return Task.CompletedTask;
                 }));
         });
@@ -480,10 +511,12 @@ public sealed partial class ReliabilityTests
         try
         {
             var domainEvent = (ResourceAllocated)Allocation.Reserve(Guid.NewGuid(), Guid.NewGuid(), Period, []).DomainEvents.Single();
+            using var tenant = TenantExecution.Enter(TenantScope.For(TenantA));
             await new RabbitBus(bus, NullLogger<RabbitBus>.Instance).PublishAsync(domainEvent, timeout.Token);
             var delivery = await received.Task.WaitAsync(timeout.Token);
             Assert.That(delivery.Event, Is.EqualTo(domainEvent));
             Assert.That(delivery.MessageId, Is.EqualTo(domainEvent.Id));
+            Assert.That(delivery.Tenant, Is.EqualTo(TenantA.ToString("D")));
         }
         finally { await bus.StopAsync(); }
     }
@@ -509,7 +542,7 @@ public sealed partial class ReliabilityTests
 
     private sealed class TestContextFactory(DbContextOptions<FulfillmentContext> options) : IDbContextFactory<FulfillmentContext>
     {
-        public FulfillmentContext CreateDbContext() => new(options);
+        public FulfillmentContext CreateDbContext() => new(options, TenantExecution.Current ?? TenantScope.Legacy);
         public Task<FulfillmentContext> CreateDbContextAsync(CancellationToken cancellationToken = default) => Task.FromResult(CreateDbContext());
     }
     private sealed class TestClock : TimeProvider

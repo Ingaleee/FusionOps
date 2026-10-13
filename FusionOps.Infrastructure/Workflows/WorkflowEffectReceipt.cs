@@ -1,7 +1,7 @@
 namespace FusionOps.Infrastructure.Workflows;
 
 /// <summary>Durable participant inbox; committed with the corresponding license effect.</summary>
-public sealed class WorkflowEffectReceipt
+public sealed class WorkflowEffectReceipt : FusionOps.Domain.Tenancy.TenantOwnedEntity
 {
     public Guid WorkflowId { get; set; }
     public string Step { get; set; } = string.Empty;

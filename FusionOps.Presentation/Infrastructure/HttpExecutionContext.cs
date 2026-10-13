@@ -8,4 +8,5 @@ public sealed class HttpExecutionContext(IHttpContextAccessor accessor) : IExecu
     public string Actor => accessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
         ?? accessor.HttpContext?.User.Identity?.Name ?? "system";
     public string CorrelationId => accessor.HttpContext?.TraceIdentifier ?? Guid.NewGuid().ToString("N");
+    public Guid TenantId => TenantExecution.RequiredTenant;
 }

@@ -25,7 +25,7 @@ public sealed class CatalogResourceConfig : IEntityTypeConfiguration<CatalogReso
         b.OwnsMany(r => r.Skills, s =>
         {
             s.ToTable("CatalogSkills");
-            s.WithOwner().HasForeignKey("ResourceId");
+            s.WithOwner().HasForeignKey("TenantId", "ResourceId").HasPrincipalKey(nameof(CatalogResource.TenantId), nameof(CatalogResource.Id));
             s.Property(v => v.Name).HasMaxLength(64);
             s.HasKey("ResourceId", nameof(CatalogSkill.Name));
         });

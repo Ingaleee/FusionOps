@@ -9,7 +9,7 @@ namespace FusionOps.Domain.Catalog;
 
 public sealed record CatalogSkill(string Name, int Level);
 
-public sealed class CatalogResource : IHasDomainEvents
+public sealed class CatalogResource : FusionOps.Domain.Tenancy.TenantOwnedEntity, IHasDomainEvents
 {
     private readonly List<CatalogSkill> _skills = [];
     private readonly List<IDomainEvent> _events = [];

@@ -268,7 +268,7 @@ public sealed partial class ReliabilityTests
     {
         // This database belongs exclusively to this test container and disappears with it.
         var connection = new SqlConnectionStringBuilder(_sql.GetConnectionString()) { InitialCatalog = $"CatalogUpgrade_{Guid.NewGuid():N}" };
-        await using var upgrade = new WorkforceContext(new DbContextOptionsBuilder<WorkforceContext>().UseSqlServer(connection.ConnectionString).Options);
+        await using var upgrade = new WorkforceContext(new DbContextOptionsBuilder<WorkforceContext>().UseSqlServer(connection.ConnectionString).Options, FusionOps.Application.Abstractions.TenantScope.Legacy);
         var migrator = upgrade.GetService<IMigrator>();
         await migrator.MigrateAsync("20261012202310_DurableCommandReceipts");
         var human = Guid.NewGuid();

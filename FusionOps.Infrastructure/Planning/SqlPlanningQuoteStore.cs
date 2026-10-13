@@ -28,7 +28,8 @@ public sealed class SqlPlanningQuoteStore(IDbContextFactory<WorkforceContext> fa
         {
             var resource = await CatalogLocks.RequireAsync(context, id, true, ct);
             // One actual conflicting booking is sufficient evidence of ineligibility; bound history reads.
-            var busy = await context.Allocations.Where(a => a.ResourceId == id && !a.IsCancelled
+            var busy = await context.Allocations.FromSqlInterpolated($"SELECT *, PeriodStart AS Period_Start, PeriodEnd AS Period_End FROM Allocations WITH (HOLDLOCK, INDEX(IX_Allocations_TenantId_ResourceId), FORCESEEK) WHERE TenantId = {context.TenantId} AND ResourceId = {id}")
+                .Where(a => !a.IsCancelled
                 && a.Period.Start < request.Period.End && request.Period.Start < a.Period.End)
                 .OrderBy(a => a.Period.Start).ThenBy(a => a.Id).Select(a => a.Period).Take(1).ToListAsync(ct);
             candidates.Add(new(resource.Revision, new(id, resource.Name, resource.Kind, resource.HourRate,
@@ -38,7 +39,7 @@ public sealed class SqlPlanningQuoteStore(IDbContextFactory<WorkforceContext> fa
             candidates.Select(c => c.Resource).ToArray());
         var result = planner.Plan(authoritative, ct);
         var databaseNow = await SqlQuoteAcceptance.DatabaseTimeAsync(context, ct);
-        var quote = PlanningQuote.Create(new(authoritative, candidates, result), execution.Actor, databaseNow, request.ValiditySeconds);
+        var quote = PlanningQuote.Create(new(authoritative, candidates, result), execution.Actor, databaseNow, request.ValiditySeconds, context.TenantId);
         context.PlanningQuotes.Add(quote);
         await context.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
